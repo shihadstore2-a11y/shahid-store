@@ -1,0 +1,73 @@
+-- ============================================================
+-- A.1 Pre-Cleanup Snapshot
+-- Date: 2026-05-26 12:54 UTC
+-- Generated before A.1 cleanup execution (PM Ahmed approval)
+-- ============================================================
+-- Purpose: forensic record + rollback guidance.
+-- Full row dumps live in chat_search history (audit query results
+-- 2026-05-26 12:54 UTC). This file captures STATE + IDs + intent.
+-- ============================================================
+
+-- ============================================================
+-- BASELINE COUNTS (before cleanup)
+-- ============================================================
+-- auth.users:                6
+-- profiles:                  6
+-- orders:                   21  (19 fulfilled, 2 pending)
+-- payment_transactions:     19  (16 initiated, 2 success, 1 failed)
+-- ============================================================
+
+-- ============================================================
+-- USERS TO DELETE (3 — non-admin testers)
+-- ============================================================
+-- 7e46a503-6785-47a5-9f5a-d11a33d23494  saalla012@gmail.com       (0 orders)
+-- 30879a5e-3f8f-4316-83ec-4171756db128  elbhery878@gmail.com      (1 pending order LG-260526-3294)
+-- e2d72abd-ecca-401f-a3f4-dbf8f176d5d7  thamer585891@gmail.com    (1 order TEST-F8-F5 by email, user_id NULL)
+--
+-- USERS TO KEEP (3 — admins)
+-- 0b9b88ef-515c-4555-a48c-14988012afba  thamer585899@gmail.com    super_admin
+-- 29a955d0-0611-41cc-8020-11d85f2e6139  thamer@shahidstore.net    super_admin
+-- 999bea15-12cf-441d-b869-2176f22455d0  wa7eeed20@gmail.com       staff
+
+-- ============================================================
+-- ORDERS TO MARK is_test=true (~19 rows expected)
+-- ============================================================
+-- Explicit tests (4):
+--   06d709d2-...  LG-260522-9296          e2e-success@test.local   (Order 9296 — KEEP, mark only)
+--   e2f60444-...  TEST-F8-C-a6c21cb8      thamer585899 (admin)
+--   58c46969-...  TEST-F8-F5-4522ecef     thamer585891 (will cascade-delete with user)
+--   a89d5198-...  LG-260526-5177          guest-test@example.com   (pending → will be cancelled)
+--
+-- Legacy 21 May test batch (15 rows, all *@hotmail.com / *@edfapay.com / saalla012X@gmail.com):
+--   LG-260521-{9632, 8472, 6633, 8002, 6645, 7482, 1879, 1662, 2771, 6691, 5066, 6531, 8617}
+--   LG-260522-4007
+--   (these emails do NOT match the LIKE patterns; marked as legacy-test manually if needed)
+
+-- ============================================================
+-- ORDERS TO HARD-DELETE (cascade with user delete)
+-- ============================================================
+-- 58c46969-0f53-4a29-902f-9179e6ec2110  TEST-F8-F5   (by customer_email=thamer585891)
+-- 64612a73-90d2-4f40-98ad-f036b85dac44  LG-260526-3294 (user_id=30879a5e... elbhery878)
+
+-- ============================================================
+-- PAYMENT TRANSACTIONS TO AUTO-CLOSE (16 expected, status='initiated' > 1h old)
+-- All belong to LG-260521-* orders + LG-260522-* (legacy EdfaPay test batch)
+-- ============================================================
+
+-- ============================================================
+-- ROLLBACK GUIDANCE (if cleanup needs reversal)
+-- ============================================================
+-- 1) is_test column: ALTER TABLE orders DROP COLUMN is_test;
+-- 2) Stale payment transactions: cannot restore without backup
+--    (status reverted from 'failed' → 'initiated' via UPDATE,
+--    but rate-limit window already passed so no harm).
+-- 3) Cancelled pending orders: UPDATE orders SET status='pending'
+--    WHERE id IN ('a89d5198-495e-4ae6-a7ae-258ff975ee57').
+--    (elbhery878 order will be hard-deleted via user cascade.)
+-- 4) Deleted users: IRREVERSIBLE via SQL. Must be re-created via
+--    Google OAuth sign-in (user identity is provider-managed).
+--
+-- Full row JSON dumps available in chat history at timestamp
+-- 2026-05-26T12:54Z under audit queries Q-snapshot-{users,profiles,
+-- orders,payment_transactions}.
+-- ============================================================

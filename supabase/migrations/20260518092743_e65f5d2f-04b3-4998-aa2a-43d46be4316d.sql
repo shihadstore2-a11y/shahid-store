@@ -1,0 +1,1 @@
+UPDATE public.store_settings SET value = '966500451602', updated_at = now() WHERE key = 'whatsapp_number';

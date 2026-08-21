@@ -1,0 +1,59 @@
+-- ============================================================
+-- Pre-Launch Clean Slate Snapshot
+-- Date: 2026-05-28 (generated 2026-05-29 UTC)
+-- Authority: PM Ahmed (Senior 16y)
+-- Purpose: forensic record BEFORE wiping all QA test data
+--          so the store launches with a zero real-order ledger.
+-- ============================================================
+-- This file captures STATE + counts + IDs + intent.
+-- Full row dumps live in chat history (investigation query
+-- results 2026-05-29 ~04:41 UTC).
+-- ============================================================
+
+-- ============================================================
+-- BASELINE COUNTS (before cleanup)
+-- ============================================================
+-- orders:                  32   (15 is_test=false, 17 is_test=true)  <-- ALL are QA per PM
+-- payment_transactions:    31
+-- subscription_inventory:   7   (1 available, 6 claimed)
+-- admin_audit_logs:       180   (160 login, 10 fulfill_order,
+--                                6 auto_claim_subscription, 4 auto_link_user)
+-- profiles:                11   (3 admins + 8 test customers)
+-- auth.users:              11
+-- ------------------------------------------------------------
+-- KEEP (untouched):
+--   admin_users:            3   (super_admin x2 + staff x1)
+--   products:              14
+--   product_costs:         12
+--   store_reviews:         13
+--   categories:             4
+--   coupons:                1
+--   store_settings:         (all)
+-- ============================================================
+
+-- ============================================================
+-- ADMINS TO KEEP (3) — DO NOT DELETE
+-- ============================================================
+-- 29a955d0-0611-41cc-8020-11d85f2e6139  thamer@shahidstore.net   super_admin
+-- 0b9b88ef-515c-4555-a48c-14988012afba  thamer585899@gmail.com   super_admin
+-- 999bea15-12cf-441d-b869-2176f22455d0  Wa7eeed20@gmail.com      staff
+
+-- ============================================================
+-- SUBSCRIPTION INVENTORY TO DELETE (7) — Thamer re-adds fresh
+-- ============================================================
+-- 983e4f1b-...  falcon  1m  available  (d0_test_user)
+-- aa1b6292-...  hulk    3m  claimed
+-- c092040f-...  hulk    3m  claimed
+-- 4d8cfad1-...  hulk    3m  claimed
+-- 7cc60dc9-...  hulk    3m  claimed
+-- afffd786-...  hulk    3m  claimed
+-- 974d3c46-...  hulk    3m  claimed
+
+-- ============================================================
+-- ROLLBACK GUIDANCE
+-- ============================================================
+-- Hard deletes are IRREVERSIBLE via SQL. Restore would require a
+-- point-in-time backup from Lovable Cloud. Inventory is being
+-- re-entered manually by the owner, so no restore is expected.
+-- Real order history starts fresh at launch by design.
+-- ============================================================

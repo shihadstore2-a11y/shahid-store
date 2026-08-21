@@ -1,0 +1,1 @@
+DELETE FROM coupons WHERE code = 'EDFA_TEST_95';

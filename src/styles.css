@@ -1,0 +1,259 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+/* ===== Tajawal — self-hosted (Arabic subset only) ===== */
+/* استبدال Google Fonts بالاستضافة الذاتية: يلغي 2× RTT خارجي + يحسّن LCP */
+@import "@fontsource/tajawal/arabic-400.css";
+@import "@fontsource/tajawal/arabic-500.css";
+@import "@fontsource/tajawal/arabic-700.css";
+@import "@fontsource/tajawal/arabic-900.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Tajawal", system-ui, -apple-system, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-light: var(--primary-light);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+  --animate-sparkle: sparkle 3s ease-in-out infinite;
+
+  /* Unified z-index scale — single source of truth (Tailwind v4 z-index namespace) */
+  --z-index-base: 0;
+  --z-index-content: 10;
+  --z-index-cta-mobile-sticky: 30;
+  --z-index-fab: 40;
+  --z-index-toast-activity: 45;
+  --z-index-header: 50;
+  --z-index-modal: 60;
+  --z-index-dialog: 70;
+}
+
+:root {
+  --radius: 0.85rem;
+
+  /* ═══ TOD True Gold Palette (v2 — TOD-matched neutral) ═══ */
+  /* Hue 0 backgrounds (محايد بارد), Hue 85 gold accent, Hue 95 yellow bright, Hue 145 green, Hue 25 destructive/sale */
+
+  /* ── Backgrounds — Charcoal #2B2B2B (موحَّد عبر الموقع — مرجع وحيد) ── */
+  --background: oklch(0.28 0 0);
+  --foreground: oklch(0.98 0 0);
+
+  /* ── Surface tiers (تدرّج أفتح صعوداً — منطق Apple/Linear) ── */
+  --surface-1: oklch(0.305 0 0);
+  --surface-2: oklch(0.335 0 0);
+  --surface-3: oklch(0.365 0 0);
+
+  /* ── Cards (أفتح من الخلفية لتبقى بارزة) ── */
+  --card: oklch(0.315 0 0);
+  --card-foreground: oklch(0.96 0 0);
+
+  /* ── Popover ── */
+  --popover: oklch(0.33 0 0);
+  --popover-foreground: oklch(0.96 0 0);
+
+  /* ── Primary (مطابق للخلفية) ── */
+  --primary: oklch(0.28 0 0);
+  --primary-foreground: oklch(0.98 0 0);
+  --primary-light: oklch(0.40 0 0);
+
+  /* ── Secondary ── */
+  --secondary: oklch(0.33 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --secondary-bg-soft: oklch(0.33 0 0 / 0.30);
+  --secondary-bg-strong: oklch(0.33 0 0 / 0.50);
+
+  /* ── Muted ── */
+  --muted: oklch(0.30 0 0);
+  --muted-foreground: oklch(0.72 0 0);
+
+  /* ── Accent (TOD Gold — the signature) ── */
+  --accent: oklch(0.78 0.16 85);
+  --accent-foreground: oklch(0.10 0 0);
+  --accent-hover: oklch(0.85 0.18 85);
+  --accent-deep: oklch(0.62 0.15 80);
+
+  /* ── Gold alias ── */
+  --gold: oklch(0.78 0.16 85);
+  --gold-foreground: oklch(0.10 0 0);
+
+  /* ── Yellow bright (discount badges only) ── */
+  --yellow-bright: oklch(0.88 0.20 95);
+  --yellow-bright-foreground: oklch(0.15 0.05 80);
+
+  /* ── Saudi green ── */
+  --saudi-green: oklch(0.55 0.18 145);
+  --saudi-green-foreground: oklch(0.98 0 0);
+
+  /* ── Borders (gold tint — TOD signature: حد ذهبي بارز) ── */
+  --border: oklch(0.78 0.16 85 / 0.45);
+  --border-strong: oklch(0.78 0.16 85 / 0.65);
+  --input: oklch(0.335 0 0);
+  --ring: oklch(0.78 0.16 85);
+
+  /* ── Destructive (red — for delete/error only) ── */
+  --destructive: oklch(0.60 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  /* ── Sale price (TOD-style red for strikethrough discount displays) ── */
+  --sale-price: oklch(0.62 0.22 25);
+
+  /* ── Success ── */
+  --success: oklch(0.55 0.18 145);
+  --success-foreground: oklch(0.98 0 0);
+
+  /* ═══ Gradients (موحَّدة بالكامل على #2B2B2B — لون صلب لتجنّب أي تباين خلفي) ═══ */
+  --gradient-hero: oklch(0.28 0 0);
+  --gradient-gold: linear-gradient(135deg, oklch(0.78 0.16 85) 0%, oklch(0.88 0.20 90) 100%);
+  --gradient-gold-deep: linear-gradient(135deg, oklch(0.62 0.15 80) 0%, oklch(0.78 0.16 85) 100%);
+  --gradient-royal: oklch(0.28 0 0);
+  --gradient-saudi: linear-gradient(135deg, oklch(0.78 0.16 85) 0%, oklch(0.55 0.18 145) 100%);
+  --gradient-card: linear-gradient(180deg, oklch(0.32 0 0) 0%, oklch(0.295 0 0) 100%);
+
+  /* ═══ Shadows ═══ */
+  --shadow-card: 0 8px 32px -8px oklch(0.01 0 0 / 0.85);
+  --shadow-card-hover: 0 16px 56px -8px oklch(0.01 0 0 / 0.90);
+  --shadow-gold: 0 12px 48px -12px oklch(0.78 0.16 85 / 0.40);
+  --shadow-glow-gold: 0 0 64px oklch(0.78 0.16 85 / 0.35);
+  --shadow-glow-purple: 0 0 80px oklch(0.78 0.16 85 / 0.30);
+  --shadow-elevated: 0 24px 64px -16px oklch(0.01 0 0 / 0.95);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    width: 100%;
+    overflow-x: hidden;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    width: 100%;
+    overflow-x: hidden;
+    font-feature-settings: "kern", "liga";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Cinematic animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 20px oklch(0.78 0.16 85 / 0.35)); }
+  50% { filter: drop-shadow(0 0 40px oklch(0.78 0.16 85 / 0.55)); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.animate-float { animation: float 4s ease-in-out infinite; }
+.trophy-glow { animation: glow-pulse 3s ease-in-out infinite; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-600 { animation-delay: 600ms; }
+
+/* Premium gold shine sweep — يمر مرة واحدة عند الـ hover على بطاقات فالكون/هولك */
+@keyframes gold-sweep {
+  0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  20%  { opacity: 0.95; }
+  100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+}
+.premium-shine { position: relative; overflow: hidden; }
+.premium-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    oklch(0.88 0.20 90 / 0.45) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%) skewX(-18deg);
+  z-index: 15;
+}
+.group:hover .premium-shine::after {
+  animation: gold-sweep 1.1s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float, .trophy-glow,
+  [class*="animate-"] {
+    animation: none !important;
+  }
+  .group:hover .premium-shine::after { animation: none !important; }
+}
+
+/* إخفاء scrollbar للـscroll الأفقي في شريط الثقة */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ═══ Admin gold shimmer (skeletons فاخرة) ═══ */
+@keyframes admin-gold-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.admin-shimmer {
+  background: linear-gradient(
+    100deg,
+    oklch(0.33 0 0) 30%,
+    oklch(0.78 0.16 85 / 0.10) 50%,
+    oklch(0.33 0 0) 70%
+  );
+  background-size: 200% 100%;
+  animation: admin-gold-shimmer 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-shimmer { animation: none; background: oklch(0.33 0 0); }
+}

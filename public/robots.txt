@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /checkout
+Disallow: /order-success
+Disallow: /payment
+Disallow: /api/
+
+Sitemap: https://shahidstore.net/sitemap.xml

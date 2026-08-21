@@ -1,0 +1,1 @@
+UPDATE public.orders SET user_id = NULL, status = 'pending' WHERE id IN ('264d8e73-396e-4fea-ab81-bf8f9aac3eb1','00b912d8-4502-4b4f-a21c-0595d5857731');

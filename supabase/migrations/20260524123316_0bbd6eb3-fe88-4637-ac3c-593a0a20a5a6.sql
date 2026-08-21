@@ -1,0 +1,1 @@
+UPDATE public.orders SET user_id = '0b9b88ef-515c-4555-a48c-14988012afba', customer_email = 'thamer585899@gmail.com', updated_at = NOW() WHERE order_number = 'TEST-F8-C-a6c21cb8';

@@ -1,0 +1,1 @@
+UPDATE public.products SET sales_count = 1720 WHERE slug = 'falcon-1y';
