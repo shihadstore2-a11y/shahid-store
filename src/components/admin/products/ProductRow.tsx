@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { InlineEditField } from "@/components/admin/InlineEditField";
+import { cn } from "@/lib/utils";
 import {
   calcDiscountPercent,
   type AdminProductRow,
