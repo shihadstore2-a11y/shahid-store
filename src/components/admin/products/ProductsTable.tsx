@@ -11,12 +11,14 @@ import type { AdminProductRow, AdminProductUpdate } from "@/lib/admin-products";
 export function ProductsTable({
   rows,
   onUpdate,
+  onDelete,
   onOpenImages,
   onOpenDescription,
   onOpenFeatures,
 }: {
   rows: AdminProductRow[];
   onUpdate: (id: string, updates: AdminProductUpdate) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   onOpenImages: (id: string) => void;
   onOpenDescription: (id: string) => void;
   onOpenFeatures: (id: string) => void;
@@ -35,7 +37,7 @@ export function ProductsTable({
             <TableHead>نشط</TableHead>
             <TableHead>نظام المخزون</TableHead>
             <TableHead>الأكثر طلباً</TableHead>
-            <TableHead className="w-[160px]">إجراءات</TableHead>
+            <TableHead className="w-[180px]">إجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -44,6 +46,7 @@ export function ProductsTable({
               key={p.id}
               product={p}
               onUpdate={onUpdate}
+              onDelete={onDelete}
               onOpenImages={onOpenImages}
               onOpenDescription={onOpenDescription}
               onOpenFeatures={onOpenFeatures}

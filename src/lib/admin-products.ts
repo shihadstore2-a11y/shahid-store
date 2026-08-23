@@ -163,6 +163,12 @@ export async function createAdminProduct(product: AdminProductInsert) {
   return data;
 }
 
+export async function deleteAdminProduct(id: string) {
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) throw error;
+  return true;
+}
+
 export const adminProductsQueryOptions = (filters: ProductFilters) =>
   queryOptions({
     queryKey: ["admin", "products", filters],

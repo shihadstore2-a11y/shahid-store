@@ -1,4 +1,4 @@
-import { ExternalLink, FileText, ImageIcon, Info, Sparkles, Star } from "lucide-react";
+import { ExternalLink, FileText, ImageIcon, Info, Sparkles, Star, Trash2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +10,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { InlineEditField } from "@/components/admin/InlineEditField";
 import { cn } from "@/lib/utils";
 import {
@@ -23,12 +34,14 @@ import { formatSAR } from "@/lib/format";
 export function ProductRow({
   product,
   onUpdate,
+  onDelete,
   onOpenImages,
   onOpenDescription,
   onOpenFeatures,
 }: {
   product: AdminProductRow;
   onUpdate: (id: string, updates: AdminProductUpdate) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   onOpenImages: (id: string) => void;
   onOpenDescription: (id: string) => void;
   onOpenFeatures: (id: string) => void;
@@ -43,60 +56,78 @@ export function ProductRow({
     <TableRow className={product.is_active ? "" : "opacity-60"}>
       {/* صورة */}
       <TableCell>
-        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
-          <img src={img} alt="" loading="lazy" className="h-full w-full object-cover" />
-        </div>
+        <button
+          type="button"
+          onClick={() => onOpenImages(product.id)}
+          className="group relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-background transition-transform hover:scale-105"
+          aria-label="تعديل الصور"
+        >
+          {img ? (
+            <img
+              src={img}
+              alt={product.name_ar}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <ImageIcon className="h-5 w-5 text-muted-foreground" />
+          )}
+          <span className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+            <ImageIcon className="h-4 w-4 text-white" />
+          </span>
+        </button>
       </TableCell>
 
-      {/* الاسم + slug */}
-      <TableCell className="min-w-[220px]">
+      {/* اسم */}
+      <TableCell className="font-bold">
         <InlineEditField
           value={product.name_ar}
-          ariaLabel={`تعديل اسم ${product.name_ar}`}
-          onSave={(val) => onUpdate(product.id, { name_ar: String(val) })}
-          className="text-sm font-bold"
-          inputClassName="w-56"
+          onSave={(v) => onUpdate(product.id, { name_ar: String(v) })}
+          ariaLabel="اسم المنتج"
         />
-        <p dir="ltr" className="mt-0.5 px-2 text-right text-[11px] text-muted-foreground">
+        <p className="mt-0.5 text-[11px] text-muted-foreground" dir="ltr">
           {product.slug}
         </p>
       </TableCell>
 
-      {/* الفئة */}
+      {/* فئة */}
       <TableCell>
-        <span className="inline-flex items-center rounded-md border border-border bg-muted px-2 py-0.5 text-xs">
-          {product.category?.name_ar ?? "—"}
-        </span>
+        {product.category ? (
+          <span className="inline-flex rounded-md border border-border bg-muted/50 px-2 py-0.5 text-xs font-bold text-muted-foreground">
+            {product.category.name_ar}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
       </TableCell>
 
-      {/* base_price */}
+      {/* سعر أصلي */}
       <TableCell>
         <InlineEditField
-          value={product.base_price}
           type="number"
-          min={0}
-          suffix="ر.س"
-          ariaLabel="تعديل السعر الأصلي"
-          onSave={(val) => onUpdate(product.id, { base_price: Number(val) })}
-          formatDisplay={(v) => (v == null ? "—" : formatSAR(Number(v)))}
+          value={product.base_price}
+          onSave={(v) => onUpdate(product.id, { base_price: Number(v) })}
+          ariaLabel="السعر الأصلي"
+          formatDisplay={(v) => formatSAR(Number(v))}
+          className="text-xs font-bold"
         />
       </TableCell>
 
-      {/* sale_price */}
+      {/* سعر العرض */}
       <TableCell>
         <InlineEditField
-          value={product.sale_price}
           type="number"
-          min={0}
-          nullable
-          suffix="ر.س"
-          placeholder="بدون عرض"
-          ariaLabel="تعديل سعر العرض"
-          onSave={(val) => onUpdate(product.id, { sale_price: val == null ? null : Number(val) })}
-          formatDisplay={(v) =>
-            v == null || v === "" ? "بدون عرض" : formatSAR(Number(v))
+          value={product.sale_price ?? ""}
+          onSave={(v) =>
+            onUpdate(product.id, {
+              sale_price: v === "" || v == null ? null : Number(v),
+            })
           }
-          className="text-[var(--sale-price)] font-bold"
+          ariaLabel="سعر العرض"
+          formatDisplay={(v) =>
+            v == null || v === "" ? "—" : formatSAR(Number(v))
+          }
+          className="text-xs font-bold text-[var(--sale-price)]"
         />
       </TableCell>
 
@@ -113,7 +144,7 @@ export function ProductRow({
 
       {/* is_active */}
       <TableCell>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center">
           <Switch
             checked={product.is_active}
             onCheckedChange={(v) => {
@@ -122,22 +153,12 @@ export function ProductRow({
             }}
             aria-label={`تفعيل ${product.name_ar}`}
           />
-          <span
-            className={cn(
-              "text-[11px] font-bold px-1.5 py-0.5 rounded transition-colors",
-              product.is_active
-                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                : "bg-zinc-800 text-zinc-400 border border-zinc-700"
-            )}
-          >
-            {product.is_active ? "نشط" : "معطل"}
-          </span>
         </div>
       </TableCell>
 
       {/* stock_management_enabled */}
       <TableCell>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Switch
             checked={product.stock_management_enabled}
             onCheckedChange={(v) => {
@@ -150,16 +171,6 @@ export function ProductRow({
             }}
             aria-label={`نظام المخزون لـ ${product.name_ar}`}
           />
-          <span
-            className={cn(
-              "text-[11px] font-bold px-1.5 py-0.5 rounded transition-colors",
-              product.stock_management_enabled
-                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                : "bg-zinc-800 text-zinc-400 border border-zinc-700"
-            )}
-          >
-            {product.stock_management_enabled ? "تلقائي" : "يدوي"}
-          </span>
           <TooltipProvider delayDuration={150}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -172,8 +183,8 @@ export function ProductRow({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-[220px] text-right">
-                <p className="font-bold">تلقائي: تسليم فوري للأكواد من المخزون</p>
-                <p className="mt-0.5 opacity-80">يدوي: تسليم الطلبات يدوياً عبر الواتساب</p>
+                <p className="font-bold">مُفعّل: تسليم تلقائي للأكواد من المخزون</p>
+                <p className="mt-0.5 opacity-80">مُعطّل: تسليم الطلبات يدوياً عبر الواتساب</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -247,11 +258,45 @@ export function ProductRow({
               </span>
             )}
           </Button>
-          <Button asChild variant="ghost" size="icon" aria-label="عرض في المتجر">
+          <Button asChild variant="ghost" size="icon" aria-label="عرض في المتجر" title="عرض في المتجر">
             <Link to="/product/$slug" params={{ slug: product.slug }} target="_blank">
               <ExternalLink className="h-4 w-4" />
             </Link>
           </Button>
+
+          {/* زر حذف المنتج مع نافذة تأكيد */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="حذف المنتج"
+                title="حذف المنتج"
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="text-right">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-right font-black">تأكيد حذف المنتج</AlertDialogTitle>
+                <AlertDialogDescription className="text-right text-sm">
+                  هل أنت متأكد من رغبتك في حذف <strong className="text-foreground font-bold">"{product.name_ar}"</strong> نهائياً من المتجر؟
+                  <br />
+                  <span className="text-destructive font-medium text-xs mt-1 block">تنبيه: لا يمكن التراجع عن هذا الإجراء بعد الحذف.</span>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-row-reverse justify-start gap-2 pt-2">
+                <AlertDialogCancel>تراجع</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onDelete(product.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold"
+                >
+                  نعم، احذف المنتج
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </TableCell>
     </TableRow>

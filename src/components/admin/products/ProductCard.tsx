@@ -1,8 +1,19 @@
-import { ExternalLink, FileText, ImageIcon, Sparkles, Star } from "lucide-react";
+import { ExternalLink, FileText, ImageIcon, Sparkles, Star, Trash2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { InlineEditField } from "@/components/admin/InlineEditField";
 import {
   calcDiscountPercent,
@@ -15,12 +26,14 @@ import { formatSAR } from "@/lib/format";
 export function ProductCard({
   product,
   onUpdate,
+  onDelete,
   onOpenImages,
   onOpenDescription,
   onOpenFeatures,
 }: {
   product: AdminProductRow;
   onUpdate: (id: string, updates: AdminProductUpdate) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   onOpenImages: (id: string) => void;
   onOpenDescription: (id: string) => void;
   onOpenFeatures: (id: string) => void;
@@ -38,25 +51,37 @@ export function ProductCard({
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
-          <img src={img} alt="" loading="lazy" className="h-full w-full object-cover" />
-        </div>
+        <button
+          type="button"
+          onClick={() => onOpenImages(product.id)}
+          className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-background"
+          aria-label="تعديل الصور"
+        >
+          {img ? (
+            <img src={img} alt="" loading="lazy" className="h-full w-full object-cover" />
+          ) : (
+            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+          )}
+          <span className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+            <ImageIcon className="h-5 w-5 text-white" />
+          </span>
+        </button>
+
         <div className="min-w-0 flex-1">
           <InlineEditField
             value={product.name_ar}
             ariaLabel={`تعديل اسم ${product.name_ar}`}
             onSave={(val) => onUpdate(product.id, { name_ar: String(val) })}
-            className="text-sm font-bold"
-            inputClassName="w-full"
+            className="text-base font-bold"
           />
-          <div className="mt-1 flex items-center gap-2">
-            <span className="inline-flex items-center rounded-md border border-border bg-muted px-2 py-0.5 text-[11px]">
-              {product.category?.name_ar ?? "—"}
+          <p dir="ltr" className="px-2 text-right text-xs text-muted-foreground">
+            {product.slug}
+          </p>
+          {product.category && (
+            <span className="mr-2 mt-1 inline-flex rounded-md border border-border bg-muted px-2 py-0.5 text-[11px]">
+              {product.category.name_ar}
             </span>
-            <span dir="ltr" className="text-[11px] text-muted-foreground">
-              {product.slug}
-            </span>
-          </div>
+          )}
         </div>
         <div className="flex flex-col gap-1">
           <Button
@@ -107,6 +132,35 @@ export function ProductCard({
               <ExternalLink className="h-4 w-4" />
             </Link>
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="حذف المنتج"
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="text-right">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-right font-black">تأكيد حذف المنتج</AlertDialogTitle>
+                <AlertDialogDescription className="text-right text-sm">
+                  هل أنت متأكد من رغبتك في حذف <strong className="text-foreground font-bold">"{product.name_ar}"</strong> نهائياً؟
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-row-reverse justify-start gap-2 pt-2">
+                <AlertDialogCancel>تراجع</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onDelete(product.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold"
+                >
+                  نعم، احذف
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

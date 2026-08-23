@@ -21,6 +21,7 @@ import { AddProductDialog } from "@/components/admin/products/AddProductDialog";
 import {
   adminProductsQueryOptions,
   updateAdminProduct,
+  deleteAdminProduct,
   type AdminProductRow,
   type AdminProductUpdate,
   type ProductFilters,
@@ -105,6 +106,22 @@ function ProductsAdminPage() {
     await updateMutation.mutateAsync({ id, updates });
   };
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteAdminProduct(id),
+    onSuccess: () => {
+      toast.success("تم حذف المنتج بنجاح");
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (err: any) => {
+      toast.error("تعذر حذف المنتج: " + (err?.message || "خطأ غير معروف"));
+    },
+  });
+
+  const handleDelete = async (id: string) => {
+    await deleteMutation.mutateAsync(id);
+  };
+
   const handleOpenImages = (id: string) => setImagesProductId(id);
   const handleOpenDescription = (id: string) => setDescProductId(id);
   const handleOpenFeatures = (id: string) => setFeaturesProductId(id);
@@ -160,6 +177,7 @@ function ProductsAdminPage() {
             <ProductsTable
               rows={rows}
               onUpdate={handleUpdate}
+              onDelete={handleDelete}
               onOpenImages={handleOpenImages}
               onOpenDescription={handleOpenDescription}
               onOpenFeatures={handleOpenFeatures}
@@ -171,6 +189,7 @@ function ProductsAdminPage() {
                 key={p.id}
                 product={p}
                 onUpdate={handleUpdate}
+                onDelete={handleDelete}
                 onOpenImages={handleOpenImages}
                 onOpenDescription={handleOpenDescription}
                 onOpenFeatures={handleOpenFeatures}
