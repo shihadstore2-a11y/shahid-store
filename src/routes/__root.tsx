@@ -198,20 +198,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
-function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="ar" dir="rtl">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
-
 const defaultQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -220,16 +206,25 @@ const defaultQueryClient = new QueryClient({
   },
 });
 
-function RootComponent() {
-  const context = Route.useRouteContext() as { queryClient?: QueryClient } | undefined;
-  const queryClient = context?.queryClient ?? defaultQueryClient;
-
+function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <Toaster position="top-center" dir="rtl" richColors />
-      </AuthProvider>
-    </QueryClientProvider>
+    <html lang="ar" dir="rtl">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <QueryClientProvider client={defaultQueryClient}>
+          <AuthProvider>
+            {children}
+            <Toaster position="top-center" dir="rtl" richColors />
+          </AuthProvider>
+        </QueryClientProvider>
+        <Scripts />
+      </body>
+    </html>
   );
+}
+
+function RootComponent() {
+  return <Outlet />;
 }
