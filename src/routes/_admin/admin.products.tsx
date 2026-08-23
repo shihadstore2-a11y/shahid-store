@@ -17,6 +17,7 @@ import { ProductCard } from "@/components/admin/products/ProductCard";
 import { ProductImagesManager } from "@/components/admin/products/ProductImagesManager";
 import { ProductDescriptionEditor } from "@/components/admin/products/ProductDescriptionEditor";
 import { ProductFeaturesEditor } from "@/components/admin/products/ProductFeaturesEditor";
+import { AddProductDialog } from "@/components/admin/products/AddProductDialog";
 import {
   adminProductsQueryOptions,
   updateAdminProduct,
@@ -113,13 +114,20 @@ function ProductsAdminPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-end justify-between gap-4">
+      <header className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black">إدارة المنتجات</h1>
           <p className="text-sm text-muted-foreground">
             تعديل سريع للأسعار والحالة والصور — اضغط على أي حقل للتعديل المباشر.
           </p>
         </div>
+        <AddProductDialog
+          categories={categories}
+          onCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+          }}
+        />
       </header>
 
       {!isLoading && <ProductStatsStrip rows={rows} />}

@@ -112,16 +112,31 @@ export function ProductRow({
 
       {/* is_active */}
       <TableCell>
-        <Switch
-          checked={product.is_active}
-          onCheckedChange={(v) => onUpdate(product.id, { is_active: v })}
-          aria-label={`تفعيل ${product.name_ar}`}
-        />
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={product.is_active}
+            onCheckedChange={(v) => {
+              onUpdate(product.id, { is_active: v });
+              toast.success(v ? `تم تفعيل ${product.name_ar}` : `تم تعطيل ${product.name_ar}`);
+            }}
+            aria-label={`تفعيل ${product.name_ar}`}
+          />
+          <span
+            className={cn(
+              "text-[11px] font-bold px-1.5 py-0.5 rounded transition-colors",
+              product.is_active
+                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                : "bg-zinc-800 text-zinc-400 border border-zinc-700"
+            )}
+          >
+            {product.is_active ? "نشط" : "معطل"}
+          </span>
+        </div>
       </TableCell>
 
       {/* stock_management_enabled */}
       <TableCell>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <Switch
             checked={product.stock_management_enabled}
             onCheckedChange={(v) => {
@@ -134,6 +149,16 @@ export function ProductRow({
             }}
             aria-label={`نظام المخزون لـ ${product.name_ar}`}
           />
+          <span
+            className={cn(
+              "text-[11px] font-bold px-1.5 py-0.5 rounded transition-colors",
+              product.stock_management_enabled
+                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                : "bg-zinc-800 text-zinc-400 border border-zinc-700"
+            )}
+          >
+            {product.stock_management_enabled ? "تلقائي" : "يدوي"}
+          </span>
           <TooltipProvider delayDuration={150}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -146,8 +171,8 @@ export function ProductRow({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-[220px] text-right">
-                <p className="font-bold">مُفعَّل: تسليم تلقائي من المخزون</p>
-                <p className="mt-0.5 opacity-80">معطَّل: تسليم يدوي عبر الواتساب</p>
+                <p className="font-bold">تلقائي: تسليم فوري للأكواد من المخزون</p>
+                <p className="mt-0.5 opacity-80">يدوي: تسليم الطلبات يدوياً عبر الواتساب</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

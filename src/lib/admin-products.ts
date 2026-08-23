@@ -137,6 +137,32 @@ export async function updateAdminProduct(id: string, updates: AdminProductUpdate
   return data;
 }
 
+export type AdminProductInsert = {
+  name_ar: string;
+  slug: string;
+  category_id: string | null;
+  base_price: number;
+  sale_price: number | null;
+  description: string | null;
+  features: string[];
+  image_urls: string[];
+  stock_management_enabled: boolean;
+  is_active: boolean;
+  is_bestseller: boolean;
+  is_featured: boolean;
+  sort_order: number;
+};
+
+export async function createAdminProduct(product: AdminProductInsert) {
+  const { data, error } = await supabase
+    .from("products")
+    .insert([product])
+    .select(SELECT_COLS)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export const adminProductsQueryOptions = (filters: ProductFilters) =>
   queryOptions({
     queryKey: ["admin", "products", filters],
