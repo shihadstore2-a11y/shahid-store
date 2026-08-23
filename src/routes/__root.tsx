@@ -212,8 +212,17 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+const defaultQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60,
+    },
+  },
+});
+
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  const context = Route.useRouteContext() as { queryClient?: QueryClient } | undefined;
+  const queryClient = context?.queryClient ?? defaultQueryClient;
 
   return (
     <QueryClientProvider client={queryClient}>
