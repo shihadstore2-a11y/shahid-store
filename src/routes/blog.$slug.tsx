@@ -56,7 +56,7 @@ export const Route = createFileRoute("/blog/$slug")({
               name: "شاهد ستور",
               logo: {
                 "@type": "ImageObject",
-                url: "https://shahidstore.net/shahid-store-logo-1200.png",
+                url: "https://shahidstore.net/logo.webp",
               },
             },
             mainEntityOfPage: {

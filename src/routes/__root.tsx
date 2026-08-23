@@ -136,23 +136,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "ar_SA" },
-      { property: "og:image", content: "/shahid-store-logo-1200.png" },
-      { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "1200" },
+      { property: "og:image", content: "/logo.webp" },
+      { property: "og:image:width", content: "512" },
+      { property: "og:image:height", content: "512" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "شاهد ستور — اشتراكات رقمية بتفعيل سريع" },
       {
         name: "twitter:description",
         content: "متجر الاشتراكات الرقمية في السعودية.",
       },
-      { name: "twitter:image", content: "/shahid-store-logo-1200.png" },
+      { name: "twitter:image", content: "/logo.webp" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/png", href: "/favicon.png" },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
-      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "icon", type: "image/webp", href: "/logo.webp" },
+      { rel: "icon", type: "image/webp", sizes: "192x192", href: "/logo.webp" },
+      { rel: "icon", type: "image/webp", sizes: "512x512", href: "/logo.webp" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/logo.webp" },
       /* Tajawal مُستضاف ذاتياً عبر @fontsource — لا حاجة لـ preconnect أو CSS خارجي */
     ],
     scripts: [
@@ -164,7 +164,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           name: "شاهد ستور",
           alternateName: "Shahid Store",
           url: "https://shahidstore.net",
-          logo: "https://shahidstore.net/shahid-store-logo-1200.png",
+          logo: "https://shahidstore.net/logo.webp",
           description:
             "متجر اشتراكات رقمية موثوق في السعودية: فالكون، هولك، سمارترز برو. تفعيل سريع، دفع آمن، دعم متواصل.",
           contactPoint: {

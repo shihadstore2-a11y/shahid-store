@@ -19,14 +19,9 @@ export function Logo({
   showText = true,
 }: LogoProps) {
   const resolved: "full" | "mark" = variant ?? (showText ? "full" : "mark");
-  const src =
-    resolved === "full" ? "/shahid-store-logo.webp" : "/shahid-store-mark.webp";
+  const src = "/logo.webp";
 
-  // logo PNG natural ratio ~ 1098x1365 (0.8). mark is 512x512 (1.0).
-  const dims =
-    resolved === "full"
-      ? { width: 220, height: 274 }
-      : { width: 110, height: 110 };
+  const dims = { width: 220, height: 220 };
 
   return (
     <img
