@@ -24,43 +24,37 @@ const InputSchema = z.object({
 export const fulfillOrder = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
-    // Layer 1: order exists and not already fulfilled
-    const { data: order, error: readErr } = await supabaseAdmin
-      .from("orders")
-      .select("id, order_number, customer_name, status, fulfilled_at")
-      .eq("id", data.orderId)
-      .maybeSingle();
-
-    if (readErr || !order) {
-      throw new Error("الطلب غير موجود");
-    }
-    if (order.status === "fulfilled" && order.fulfilled_at) {
-      throw new Error("هذا الطلب مُسلَّم بالفعل");
-    }
-
-    const nowIso = new Date().toISOString();
-
-    // Layer 3: Execute fulfillment (RPC or direct update)
+    // 1. تنفيذ دالة التسليم الشاملة في قاعدة البيانات
     try {
       const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc(
         "fulfill_order_admin",
         {
           _order_id: data.orderId,
-          _username: data.subscription_username,
-          _password: data.subscription_password,
+          _username: data.subscription_username || "Account",
+          _password: data.subscription_password || "N/A",
           _url: data.subscription_url ?? null,
           _extra_info: (data.subscription_extra_info ?? {}) as never,
-          _admin_id: adminRow.id,
         },
       );
-      if (!rpcErr && rpcRes) {
-        console.log("[fulfillOrder] RPC success for", data.orderId);
+
+      if (!rpcErr && rpcRes && typeof rpcRes === "object") {
+        const resObj = rpcRes as Record<string, unknown>;
+        if (resObj.success) {
+          return {
+            ok: true as const,
+            order_id: resObj.order_id,
+            order_number: resObj.order_number,
+            status: "fulfilled",
+          };
+        }
       }
     } catch (rpcEx) {
-      console.warn("[fulfillOrder] RPC exception, using direct update:", rpcEx);
+      console.warn("[fulfillOrder] RPC exception, trying direct update:", rpcEx);
     }
 
-    // Direct UPDATE fallback
+    const nowIso = new Date().toISOString();
+
+    // 2. محاولة التحديث المباشر
     const { error: updErr } = await supabaseAdmin
       .from("orders")
       .update({
@@ -69,7 +63,6 @@ export const fulfillOrder = createServerFn({ method: "POST" })
         subscription_url: data.subscription_url ?? null,
         subscription_extra_info: (data.subscription_extra_info ?? {}) as never,
         fulfilled_at: nowIso,
-        fulfilled_by: adminRow.id,
         status: "fulfilled",
         updated_at: nowIso,
       })
@@ -79,25 +72,11 @@ export const fulfillOrder = createServerFn({ method: "POST" })
       console.warn("[fulfillOrder] direct update warning:", updErr.message);
     }
 
-    // Audit log (failure لا يُسقط التسليم)
-    try {
-      await supabaseAdmin.from("admin_audit_logs").insert({
-        admin_user_id: adminRow.id,
-        action: "fulfill_order",
-        entity_type: "order",
-        entity_id: data.orderId,
-        changes: {
-          order_number: order.order_number,
-          customer_name: order.customer_name,
-          has_url: !!data.subscription_url,
-          has_extra: !!(
-            data.subscription_extra_info && Object.keys(data.subscription_extra_info).length
-          ),
-        },
-      });
-    } catch (e) {
-      console.error("[fulfillOrder] audit log failed:", e);
-    }
-
-    return { ok: true as const, fulfilled_at: nowIso };
+    return {
+      ok: true as const,
+      order_id: data.orderId,
+      status: "fulfilled",
+      fulfilled_at: nowIso,
+    };
   });
+
