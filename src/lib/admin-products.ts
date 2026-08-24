@@ -27,6 +27,7 @@ export type AdminProductRow = {
   features: string[];
   compatibility: string[];
   stock_management_enabled: boolean;
+  created_at?: string | null;
   category?: AdminCategory | null;
 };
 
@@ -39,7 +40,7 @@ export type ProductFilters = {
 };
 
 const SELECT_COLS =
-  "id, slug, name_ar, base_price, sale_price, is_active, is_bestseller, is_featured, category_id, sort_order, sales_count, rating, duration_months, image_urls, description, features, compatibility, stock_management_enabled";
+  "id, slug, name_ar, base_price, sale_price, is_active, is_bestseller, is_featured, category_id, sort_order, sales_count, rating, duration_months, image_urls, description, features, compatibility, stock_management_enabled, created_at";
 
 function parseFeatures(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
@@ -53,7 +54,7 @@ export async function fetchAdminProducts(
   filters: ProductFilters,
 ): Promise<{ rows: AdminProductRow[]; categories: AdminCategory[] }> {
   const [productsRes, categoriesRes] = await Promise.all([
-    supabase.from("products").select(SELECT_COLS),
+    supabase.from("products").select(SELECT_COLS).order("created_at", { ascending: false }),
     supabase
       .from("categories")
       .select("id, slug, name_ar, sort_order")
@@ -74,6 +75,7 @@ export async function fetchAdminProducts(
     features: parseFeatures(p.features),
     compatibility: parseFeatures(p.compatibility),
     stock_management_enabled: p.stock_management_enabled ?? true,
+    created_at: p.created_at ?? null,
     category: p.category_id ? catById.get(p.category_id) ?? null : null,
   }));
 
@@ -103,9 +105,12 @@ export async function fetchAdminProducts(
       rows.sort((a, b) => a.name_ar.localeCompare(b.name_ar, "ar"));
       break;
     default:
+      // الترتيب الافتراضي: حسب تاريخ الإنشاء (من الأحدث للأقدم — آخر منتج أنشئ يظهر الأول)
       rows.sort((a, b) => {
-        const c = (a.category?.sort_order ?? 99) - (b.category?.sort_order ?? 99);
-        return c !== 0 ? c : a.sort_order - b.sort_order;
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (timeB !== timeA) return timeB - timeA;
+        return b.id.localeCompare(a.id);
       });
   }
 

@@ -22,11 +22,11 @@ export async function fetchHomeCategories(
   for (const row of (data ?? []) as { slug: string; products: Product[] | null }[]) {
     const items = (row.products ?? [])
       .filter((p) => (p as unknown as { is_active: boolean }).is_active)
-      .sort(
-        (a, b) =>
-          ((a as unknown as { sort_order: number }).sort_order ?? 0) -
-          ((b as unknown as { sort_order: number }).sort_order ?? 0),
-      ) as unknown as Product[];
+      .sort((a, b) => {
+        const priceA = a.sale_price != null ? a.sale_price : a.base_price;
+        const priceB = b.sale_price != null ? b.sale_price : b.base_price;
+        return priceA - priceB;
+      }) as unknown as Product[];
     grouped[row.slug] = items;
   }
   return grouped;
@@ -61,10 +61,14 @@ export async function fetchProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
     .select("*")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+    .eq("is_active", true);
   if (error) throw error;
-  return (data ?? []) as unknown as Product[];
+  const products = (data ?? []) as unknown as Product[];
+  return products.sort((a, b) => {
+    const priceA = a.sale_price != null ? a.sale_price : a.base_price;
+    const priceB = b.sale_price != null ? b.sale_price : b.base_price;
+    return priceA - priceB;
+  });
 }
 
 export async function fetchBestsellers(limit = 4): Promise<Product[]> {
@@ -95,11 +99,16 @@ export async function fetchProductsByCategory(slug: string): Promise<{
     .from("products")
     .select("*")
     .eq("category_id", cat.id)
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+    .eq("is_active", true);
   if (prodErr) throw prodErr;
 
-  return { category: cat as Category, products: (prods ?? []) as unknown as Product[] };
+  const products = ((prods ?? []) as unknown as Product[]).sort((a, b) => {
+    const priceA = a.sale_price != null ? a.sale_price : a.base_price;
+    const priceB = b.sale_price != null ? b.sale_price : b.base_price;
+    return priceA - priceB;
+  });
+
+  return { category: cat as Category, products };
 }
 
 export async function fetchProductsByCategorySlug(
@@ -117,10 +126,14 @@ export async function fetchProductsByCategorySlug(
     .from("products")
     .select("*")
     .eq("category_id", cat.id)
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+    .eq("is_active", true);
   if (error) throw error;
-  return (data ?? []) as unknown as Product[];
+  const products = (data ?? []) as unknown as Product[];
+  return products.sort((a, b) => {
+    const priceA = a.sale_price != null ? a.sale_price : a.base_price;
+    const priceB = b.sale_price != null ? b.sale_price : b.base_price;
+    return priceA - priceB;
+  });
 }
 
 export async function fetchProductBySlug(slug: string): Promise<{

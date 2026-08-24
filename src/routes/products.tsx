@@ -35,7 +35,7 @@ export const Route = createFileRoute("/products")({
 function ProductsPage() {
   const [q, setQ] = useState("");
   const [catId, setCatId] = useState<string | "all">("all");
-  const [sort, setSort] = useState<"bestseller" | "price_asc" | "price_desc">("bestseller");
+  const [sort, setSort] = useState<"price_asc" | "price_desc" | "bestseller">("price_asc");
 
   const cats = useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
   const prods = useQuery({ queryKey: ["products"], queryFn: fetchProducts });
