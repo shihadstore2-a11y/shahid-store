@@ -515,19 +515,21 @@ function CheckoutPage() {
     try {
       const { error } = await supabase.from("orders").insert(payload);
       if (error) {
+        console.error("[Checkout] Order insert error:", error);
         if ((error as { code?: string })?.code === "P0001") {
           setErrorMessage(
-            "تم استلام طلب من نفس الرقم مؤخراً. يرجى الانتظار 5 دقائق قبل إرسال طلب جديد.",
+            "يرجى الانتظار بضع ثوانٍ قبل إعادة إرسال طلب جديد.",
           );
         } else {
           setErrorMessage(
-            "تعذّر إنشاء الطلب الآن. يرجى مراجعة البيانات والمحاولة مرة أخرى.",
+            error.message || "تعذّر إنشاء الطلب الآن. يرجى مراجعة البيانات والمحاولة مرة أخرى.",
           );
         }
-        toast.error("لم يتم إرسال الطلب");
+        toast.error("لم يتم إرسال الطلب: " + (error.message || ""));
         return;
       }
-    } catch {
+    } catch (err: any) {
+      console.error("[Checkout] Unexpected error:", err);
       setErrorMessage("حدث خطأ غير متوقع. يرجى المحاولة لاحقاً.");
       toast.error("لم يتم إرسال الطلب");
       return;
