@@ -307,13 +307,13 @@ ${items}
                   نسخ تفاصيل الطلب
                 </Button>
 
-                {order.status === "paid" && !order.fulfilled_at && canFulfillOrders && (
+                {order.status !== "cancelled" && canFulfillOrders && (
                   <Button
                     onClick={() => setFulfillOpen(true)}
-                    className="gap-2 bg-amber-500 text-black hover:bg-amber-600"
+                    className="gap-2 bg-amber-500 text-black hover:bg-amber-600 font-bold"
                   >
                     <Gift className="h-4 w-4" />
-                    🎁 تسليم الاشتراك
+                    {order.fulfilled_at ? "🎁 تعديل / إعادة تسليم الاشتراك" : "🎁 تسليم الاشتراك"}
                   </Button>
                 )}
 

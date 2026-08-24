@@ -75,26 +75,54 @@ export function FulfillModal({
 
   const mutation = useMutation({
     mutationFn: async (vars: FulfillVars) => {
-      // محاولة تنفيذ دالة الـ RPC المباشرة
-      try {
-        const { data: rpcData, error: rpcError } = await supabase.rpc(
-          "fulfill_order_admin",
-          {
-            _order_id: vars.orderId,
-            _username: vars.subscription_username || "Account",
-            _password: vars.subscription_password || "N/A",
-            _url: vars.subscription_url ?? null,
-            _extra_info: vars.subscription_extra_info ?? {},
-          },
-        );
-        if (!rpcError && rpcData && typeof rpcData === "object" && (rpcData as Record<string, unknown>).success) {
-          return rpcData;
-        }
-      } catch (e) {
-        console.warn("[FulfillModal] client RPC fallback to serverFn:", e);
+      const nowIso = new Date().toISOString();
+      const targetUsername = vars.subscription_username || order.customer_email || order.customer_phone || "عميل المتجر";
+      const targetPassword = vars.subscription_password || "555555";
+
+      // 1. تحديث مباشر للطلب في قاعدة البيانات
+      const { data: directData, error: directErr } = await supabase
+        .from("orders")
+        .update({
+          subscription_username: targetUsername,
+          subscription_password: targetPassword,
+          subscription_url: vars.subscription_url ?? null,
+          subscription_extra_info: (vars.subscription_extra_info ?? {}) as any,
+          fulfilled_at: nowIso,
+          status: "fulfilled",
+          updated_at: nowIso,
+        })
+        .eq("id", vars.orderId)
+        .select("id, status, subscription_username, subscription_password, fulfilled_at")
+        .maybeSingle();
+
+      if (!directErr && directData) {
+        return directData;
       }
 
-      return fulfillFn({ data: vars });
+      // 2. استخدام دالة RPC كإجراء احتياطي
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        "fulfill_order_admin",
+        {
+          _order_id: vars.orderId,
+          _username: targetUsername,
+          _password: targetPassword,
+          _url: vars.subscription_url ?? null,
+          _extra_info: vars.subscription_extra_info ?? {},
+        },
+      );
+
+      if (!rpcError && rpcData && typeof rpcData === "object" && (rpcData as Record<string, unknown>).success) {
+        return rpcData;
+      }
+
+      // 3. محاولة السيرفر
+      return fulfillFn({
+        data: {
+          ...vars,
+          subscription_username: targetUsername,
+          subscription_password: targetPassword,
+        },
+      });
     },
     onSuccess: () => {
       toast.success("تم تسليم الاشتراك بنجاح ✅");
@@ -136,7 +164,7 @@ export function FulfillModal({
 
     mutation.mutate({
       orderId: order.id,
-      subscription_username: username.trim() || order.customer_email || "User",
+      subscription_username: order.customer_email || username.trim() || order.customer_phone || "عميل المتجر",
       subscription_password: password || "N/A",
       subscription_url: url.trim() || undefined,
       subscription_extra_info: extraInfoToSend,
