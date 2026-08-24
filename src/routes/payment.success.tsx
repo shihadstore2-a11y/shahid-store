@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 import {
@@ -13,13 +14,14 @@ import { SiteLayout } from "@/components/SiteLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { formatSAR } from "@/lib/format";
 import { useWhatsappLink } from "@/lib/whatsapp";
+import { verifyAndConfirmPayment } from "@/lib/edfapay.functions";
 
 const SearchSchema = z.object({
   order: z.string().uuid().optional(),
 });
 
-const MAX_ATTEMPTS = 10;
-const POLL_INTERVAL_MS = 2000;
+const MAX_ATTEMPTS = 5;
+const POLL_INTERVAL_MS = 1500;
 
 export const Route = createFileRoute("/payment/success")({
   validateSearch: (s) => SearchSchema.parse(s),
@@ -52,6 +54,7 @@ function isTerminalFailureStatus(s?: string | null) {
 function PaymentSuccessPage() {
   const { order: orderId } = Route.useSearch();
   const navigate = useNavigate();
+  const verifyPaymentFn = useServerFn(verifyAndConfirmPayment);
 
   const [payment, setPayment] = useState<PaymentStatus | null>(null);
   const [polling, setPolling] = useState(true);
@@ -60,11 +63,30 @@ function PaymentSuccessPage() {
 
   const pollOnce = useCallback(async (): Promise<PaymentStatus | null> => {
     if (!orderId) return null;
+
+    // 1. استدعاء التحقق المباشر من السيرفر
+    try {
+      const res = await verifyPaymentFn({ data: { orderId } });
+      if (res.ok && res.confirmed) {
+        return {
+          order_id: orderId,
+          order_number: res.order?.order_number || orderId,
+          status: "paid",
+          amount: Number(res.order?.total || 0),
+          provider: "edfapay",
+          updated_at: new Date().toISOString(),
+        };
+      }
+    } catch (err) {
+      console.warn("[PaymentSuccess] active verification attempt failed:", err);
+    }
+
+    // 2. فحص DB عبر RPC كإجراء احتياطي
     const { data } = await supabase.rpc("get_payment_status", {
       _order_id: orderId,
     });
     return (data as PaymentStatus[] | null)?.[0] ?? null;
-  }, [orderId]);
+  }, [orderId, verifyPaymentFn]);
 
   useEffect(() => {
     if (!orderId) {
@@ -86,7 +108,7 @@ function PaymentSuccessPage() {
           setPolling(false);
           setTimeout(() => {
             navigate({ to: "/order-success/$id", params: { id: orderId! } });
-          }, 2000);
+          }, 1200);
           return;
         }
         if (isTerminalFailureStatus(row.status)) {

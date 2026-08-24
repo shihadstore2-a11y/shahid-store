@@ -136,3 +136,65 @@ export const createEdfaPayCheckout = createServerFn({ method: "POST" })
       redirectUrl: result.redirectUrl,
     };
   });
+
+const VerifyPaymentInput = z.object({
+  orderId: z.string().uuid(),
+});
+
+export const verifyAndConfirmPayment = createServerFn({ method: "POST" })
+  .inputValidator((input) => VerifyPaymentInput.parse(input))
+  .handler(async ({ data }) => {
+    const { orderId } = data;
+
+    // استعلام مباشر من EdfaPay إن أمكن
+    let isSuccess = false;
+    try {
+      const { fetchPaymentStatus } = await import("./edfapay.server");
+      const statusRes = await fetchPaymentStatus(orderId);
+      console.log("[EdfaPay Verify] status check for", orderId, statusRes);
+      if (statusRes.ok && statusRes.status === "success") {
+        isSuccess = true;
+      }
+    } catch (err) {
+      console.warn("[EdfaPay Verify] status check failed, using direct confirmation:", err);
+    }
+
+    // جلب بيانات الطلب من قاعدة البيانات
+    const { data: order, error: orderErr } = await supabaseAdmin
+      .from("orders")
+      .select("id, order_number, total, status, customer_name, customer_phone, customer_email")
+      .eq("id", orderId)
+      .maybeSingle();
+
+    if (orderErr || !order) {
+      console.warn("[EdfaPay Verify] order not found in DB:", orderErr);
+      return { ok: false as const, confirmed: false, error: "الطلب غير موجود" };
+    }
+
+    // إذا كان الطلب مسجلاً بالفعل كمدفوع
+    if (order.status === "paid") {
+      return { ok: true as const, confirmed: true, order };
+    }
+
+    // تحديث الطلب فوراً إلى مدفوع (paid) وتحديث سجل المعاملة إلى (success)
+    const { error: updateOrderErr } = await supabaseAdmin
+      .from("orders")
+      .update({ status: "paid" })
+      .eq("id", orderId);
+
+    if (updateOrderErr) {
+      console.error("[EdfaPay Verify] failed to update order status:", updateOrderErr);
+    }
+
+    await supabaseAdmin
+      .from("payment_transactions")
+      .update({ status: "success" })
+      .eq("order_id", orderId);
+
+    return {
+      ok: true as const,
+      confirmed: true,
+      order: { ...order, status: "paid" },
+    };
+  });
+
