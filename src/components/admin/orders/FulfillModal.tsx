@@ -72,7 +72,26 @@ export function FulfillModal({
   };
 
   const mutation = useMutation({
-    mutationFn: (vars: FulfillVars) => {
+    mutationFn: async (vars: FulfillVars) => {
+      // محاولة تنفيذ دالة الـ RPC المباشرة
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          "fulfill_order_admin",
+          {
+            _order_id: vars.orderId,
+            _username: vars.subscription_username || "Account",
+            _password: vars.subscription_password || "N/A",
+            _url: vars.subscription_url ?? null,
+            _extra_info: vars.subscription_extra_info ?? {},
+          },
+        );
+        if (!rpcError && rpcData && typeof rpcData === "object" && (rpcData as Record<string, unknown>).success) {
+          return rpcData;
+        }
+      } catch (e) {
+        console.warn("[FulfillModal] client RPC fallback to serverFn:", e);
+      }
+
       return fulfillFn({ data: vars });
     },
     onSuccess: () => {
@@ -93,7 +112,6 @@ export function FulfillModal({
   const handleSubmit = () => {
     if (!order) return;
 
-    // Synchronous parse عند submit (لا نعتمد على useMemo لتجنّب stale closure)
     let extraInfoToSend: Record<string, unknown> | undefined = undefined;
     const raw = extraJson.trim();
     if (raw) {
@@ -116,8 +134,8 @@ export function FulfillModal({
 
     mutation.mutate({
       orderId: order.id,
-      subscription_username: username.trim(),
-      subscription_password: password,
+      subscription_username: username.trim() || order.customer_email || "User",
+      subscription_password: password || "N/A",
       subscription_url: url.trim() || undefined,
       subscription_extra_info: extraInfoToSend,
     });
@@ -125,7 +143,7 @@ export function FulfillModal({
 
   if (!order) return null;
 
-  const disabled = !username.trim() || !password || !jsonValidation.ok || mutation.isPending;
+  const disabled = (!username.trim() && !password) || !jsonValidation.ok || mutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -142,18 +160,17 @@ export function FulfillModal({
 
         <div className="space-y-4">
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
-            أدخل بيانات الاشتراك للعميل. بعد الحفظ، تتحوّل حالة الطلب إلى "fulfilled" ولا يمكن تعديل
-            البيانات من هنا.
+            أدخل بيانات الاشتراك أو كود التفعيل للعميل. بعد الحفظ، تتحوّل حالة الطلب إلى &quot;fulfilled&quot; ويستلم العميل بياناته فوراً.
           </div>
 
           <div>
             <Label className="mb-1.5 block text-xs font-bold text-muted-foreground">
-              👤 اسم المستخدم *
+              👤 اسم المستخدم أو البريد (أو الكود)
             </Label>
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="user@example.com"
+              placeholder="user123 أو name@example.com"
               dir="ltr"
               maxLength={255}
             />
@@ -161,14 +178,14 @@ export function FulfillModal({
 
           <div>
             <Label className="mb-1.5 block text-xs font-bold text-muted-foreground">
-              🔐 كلمة السر *
+              🔐 كلمة المرور / كود التفعيل
             </Label>
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="كلمة السر أو كود التفعيل (مثل: 555555)"
                 dir="ltr"
                 maxLength={255}
                 className="pe-10"

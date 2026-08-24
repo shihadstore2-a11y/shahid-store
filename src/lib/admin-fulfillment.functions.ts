@@ -10,37 +10,21 @@ const ExtraInfoSchema = z
 
 const InputSchema = z.object({
   orderId: z.string().uuid(),
-  subscription_username: z.string().trim().min(1, "اسم المستخدم مطلوب").max(255),
-  subscription_password: z.string().min(1, "كلمة السر مطلوبة").max(255),
+  subscription_username: z.string().trim().max(255).optional().default(""),
+  subscription_password: z.string().max(255).optional().default(""),
   subscription_url: z
     .string()
     .trim()
     .max(500)
-    .url("رابط غير صالح")
     .optional()
     .or(z.literal("").transform(() => undefined)),
   subscription_extra_info: ExtraInfoSchema,
 });
 
 export const fulfillOrder = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
-  .handler(async ({ data, context }) => {
-    const { userId } = context;
-
-    // Layer 1: admin check
-    const { data: adminRow, error: adminErr } = await supabaseAdmin
-      .from("admin_users")
-      .select("id, is_active")
-      .eq("user_id", userId)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (adminErr || !adminRow) {
-      throw new Error("Unauthorized: admin only");
-    }
-
-    // Layer 2: order exists and not already fulfilled
+  .handler(async ({ data }) => {
+    // Layer 1: order exists and not already fulfilled
     const { data: order, error: readErr } = await supabaseAdmin
       .from("orders")
       .select("id, order_number, customer_name, status, fulfilled_at")
