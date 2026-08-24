@@ -208,6 +208,7 @@ function ProductsAdminPage() {
               <ProductCard
                 key={p.id}
                 product={p}
+                categories={categories}
                 onUpdate={handleUpdate}
                 onDelete={handleDelete}
                 onOpenImages={handleOpenImages}

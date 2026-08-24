@@ -257,3 +257,19 @@
 @media (prefers-reduced-motion: reduce) {
   .admin-shimmer { animation: none; background: oklch(0.33 0 0); }
 }
+
+/* ═══ Fix Radix UI Modal / Sheet / Tooltip RTL layout shift & scroll locking ═══ */
+body[data-scroll-locked],
+html[dir="rtl"] body[data-scroll-locked],
+html body[data-scroll-locked],
+body {
+  padding-right: 0px !important;
+  margin-right: 0px !important;
+  padding-left: 0px !important;
+  margin-left: 0px !important;
+}
+
+html[dir="rtl"] {
+  scrollbar-gutter: stable;
+}
+
