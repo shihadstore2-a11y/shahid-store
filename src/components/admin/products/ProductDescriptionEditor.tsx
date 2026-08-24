@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, AlertTriangle, Sparkles, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   updateAdminProduct,
@@ -38,27 +39,34 @@ type Props = {
 export function ProductDescriptionEditor({ product, onClose }: Props) {
   const queryClient = useQueryClient();
   const initial = product.description ?? "";
+  const initialSlug = product.slug ?? "";
   const [value, setValue] = useState(initial);
+  const [slugVal, setSlugVal] = useState(initialSlug);
   const [confirmBanned, setConfirmBanned] = useState(false);
 
   // إعادة المزامنة عند تبديل المنتج
   useEffect(() => {
     setValue(product.description ?? "");
+    setSlugVal(product.slug ?? "");
     setConfirmBanned(false);
-  }, [product.id, product.description]);
+  }, [product.id, product.description, product.slug]);
 
   const trimmed = value.trim();
+  const trimmedSlug = slugVal.trim().toLowerCase();
   const len = value.length;
-  const hasChanges = trimmed !== (initial ?? "").trim();
+  const hasChanges = trimmed !== (initial ?? "").trim() || trimmedSlug !== initialSlug;
   const banned = useMemo(() => findBannedHits(value), [value]);
 
   const countColor =
     len > 500 ? "text-destructive" : len >= 400 ? "text-[var(--gold)]" : "text-emerald-500";
 
   const persist = useMutation({
-    mutationFn: (next: string | null) =>
-      updateAdminProduct(product.id, { description: next } as AdminProductUpdate),
-    onMutate: async (next) => {
+    mutationFn: ({ nextDesc, nextSlug }: { nextDesc: string | null; nextSlug: string }) =>
+      updateAdminProduct(product.id, {
+        description: nextDesc,
+        slug: nextSlug,
+      } as AdminProductUpdate),
+    onMutate: async ({ nextDesc, nextSlug }) => {
       await queryClient.cancelQueries({ queryKey: ["admin", "products"] });
       const snapshots = queryClient.getQueriesData<{ rows: AdminProductRow[] }>({
         queryKey: ["admin", "products"],
@@ -68,7 +76,7 @@ export function ProductDescriptionEditor({ product, onClose }: Props) {
         queryClient.setQueryData(key, {
           ...prev,
           rows: prev.rows.map((r) =>
-            r.id === product.id ? { ...r, description: next } : r,
+            r.id === product.id ? { ...r, description: nextDesc, slug: nextSlug } : r,
           ),
         });
       });
@@ -81,7 +89,7 @@ export function ProductDescriptionEditor({ product, onClose }: Props) {
       toast.error("تعذّر الحفظ: " + (err?.message ?? "خطأ غير معروف"));
     },
     onSuccess: () => {
-      toast.success("تم حفظ الوصف");
+      toast.success("تم حفظ الوصف والرابط بنجاح");
       onClose();
     },
     onSettled: () => {
@@ -92,6 +100,10 @@ export function ProductDescriptionEditor({ product, onClose }: Props) {
 
   const handleSave = async () => {
     if (!hasChanges || persist.isPending) return;
+    if (!trimmedSlug) {
+      toast.error("يرجى إدخال رابط المنتج (Slug)");
+      return;
+    }
     if (banned.length > 0 && !confirmBanned) {
       setConfirmBanned(true);
       toast.warning("نصوص محظورة مكتشَفة — راجعها أو اضغط حفظ مرة أخرى للتأكيد", {
@@ -99,8 +111,8 @@ export function ProductDescriptionEditor({ product, onClose }: Props) {
       });
       return;
     }
-    const next = trimmed.length === 0 ? null : trimmed;
-    await persist.mutateAsync(next);
+    const nextDesc = trimmed.length === 0 ? null : trimmed;
+    await persist.mutateAsync({ nextDesc, nextSlug: trimmedSlug });
   };
 
   const preview = trimmed.slice(0, SEO_LEN) + (trimmed.length > SEO_LEN ? "…" : "");
@@ -136,8 +148,34 @@ export function ProductDescriptionEditor({ product, onClose }: Props) {
           </span>
         </div>
 
+        {/* رابط المنتج التعريفي Slug */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-muted-foreground">
+            الرابط التعريفي للمنتج (Slug):
+          </label>
+          <Input
+            value={slugVal}
+            onChange={(e) =>
+              setSlugVal(
+                e.target.value
+                  .toLowerCase()
+                  .replace(/[^\w\u0621-\u064A0-9-]+/g, "-")
+              )
+            }
+            dir="ltr"
+            placeholder="مثال: bundle-falcon-hulk-1y"
+            className="text-sm font-mono bg-card"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            يُستخدم في مسار رابط صفحة المنتج (مثال: <span dir="ltr">/product/{slugVal || "slug"}</span>)
+          </p>
+        </div>
+
         {/* Textarea */}
         <div>
+          <label className="text-xs font-bold text-muted-foreground mb-1 block">
+            وصف المنتج:
+          </label>
           <Textarea
             value={value}
             onChange={(e) => setValue(e.target.value.slice(0, MAX_LEN))}

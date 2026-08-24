@@ -6,10 +6,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ProductRow } from "./ProductRow";
-import type { AdminProductRow, AdminProductUpdate } from "@/lib/admin-products";
+import type { AdminProductRow, AdminProductUpdate, AdminCategory } from "@/lib/admin-products";
 
 export function ProductsTable({
   rows,
+  categories = [],
   onUpdate,
   onDelete,
   onOpenImages,
@@ -18,6 +19,7 @@ export function ProductsTable({
   onOpenCompatibility,
 }: {
   rows: AdminProductRow[];
+  categories?: AdminCategory[];
   onUpdate: (id: string, updates: AdminProductUpdate) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onOpenImages: (id: string) => void;
@@ -30,14 +32,14 @@ export function ProductsTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[60px]">الصورة</TableHead>
-            <TableHead>الاسم</TableHead>
-            <TableHead>الفئة</TableHead>
-            <TableHead className="min-w-[150px]">التسعير</TableHead>
-            <TableHead>نشط</TableHead>
-            <TableHead>نظام المخزون</TableHead>
-            <TableHead>الأكثر طلباً</TableHead>
-            <TableHead className="w-[200px]">إجراءات</TableHead>
+            <TableHead className="w-[70px] text-center">الصورة</TableHead>
+            <TableHead className="min-w-[180px] text-right">الاسم</TableHead>
+            <TableHead className="min-w-[130px] text-right">الفئة</TableHead>
+            <TableHead className="min-w-[150px] text-right">التسعير</TableHead>
+            <TableHead className="w-[70px] text-center">نشط</TableHead>
+            <TableHead className="w-[100px] text-center">نظام المخزون</TableHead>
+            <TableHead className="w-[80px] text-center">الأكثر طلباً</TableHead>
+            <TableHead className="min-w-[190px] text-center">إجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -45,6 +47,7 @@ export function ProductsTable({
             <ProductRow
               key={p.id}
               product={p}
+              categories={categories}
               onUpdate={onUpdate}
               onDelete={onDelete}
               onOpenImages={onOpenImages}

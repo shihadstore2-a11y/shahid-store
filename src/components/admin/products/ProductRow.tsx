@@ -27,12 +27,14 @@ import {
   calcDiscountPercent,
   type AdminProductRow,
   type AdminProductUpdate,
+  type AdminCategory,
 } from "@/lib/admin-products";
 import { getProductImage } from "@/lib/productVisuals";
 import { formatSAR } from "@/lib/format";
 
 export function ProductRow({
   product,
+  categories = [],
   onUpdate,
   onDelete,
   onOpenImages,
@@ -41,6 +43,7 @@ export function ProductRow({
   onOpenCompatibility,
 }: {
   product: AdminProductRow;
+  categories?: AdminCategory[];
   onUpdate: (id: string, updates: AdminProductUpdate) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onOpenImages: (id: string) => void;
@@ -58,55 +61,69 @@ export function ProductRow({
   return (
     <TableRow className={product.is_active ? "" : "opacity-60"}>
       {/* صورة */}
-      <TableCell>
-        <button
-          type="button"
-          onClick={() => onOpenImages(product.id)}
-          className="group relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-background transition-transform hover:scale-105"
-          aria-label="تعديل الصور"
-        >
-          {img ? (
-            <img
-              src={img}
-              alt={product.name_ar}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <ImageIcon className="h-5 w-5 text-muted-foreground" />
-          )}
-          <span className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-            <ImageIcon className="h-4 w-4 text-white" />
-          </span>
-        </button>
+      <TableCell className="text-center">
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => onOpenImages(product.id)}
+            className="group relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-background transition-transform hover:scale-105"
+            aria-label="تعديل الصور"
+          >
+            {img ? (
+              <img
+                src={img}
+                alt={product.name_ar}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+            )}
+            <span className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+              <ImageIcon className="h-4 w-4 text-white" />
+            </span>
+          </button>
+        </div>
       </TableCell>
 
       {/* اسم */}
-      <TableCell className="font-bold">
+      <TableCell className="font-bold text-right">
         <InlineEditField
           value={product.name_ar}
           onSave={(v) => onUpdate(product.id, { name_ar: String(v) })}
           ariaLabel="اسم المنتج"
         />
-        <p className="mt-0.5 text-[11px] text-muted-foreground" dir="ltr">
-          {product.slug}
-        </p>
       </TableCell>
 
-      {/* فئة */}
-      <TableCell>
-        {product.category ? (
-          <span className="inline-flex rounded-md border border-border bg-muted/50 px-2 py-0.5 text-xs font-bold text-muted-foreground">
-            {product.category.name_ar}
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
+      {/* فئة (تصنيف المنتج - قابل للتعديل المباشر) */}
+      <TableCell className="text-right">
+        <select
+          value={product.category_id ?? ""}
+          onChange={(e) => {
+            const nextCatId = e.target.value ? e.target.value : null;
+            onUpdate(product.id, { category_id: nextCatId });
+            const selectedCat = categories.find((c) => c.id === nextCatId);
+            toast.success(
+              selectedCat
+                ? `تم تغيير التصنيف إلى: ${selectedCat.name_ar}`
+                : "تم إزالة التصنيف"
+            );
+          }}
+          className="h-8 max-w-[140px] truncate rounded-lg border border-border bg-card px-2 text-xs font-bold text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer transition-colors"
+          aria-label="تغيير تصنيف المنتج"
+        >
+          <option value="">بدون تصنيف</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name_ar}
+            </option>
+          ))}
+        </select>
       </TableCell>
 
       {/* التسعير */}
-      <TableCell className="min-w-[150px]">
-        <div className="flex flex-col gap-1">
+      <TableCell className="min-w-[150px] text-right">
+        <div className="flex flex-col gap-1 text-right">
           <div className="flex items-center gap-1.5 text-xs">
             <span className="text-[10px] font-bold text-muted-foreground">سعر البيع:</span>
             <InlineEditField
@@ -145,8 +162,8 @@ export function ProductRow({
       </TableCell>
 
       {/* is_active */}
-      <TableCell>
-        <div className="flex items-center">
+      <TableCell className="text-center">
+        <div className="flex items-center justify-center">
           <Switch
             checked={product.is_active}
             onCheckedChange={(v) => {
@@ -159,8 +176,8 @@ export function ProductRow({
       </TableCell>
 
       {/* stock_management_enabled */}
-      <TableCell>
-        <div className="flex items-center gap-1.5">
+      <TableCell className="text-center">
+        <div className="flex items-center justify-center gap-1.5">
           <Switch
             checked={product.stock_management_enabled}
             onCheckedChange={(v) => {
@@ -194,26 +211,28 @@ export function ProductRow({
       </TableCell>
 
       {/* is_bestseller */}
-      <TableCell>
-        <button
-          type="button"
-          onClick={() => onUpdate(product.id, { is_bestseller: !product.is_bestseller })}
-          aria-label="الأكثر طلباً"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-accent/10"
-        >
-          <Star
-            className={
-              product.is_bestseller
-                ? "h-4 w-4 fill-[var(--gold)] text-[var(--gold)]"
-                : "h-4 w-4 text-muted-foreground"
-            }
-          />
-        </button>
+      <TableCell className="text-center">
+        <div className="flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => onUpdate(product.id, { is_bestseller: !product.is_bestseller })}
+            aria-label="الأكثر طلباً"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-accent/10"
+          >
+            <Star
+              className={
+                product.is_bestseller
+                  ? "h-4 w-4 fill-[var(--gold)] text-[var(--gold)]"
+                  : "h-4 w-4 text-muted-foreground"
+              }
+            />
+          </button>
+        </div>
       </TableCell>
 
       {/* إجراءات */}
-      <TableCell>
-        <div className="flex items-center gap-1">
+      <TableCell className="text-center">
+        <div className="flex items-center justify-center gap-1">
           <Button
             variant="ghost"
             size="icon"

@@ -116,6 +116,8 @@ export type AdminProductUpdate = Partial<
   Pick<
     AdminProductRow,
     | "name_ar"
+    | "slug"
+    | "category_id"
     | "base_price"
     | "sale_price"
     | "is_active"

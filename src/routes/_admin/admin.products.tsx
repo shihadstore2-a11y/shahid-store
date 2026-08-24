@@ -183,6 +183,7 @@ function ProductsAdminPage() {
           <div className="hidden md:block">
             <ProductsTable
               rows={rows}
+              categories={categories}
               onUpdate={handleUpdate}
               onDelete={handleDelete}
               onOpenImages={handleOpenImages}
