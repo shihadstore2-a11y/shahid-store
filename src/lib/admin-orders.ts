@@ -52,8 +52,16 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
  *    payment_failed) لا تزال تُكتب كما هي بواسطة الدفع والتسليم — مخفية فقط من الواجهة.
  *  - الإبقاء الدفاعي على OrderStatus + LABELS + STYLES لعرض أي بيانات قديمة بأمان.
  */
-export const ADMIN_VISIBLE_STATUSES: OrderStatus[] = ["paid", "fulfilled", "refunded"];
-export const ADMIN_SELECTABLE_STATUSES: OrderStatus[] = ["paid", "fulfilled"];
+export const ADMIN_VISIBLE_STATUSES: OrderStatus[] = [
+  "paid",
+  "fulfilled",
+  "pending",
+  "initiated",
+  "payment_failed",
+  "refunded",
+  "cancelled",
+];
+export const ADMIN_SELECTABLE_STATUSES: OrderStatus[] = ["paid", "fulfilled", "refunded", "cancelled"];
 
 export type OrderItemJson = {
   // الحقول الفعلية التي يكتبها checkout الحالي
@@ -154,11 +162,9 @@ export async function fetchAdminOrders(filters: OrderFilters): Promise<OrdersPag
 
   let q = supabase.from("orders").select("*", { count: "exact" });
 
-  // طبقة العرض: لا تُعرض إلا الحالات المسموح بها في الإدارة (paid/fulfilled/refunded).
+  // تصفية الحالة: إن تم تحديد حالة معينة نفلتر بها، وإلا نعرض كافة الطلبات
   if (filters.status && filters.status !== "all") {
     q = q.eq("status", filters.status);
-  } else {
-    q = q.in("status", ADMIN_VISIBLE_STATUSES);
   }
   const since = rangeStart(filters.dateRange);
   if (since) q = q.gte("created_at", since);

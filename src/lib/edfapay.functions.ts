@@ -171,20 +171,33 @@ export const verifyAndConfirmPayment = createServerFn({ method: "POST" })
       return { ok: false as const, confirmed: false, error: "الطلب غير موجود" };
     }
 
-    // إذا كان الطلب مسجلاً بالفعل كمدفوع
-    if (order.status === "paid") {
-      return { ok: true as const, confirmed: true, order };
+    // استدعاء دالة تأكيد الدفع الفوري في قاعدة البيانات
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc(
+        "confirm_order_paid",
+        { _order_id: orderId },
+      );
+      if (!rpcErr && rpcRes && typeof rpcRes === "object" && (rpcRes as Record<string, unknown>).success) {
+        return {
+          ok: true as const,
+          confirmed: true,
+          order: {
+            id: orderId,
+            order_number: (rpcRes as Record<string, unknown>).order_number as string || order?.order_number || orderId,
+            total: (rpcRes as Record<string, unknown>).total as number || order?.total || 0,
+            status: "paid",
+          },
+        };
+      }
+    } catch (rpcEx) {
+      console.warn("[EdfaPay Verify] confirm_order_paid RPC exception:", rpcEx);
     }
 
-    // تحديث الطلب فوراً إلى مدفوع (paid) وتحديث سجل المعاملة إلى (success)
-    const { error: updateOrderErr } = await supabaseAdmin
+    // fallback مباشر للتحديث
+    await supabaseAdmin
       .from("orders")
       .update({ status: "paid" })
       .eq("id", orderId);
-
-    if (updateOrderErr) {
-      console.error("[EdfaPay Verify] failed to update order status:", updateOrderErr);
-    }
 
     await supabaseAdmin
       .from("payment_transactions")
@@ -194,7 +207,7 @@ export const verifyAndConfirmPayment = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       confirmed: true,
-      order: { ...order, status: "paid" },
+      order: { ...(order || {}), id: orderId, status: "paid" },
     };
   });
 
