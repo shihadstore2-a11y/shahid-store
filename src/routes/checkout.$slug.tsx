@@ -366,83 +366,43 @@ function CheckoutPage() {
   const onSubmit = async (data: FormVals) => {
     setErrorMessage(null);
 
-    // ─── Option A: STEP 1 — Auth gate (must complete before order/payment) ───
-    // auto-confirm ON → signUp creates an immediate session → payment is seamless.
+    // ─── STEP 1 — Auth integration (سلس وغير مانع لإتمام الشراء) ───
     let finalUserId: string | null = user?.id ?? null;
-    if (!user) {
+    if (!user && data.customer_email) {
       const email = data.customer_email;
       const pw = data.password ?? "";
 
-      if (authMode === "returning") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password: pw,
-        });
-        if (error) {
-          setErrorMessage("بيانات الدخول غير صحيحة. تحقّق من كلمة المرور أو استعدها.");
-          toast.error("بيانات الدخول غير صحيحة");
-          return;
+      if (pw.length >= 6) {
+        try {
+          if (authMode === "returning") {
+            const { data: signInData, error: signInErr } =
+              await supabase.auth.signInWithPassword({
+                email,
+                password: pw,
+              });
+            if (!signInErr && signInData?.user) {
+              finalUserId = signInData.user.id;
+            }
+          } else {
+            const { data: signUpData, error: signUpErr } =
+              await supabase.auth.signUp({
+                email,
+                password: pw,
+                options: {
+                  emailRedirectTo: window.location.origin + "/account",
+                  data: {
+                    full_name: data.customer_name,
+                    phone: data.customer_phone,
+                  },
+                },
+              });
+            if (!signUpErr && signUpData?.user) {
+              finalUserId = signUpData.user.id;
+            }
+          }
+        } catch (authErr) {
+          console.warn("[Checkout] Auth attempt non-blocking error:", authErr);
         }
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password: pw,
-          options: {
-            emailRedirectTo: window.location.origin + "/account",
-            data: { full_name: data.customer_name, phone: data.customer_phone },
-          },
-        });
-        if (error) {
-          const msg = (error.message || "").toLowerCase();
-          const code = (error as { code?: string }).code || "";
-
-          // النهج B — كشف ضمني: بريد موجود → تبديل تلقائي لوضع الدخول
-          if (
-            msg.includes("already") ||
-            msg.includes("registered") ||
-            code === "user_already_exists"
-          ) {
-            setAuthMode("returning");
-            setValue("password", "", { shouldValidate: false });
-            setErrorMessage("هذا البريد مسجَّل مسبقاً. أدخل كلمة المرور لتسجيل الدخول.");
-            toast.info("لديك حساب — أدخل كلمة المرور لتسجيل الدخول");
-            return;
-          }
-          if (
-            msg.includes("weak") ||
-            msg.includes("pwned") ||
-            msg.includes("compromised") ||
-            msg.includes("haveibeenpwned") ||
-            code === "weak_password"
-          ) {
-            setErrorMessage(
-              "كلمة المرور شائعة أو مسرَّبة في خروقات سابقة. اختر كلمة أقوى (8+ أحرف وأرقام ورموز).",
-            );
-            toast.error("كلمة المرور ضعيفة");
-            return;
-          }
-          if (
-            msg.includes("rate") ||
-            msg.includes("too many") ||
-            code === "over_request_rate_limit"
-          ) {
-            setErrorMessage("محاولات كثيرة. انتظر دقيقة ثم حاول مجدداً.");
-            toast.error("محاولات كثيرة");
-            return;
-          }
-          setErrorMessage("تعذّر إنشاء الحساب. حاول مرة أخرى.");
-          toast.error("تعذّر إنشاء الحساب");
-          return;
-        }
-      }
-
-      // STEP 2 — verify session exists before creating the order
-      const { data: sess } = await supabase.auth.getSession();
-      finalUserId = sess?.session?.user?.id ?? null;
-      if (!finalUserId) {
-        setErrorMessage("تعذّر إنشاء الجلسة. حاول مرة أخرى.");
-        toast.error("تعذّر إنشاء الجلسة");
-        return;
       }
     }
 
