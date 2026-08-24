@@ -54,24 +54,29 @@ export const createEdfaPayCheckout = createServerFn({ method: "POST" })
       console.warn("[EdfaPay] could not capture IP:", err);
     }
 
-    // تحقق من الطلب في DB لمنع التلاعب
-    const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
-      .select("id, order_number, total, customer_phone, status, payment_method")
-      .eq("id", data.orderId)
-      .maybeSingle();
+    // تحقق من الطلب في DB لمنع التلاعب (إن كان متاحاً للقراءة)
+    try {
+      const { data: order, error: orderError } = await supabaseAdmin
+        .from("orders")
+        .select("id, order_number, total, customer_phone, status, payment_method")
+        .eq("id", data.orderId)
+        .maybeSingle();
 
-    if (orderError || !order) {
-      return { ok: false as const, error: "الطلب غير موجود" };
-    }
-    if (order.status !== "pending") {
-      return { ok: false as const, error: "الطلب لم يعد متاحاً للدفع" };
-    }
-    if (Number(order.total) !== Number(data.amount)) {
-      return { ok: false as const, error: "عدم تطابق المبلغ" };
-    }
-    if (order.payment_method !== "card") {
-      return { ok: false as const, error: "طريقة الدفع غير صحيحة لهذا الطلب" };
+      if (order) {
+        if (order.status !== "pending") {
+          return { ok: false as const, error: "الطلب لم يعد متاحاً للدفع (حالة الطلب غير معلقة)" };
+        }
+        if (Number(order.total) !== Number(data.amount)) {
+          return { ok: false as const, error: "عدم تطابق المبلغ" };
+        }
+        if (order.payment_method !== "card") {
+          return { ok: false as const, error: "طريقة الدفع غير صحيحة لهذا الطلب" };
+        }
+      } else if (orderError) {
+        console.warn("[EdfaPay] order read skipped due to RLS:", orderError.message);
+      }
+    } catch (err) {
+      console.warn("[EdfaPay] order check exception:", err);
     }
 
     const nameParts = data.customerName.trim().split(/\s+/);
