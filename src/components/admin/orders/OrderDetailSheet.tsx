@@ -60,20 +60,20 @@ export function OrderDetailSheet({
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!orderId) return;
-      try {
-        const { error: rpcErr } = await supabase.rpc("delete_order_admin", {
-          _order_id: orderId,
-        });
-        if (rpcErr) {
-          await supabase.from("orders").delete().eq("id", orderId);
-        }
-      } catch {
-        await supabase.from("orders").delete().eq("id", orderId);
+      const { data: rpcData, error: rpcErr } = await supabase.rpc("delete_order_admin", {
+        _order_id: orderId,
+      });
+      if (rpcErr) {
+        const { error: delErr } = await supabase.from("orders").delete().eq("id", orderId);
+        if (delErr) throw new Error(delErr.message || rpcErr.message);
+      } else if (rpcData && typeof rpcData === "object" && !(rpcData as Record<string, unknown>).success) {
+        throw new Error(String((rpcData as Record<string, unknown>).error || "فشل حذف الطلب"));
       }
     },
     onSuccess: () => {
       toast.success("تم حذف الطلب بنجاح 🗑️");
       queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      queryClient.invalidateQueries({ queryKey: ["my-orders"] });
       onOpenChange(false);
     },
     onError: (err: unknown) => {

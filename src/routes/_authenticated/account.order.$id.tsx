@@ -209,7 +209,7 @@ function OrderDetailPage() {
 
       <OrderStatusBanner status={order.status} />
 
-      {isFulfilled && (
+      {(isFulfilled || Boolean(order.subscription_username || order.subscription_password || order.subscription_url || order.subscription_extra_info)) && (
         <CredentialsCard
           username={order.subscription_username}
           password={order.subscription_password}
