@@ -1,11 +1,12 @@
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { LogIn, Smartphone, Eye, EyeOff } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -47,9 +48,16 @@ type Vals = z.infer<typeof schema>;
 function LoginPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [identifierValue, setIdentifierValue] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (user && !search.force) {
+      navigate({ to: (search.redirect as string) || "/account", replace: true });
+    }
+  }, [user, search.redirect, search.force, navigate]);
 
   const {
     register,

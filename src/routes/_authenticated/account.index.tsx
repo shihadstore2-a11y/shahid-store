@@ -42,11 +42,29 @@ function ProfilePage() {
           .eq("user_id", user.id)
           .maybeSingle();
         if (cancelled) return;
-        if (error) console.error("[account] profiles fetch error:", error);
+        const metaName = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || "";
+        const metaPhone = (user.user_metadata?.phone as string) || (user.phone as string) || "";
+        
+        const finalName = data?.full_name || metaName;
+        const finalPhone = data?.phone || metaPhone;
+
         reset({
-          full_name: data?.full_name ?? "",
-          phone: data?.phone ?? "",
+          full_name: finalName,
+          phone: finalPhone,
         });
+
+        // مزامنة تلقائية لجدول profiles في حال وجود بيانات في metadata
+        if (user.id && ((!data?.full_name && metaName) || (!data?.phone && metaPhone))) {
+          supabase.from("profiles").upsert(
+            {
+              user_id: user.id,
+              full_name: finalName,
+              phone: finalPhone,
+              email: user.email,
+            },
+            { onConflict: "user_id" },
+          ).then(() => {});
+        }
       } catch (e) {
         console.error("[account] unexpected error:", e);
       } finally {

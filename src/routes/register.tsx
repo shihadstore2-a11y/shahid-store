@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { PhoneInputIntl } from "@/components/forms/PhoneInputIntl";
 import { E164_REGEX, toE164 } from "@/lib/phone-intl";
 
+import { useAuth } from "@/hooks/useAuth";
+
 // H.5: prefill from checkout — low-PII fields via URL (phone uses sessionStorage)
 const prefillSchema = z.object({
   email: fallback(z.string().email(), "").default(""),
@@ -51,9 +53,15 @@ const schema = z
 type Vals = z.infer<typeof schema>;
 
 function RegisterPage() {
-  // H.5: prefill from checkout — email + full_name via URL, phone via sessionStorage
   const sp = Route.useSearch();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate({ to: "/account", replace: true });
+    }
+  }, [user, navigate]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [phoneInitial, setPhoneInitial] = useState("");
@@ -144,9 +152,22 @@ function RegisterPage() {
         password: v.password,
       });
 
+      const userId = signInData?.session?.user?.id || signUpData?.user?.id;
+      if (userId) {
+        await supabase.from("profiles").upsert(
+          {
+            user_id: userId,
+            full_name: v.full_name.trim(),
+            phone: v.phone.trim(),
+            email: v.email.trim(),
+          },
+          { onConflict: "user_id" },
+        );
+      }
+
       if (signInData?.session) {
         toast.success("تم إنشاء الحساب وتسجيل الدخول بنجاح 🎉");
-        navigate({ to: "/account" });
+        navigate({ to: "/account", replace: true });
         return;
       }
     } catch (e) {
@@ -154,7 +175,7 @@ function RegisterPage() {
     }
 
     toast.success("تم إنشاء حسابك بنجاح");
-    navigate({ to: "/account" });
+    navigate({ to: "/account", replace: true });
   };
 
 
