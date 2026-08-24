@@ -28,7 +28,6 @@ export function OrdersTable({
           <TableRow>
             <TableHead className="text-right">رقم الطلب</TableHead>
             <TableHead className="text-right">العميل</TableHead>
-            <TableHead className="text-right">المنتج</TableHead>
             <TableHead className="text-right">المبلغ</TableHead>
             <TableHead className="text-right">الحالة</TableHead>
             <TableHead className="text-right">الدفع</TableHead>
@@ -38,9 +37,6 @@ export function OrdersTable({
         </TableHeader>
         <TableBody>
           {rows.map((o) => {
-            const first = o.items[0];
-            const firstName = first?.product_name ?? first?.name_ar ?? first?.name ?? "—";
-            const more = o.items.length > 1 ? `+ ${o.items.length - 1}` : "";
             return (
               <TableRow key={o.id} className="hover:bg-accent/5">
                 <TableCell className="font-mono text-xs">
@@ -60,11 +56,6 @@ export function OrdersTable({
                 </TableCell>
                 <TableCell>
                   <div className="font-bold">{o.customer_name}</div>
-                  <div className="text-xs text-muted-foreground" dir="ltr">{o.customer_phone}</div>
-                </TableCell>
-                <TableCell className="max-w-[180px]">
-                  <div className="truncate text-sm">{firstName}</div>
-                  {more && <div className="text-xs text-muted-foreground">{more}</div>}
                 </TableCell>
                 <TableCell className="font-bold">{formatSAR(o.total)}</TableCell>
                 <TableCell>

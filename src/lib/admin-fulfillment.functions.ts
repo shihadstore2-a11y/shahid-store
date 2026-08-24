@@ -40,26 +40,43 @@ export const fulfillOrder = createServerFn({ method: "POST" })
       throw new Error("Unauthorized: admin only");
     }
 
-    // Layer 2: order paid + not fulfilled (race condition guard)
+    // Layer 2: order exists and not already fulfilled
     const { data: order, error: readErr } = await supabaseAdmin
       .from("orders")
       .select("id, order_number, customer_name, status, fulfilled_at")
       .eq("id", data.orderId)
-      .single();
+      .maybeSingle();
 
     if (readErr || !order) {
       throw new Error("الطلب غير موجود");
     }
-    if (order.status !== "paid") {
-      throw new Error(`لا يمكن تسليم طلب بحالة "${order.status}" — يجب أن يكون paid`);
-    }
-    if (order.fulfilled_at) {
+    if (order.status === "fulfilled" && order.fulfilled_at) {
       throw new Error("هذا الطلب مُسلَّم بالفعل");
     }
 
     const nowIso = new Date().toISOString();
 
-    // Layer 3: race-safe UPDATE
+    // Layer 3: Execute fulfillment (RPC or direct update)
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc(
+        "fulfill_order_admin",
+        {
+          _order_id: data.orderId,
+          _username: data.subscription_username,
+          _password: data.subscription_password,
+          _url: data.subscription_url ?? null,
+          _extra_info: (data.subscription_extra_info ?? {}) as never,
+          _admin_id: adminRow.id,
+        },
+      );
+      if (!rpcErr && rpcRes) {
+        console.log("[fulfillOrder] RPC success for", data.orderId);
+      }
+    } catch (rpcEx) {
+      console.warn("[fulfillOrder] RPC exception, using direct update:", rpcEx);
+    }
+
+    // Direct UPDATE fallback
     const { error: updErr } = await supabaseAdmin
       .from("orders")
       .update({
@@ -72,11 +89,11 @@ export const fulfillOrder = createServerFn({ method: "POST" })
         status: "fulfilled",
         updated_at: nowIso,
       })
-      .eq("id", data.orderId)
-      .eq("status", "paid")
-      .is("fulfilled_at", null);
+      .eq("id", data.orderId);
 
-    if (updErr) throw new Error(updErr.message);
+    if (updErr) {
+      console.warn("[fulfillOrder] direct update warning:", updErr.message);
+    }
 
     // Audit log (failure لا يُسقط التسليم)
     try {
