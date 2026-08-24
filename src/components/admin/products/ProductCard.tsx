@@ -1,4 +1,4 @@
-import { ExternalLink, FileText, ImageIcon, Sparkles, Star, Trash2 } from "lucide-react";
+import { ExternalLink, FileText, ImageIcon, Sparkles, Star, Trash2, Tv } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -30,6 +30,7 @@ export function ProductCard({
   onOpenImages,
   onOpenDescription,
   onOpenFeatures,
+  onOpenCompatibility,
 }: {
   product: AdminProductRow;
   onUpdate: (id: string, updates: AdminProductUpdate) => Promise<void>;
@@ -37,12 +38,14 @@ export function ProductCard({
   onOpenImages: (id: string) => void;
   onOpenDescription: (id: string) => void;
   onOpenFeatures: (id: string) => void;
+  onOpenCompatibility: (id: string) => void;
 }) {
   const img = getProductImage(product.slug, product.category?.slug, product.image_urls);
   const discount = calcDiscountPercent(product);
   const imageCount = product.image_urls?.length ?? 0;
   const hasDescription = (product.description ?? "").trim().length > 0;
   const featuresCount = product.features?.length ?? 0;
+  const compatibilityCount = product.compatibility?.length ?? 0;
 
   return (
     <div
@@ -124,6 +127,20 @@ export function ProductCard({
             {featuresCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-black text-accent-foreground">
                 {featuresCount}
+              </span>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="تعديل الأجهزة المتوافقة"
+            onClick={() => onOpenCompatibility(product.id)}
+            className="relative"
+          >
+            <Tv className="h-4 w-4" />
+            {compatibilityCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-black text-accent-foreground">
+                {compatibilityCount}
               </span>
             )}
           </Button>

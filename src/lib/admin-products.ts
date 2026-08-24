@@ -25,6 +25,7 @@ export type AdminProductRow = {
   image_urls: string[];
   description: string | null;
   features: string[];
+  compatibility: string[];
   stock_management_enabled: boolean;
   category?: AdminCategory | null;
 };
@@ -38,7 +39,7 @@ export type ProductFilters = {
 };
 
 const SELECT_COLS =
-  "id, slug, name_ar, base_price, sale_price, is_active, is_bestseller, is_featured, category_id, sort_order, sales_count, rating, duration_months, image_urls, description, features, stock_management_enabled";
+  "id, slug, name_ar, base_price, sale_price, is_active, is_bestseller, is_featured, category_id, sort_order, sales_count, rating, duration_months, image_urls, description, features, compatibility, stock_management_enabled";
 
 function parseFeatures(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
@@ -71,6 +72,7 @@ export async function fetchAdminProducts(
     image_urls: Array.isArray(p.image_urls) ? p.image_urls : [],
     description: p.description ?? null,
     features: parseFeatures(p.features),
+    compatibility: parseFeatures(p.compatibility),
     stock_management_enabled: p.stock_management_enabled ?? true,
     category: p.category_id ? catById.get(p.category_id) ?? null : null,
   }));
@@ -121,6 +123,7 @@ export type AdminProductUpdate = Partial<
     | "image_urls"
     | "description"
     | "features"
+    | "compatibility"
     | "stock_management_enabled"
   >
 >;
@@ -145,6 +148,7 @@ export type AdminProductInsert = {
   sale_price: number | null;
   description: string | null;
   features: string[];
+  compatibility?: string[];
   image_urls: string[];
   stock_management_enabled: boolean;
   is_active: boolean;
@@ -156,7 +160,18 @@ export type AdminProductInsert = {
 export async function createAdminProduct(product: AdminProductInsert) {
   const { data, error } = await supabase
     .from("products")
-    .insert([product])
+    .insert([
+      {
+        ...product,
+        compatibility: product.compatibility ?? [
+          "Smart TV",
+          "Android TV",
+          "iOS / Apple TV",
+          "Windows / Mac",
+          "MAG / Formuler",
+        ],
+      },
+    ])
     .select(SELECT_COLS)
     .single();
   if (error) throw error;

@@ -35,6 +35,9 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
   const [salePrice, setSalePrice] = useState<string>("");
   const [description, setDescription] = useState("");
   const [featuresText, setFeaturesText] = useState("");
+  const [compatText, setCompatText] = useState(
+    "Smart TV\nAndroid TV\niOS / Apple TV\nWindows / Mac\nMAG / Formuler"
+  );
   const [imageUrl, setImageUrl] = useState("/logo.webp");
   const [stockEnabled, setStockEnabled] = useState(true);
   const [isActive, setIsActive] = useState(true);
@@ -76,6 +79,11 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
       .map((f) => f.trim())
       .filter(Boolean);
 
+    const compatList = compatText
+      .split("\n")
+      .map((c) => c.trim())
+      .filter(Boolean);
+
     setLoading(true);
     try {
       const payload: AdminProductInsert = {
@@ -86,6 +94,9 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
         sale_price: sPrice,
         description: description.trim() || null,
         features: featuresList.length ? featuresList : ["اشتراك رسمي عالي الجودة", "تفعيل سريع وسهل"],
+        compatibility: compatList.length
+          ? compatList
+          : ["Smart TV", "Android TV", "iOS / Apple TV", "Windows / Mac", "MAG / Formuler"],
         image_urls: [imageUrl.trim() || "/logo.webp"],
         stock_management_enabled: stockEnabled,
         is_active: isActive,
@@ -104,6 +115,7 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
       setSalePrice("");
       setDescription("");
       setFeaturesText("");
+      setCompatText("Smart TV\nAndroid TV\niOS / Apple TV\nWindows / Mac\nMAG / Formuler");
       setImageUrl("/logo.webp");
       onCreated();
     } catch (err: any) {
@@ -221,10 +233,23 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
               المميزات (اكتب كل ميزة في سطر منفصل)
             </label>
             <Textarea
-              placeholder="+25,000 قناة عالمية&#10;جودة 4K UHD فائقة&#10;تفعيل فوري ودعم 24/7"
+              placeholder="+25,000 قناة عالمية&#10;جودة 4K UHD فائقة&#10;تفعيل سريع ودعم 24/7"
               rows={3}
               value={featuresText}
               onChange={(e) => setFeaturesText(e.target.value)}
+            />
+          </div>
+
+          {/* التوافق والأجهزة */}
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">
+              الأجهزة المتوافقة (اكتب كل جهاز في سطر منفصل)
+            </label>
+            <Textarea
+              placeholder="Smart TV&#10;Android TV&#10;iOS / Apple TV&#10;Windows / Mac&#10;MAG / Formuler"
+              rows={3}
+              value={compatText}
+              onChange={(e) => setCompatText(e.target.value)}
             />
           </div>
 

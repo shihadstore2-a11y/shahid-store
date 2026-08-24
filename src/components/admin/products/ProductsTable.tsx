@@ -15,6 +15,7 @@ export function ProductsTable({
   onOpenImages,
   onOpenDescription,
   onOpenFeatures,
+  onOpenCompatibility,
 }: {
   rows: AdminProductRow[];
   onUpdate: (id: string, updates: AdminProductUpdate) => Promise<void>;
@@ -22,6 +23,7 @@ export function ProductsTable({
   onOpenImages: (id: string) => void;
   onOpenDescription: (id: string) => void;
   onOpenFeatures: (id: string) => void;
+  onOpenCompatibility: (id: string) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-border bg-card">
@@ -37,7 +39,7 @@ export function ProductsTable({
             <TableHead>نشط</TableHead>
             <TableHead>نظام المخزون</TableHead>
             <TableHead>الأكثر طلباً</TableHead>
-            <TableHead className="w-[180px]">إجراءات</TableHead>
+            <TableHead className="w-[200px]">إجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -50,6 +52,7 @@ export function ProductsTable({
               onOpenImages={onOpenImages}
               onOpenDescription={onOpenDescription}
               onOpenFeatures={onOpenFeatures}
+              onOpenCompatibility={onOpenCompatibility}
             />
           ))}
         </TableBody>

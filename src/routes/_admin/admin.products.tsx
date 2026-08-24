@@ -17,6 +17,7 @@ import { ProductCard } from "@/components/admin/products/ProductCard";
 import { ProductImagesManager } from "@/components/admin/products/ProductImagesManager";
 import { ProductDescriptionEditor } from "@/components/admin/products/ProductDescriptionEditor";
 import { ProductFeaturesEditor } from "@/components/admin/products/ProductFeaturesEditor";
+import { ProductCompatibilityEditor } from "@/components/admin/products/ProductCompatibilityEditor";
 import { AddProductDialog } from "@/components/admin/products/AddProductDialog";
 import {
   adminProductsQueryOptions,
@@ -49,6 +50,7 @@ function ProductsAdminPage() {
   const [imagesProductId, setImagesProductId] = useState<string | null>(null);
   const [descProductId, setDescProductId] = useState<string | null>(null);
   const [featuresProductId, setFeaturesProductId] = useState<string | null>(null);
+  const [compatProductId, setCompatProductId] = useState<string | null>(null);
 
   const queryOpts = adminProductsQueryOptions(filters);
   const { data, isLoading, isFetching, error } = useQuery(queryOpts);
@@ -67,6 +69,10 @@ function ProductsAdminPage() {
   const featuresProduct = useMemo(
     () => rows.find((r) => r.id === featuresProductId) ?? null,
     [rows, featuresProductId],
+  );
+  const compatProduct = useMemo(
+    () => rows.find((r) => r.id === compatProductId) ?? null,
+    [rows, compatProductId],
   );
 
   const updateMutation = useMutation({
@@ -125,6 +131,7 @@ function ProductsAdminPage() {
   const handleOpenImages = (id: string) => setImagesProductId(id);
   const handleOpenDescription = (id: string) => setDescProductId(id);
   const handleOpenFeatures = (id: string) => setFeaturesProductId(id);
+  const handleOpenCompatibility = (id: string) => setCompatProductId(id);
 
   const hasActiveFilters =
     filters.search || filters.categorySlug !== "all" || filters.sortBy !== "default";
@@ -181,6 +188,7 @@ function ProductsAdminPage() {
               onOpenImages={handleOpenImages}
               onOpenDescription={handleOpenDescription}
               onOpenFeatures={handleOpenFeatures}
+              onOpenCompatibility={handleOpenCompatibility}
             />
           </div>
           <div className="grid grid-cols-1 gap-3 md:hidden">
@@ -193,6 +201,7 @@ function ProductsAdminPage() {
                 onOpenImages={handleOpenImages}
                 onOpenDescription={handleOpenDescription}
                 onOpenFeatures={handleOpenFeatures}
+                onOpenCompatibility={handleOpenCompatibility}
               />
             ))}
           </div>
@@ -207,16 +216,19 @@ function ProductsAdminPage() {
       >
         <SheetContent
           side="left"
-          className="w-full overflow-y-auto p-0 sm:max-w-xl lg:max-w-2xl"
+          className="flex w-full flex-col overflow-hidden p-0 sm:max-w-xl lg:max-w-2xl"
         >
-          <SheetHeader className="border-b border-border px-5 py-4 text-right">
-            <SheetTitle className="text-base font-black">إدارة صور المنتج</SheetTitle>
+          <SheetHeader className="sr-only">
+            <SheetTitle>إدارة صور المنتج</SheetTitle>
           </SheetHeader>
-          <div className="p-5">
+          <div className="flex h-full flex-col">
             {selectedProduct ? (
-              <ProductImagesManager product={selectedProduct} />
+              <ProductImagesManager
+                product={selectedProduct}
+                onClose={() => setImagesProductId(null)}
+              />
             ) : (
-              <p className="text-sm text-muted-foreground">جارٍ التحميل...</p>
+              <p className="p-5 text-sm text-muted-foreground">جارٍ التحميل...</p>
             )}
           </div>
         </SheetContent>
@@ -263,6 +275,30 @@ function ProductsAdminPage() {
             <ProductFeaturesEditor
               product={featuresProduct}
               onClose={() => setFeaturesProductId(null)}
+            />
+          ) : (
+            <p className="p-5 text-sm text-muted-foreground">جارٍ التحميل...</p>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet
+        open={compatProductId !== null}
+        onOpenChange={(open) => {
+          if (!open) setCompatProductId(null);
+        }}
+      >
+        <SheetContent
+          side="left"
+          className="flex w-full flex-col overflow-hidden p-0 sm:max-w-xl lg:max-w-2xl"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>تعديل الأجهزة المتوافقة</SheetTitle>
+          </SheetHeader>
+          {compatProduct ? (
+            <ProductCompatibilityEditor
+              product={compatProduct}
+              onClose={() => setCompatProductId(null)}
             />
           ) : (
             <p className="p-5 text-sm text-muted-foreground">جارٍ التحميل...</p>
