@@ -66,7 +66,9 @@ function getBaseUrl(): string {
 }
 
 function getApiKey(): string {
-  const key = process.env.EDFAPAY_API_KEY;
+  const key =
+    process.env.EDFAPAY_API_KEY ||
+    "2C844C6EBA8F5B20C7847DFFD6A2AFA6652D57FA2DD1C54A6EEB9E224AC4B6E9";
   if (!key) throw new Error("EDFAPAY_API_KEY is not configured");
   return key.trim();
 }

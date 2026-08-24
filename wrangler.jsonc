@@ -7,5 +7,12 @@
   "assets": {
     "directory": "dist/client",
     "binding": "ASSETS"
+  },
+  "vars": {
+    "EDFAPAY_AUTH_MODE": "x-api-key",
+    "EDFAPAY_BASE_URL": "https://app-api.edfapay.com",
+    "EDFAPAY_MODE": "live",
+    "EDFAPAY_API_KEY": "2C844C6EBA8F5B20C7847DFFD6A2AFA6652D57FA2DD1C54A6EEB9E224AC4B6E9",
+    "SUPABASE_URL": "https://ibcobmfgidqikdsblcqs.supabase.co"
   }
 }
