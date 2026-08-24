@@ -19,6 +19,7 @@ import { ProductDescriptionEditor } from "@/components/admin/products/ProductDes
 import { ProductFeaturesEditor } from "@/components/admin/products/ProductFeaturesEditor";
 import { ProductCompatibilityEditor } from "@/components/admin/products/ProductCompatibilityEditor";
 import { AddProductDialog } from "@/components/admin/products/AddProductDialog";
+import { ManageCategoriesDialog } from "@/components/admin/products/ManageCategoriesDialog";
 import {
   adminProductsQueryOptions,
   updateAdminProduct,
@@ -145,13 +146,23 @@ function ProductsAdminPage() {
             تعديل سريع للأسعار والحالة والصور — اضغط على أي حقل للتعديل المباشر.
           </p>
         </div>
-        <AddProductDialog
-          categories={categories}
-          onCreated={() => {
-            queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
-            queryClient.invalidateQueries({ queryKey: ["products"] });
-          }}
-        />
+        <div className="flex flex-wrap items-center gap-2.5">
+          <ManageCategoriesDialog
+            categories={categories}
+            onChanged={() => {
+              queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+              queryClient.invalidateQueries({ queryKey: ["products"] });
+              queryClient.invalidateQueries({ queryKey: ["categories"] });
+            }}
+          />
+          <AddProductDialog
+            categories={categories}
+            onCreated={() => {
+              queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+              queryClient.invalidateQueries({ queryKey: ["products"] });
+            }}
+          />
+        </div>
       </header>
 
       {!isLoading && <ProductStatsStrip rows={rows} />}

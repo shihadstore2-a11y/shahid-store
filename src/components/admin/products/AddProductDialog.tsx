@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Plus, Loader2, Upload, ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,10 @@ import {
   type AdminCategory,
   type AdminProductInsert,
 } from "@/lib/admin-products";
+import {
+  uploadProductImage,
+  validateImageFile,
+} from "@/lib/admin-product-images";
 
 interface AddProductDialogProps {
   categories: AdminCategory[];
@@ -27,6 +31,7 @@ interface AddProductDialogProps {
 export function AddProductDialog({ categories, onCreated }: AddProductDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [nameAr, setNameAr] = useState("");
   const [slug, setSlug] = useState("");
@@ -38,22 +43,42 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
   const [compatText, setCompatText] = useState(
     "Smart TV\nAndroid TV\niOS / Apple TV\nWindows / Mac\nMAG / Formuler"
   );
-  const [imageUrl, setImageUrl] = useState("/logo.webp");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [stockEnabled, setStockEnabled] = useState(true);
   const [isActive, setIsActive] = useState(true);
 
   const handleNameChange = (val: string) => {
     setNameAr(val);
     if (!slug || slug === nameAr.toLowerCase().replace(/\s+/g, "-")) {
-      // Auto-generate basic slug
       setSlug(
         val
           .trim()
           .toLowerCase()
-          .replace(/[^\w\u0621-\u064A0-9]+/g, "-")
+          .replace(/[^\w\u0621-\u064A0-9-]+/g, "-")
           .replace(/^-+|-+$/g, "")
       );
     }
+  };
+
+  const handleFileSelect = (file: File) => {
+    const err = validateImageFile(file);
+    if (err) {
+      toast.error(err.message);
+      return;
+    }
+    setImageFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setImagePreview(objectUrl);
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,6 +111,16 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
 
     setLoading(true);
     try {
+      let finalImageUrl = "/logo.webp";
+
+      // إذا تم اختيار صورة من الجهاز، يتم رفعها لـ Supabase Storage فوراً
+      if (imageFile) {
+        toast.loading("جارٍ رفع صورة المنتج...", { id: "upload-img" });
+        const tempFolderId = crypto.randomUUID();
+        finalImageUrl = await uploadProductImage(tempFolderId, imageFile);
+        toast.dismiss("upload-img");
+      }
+
       const payload: AdminProductInsert = {
         name_ar: nameAr.trim(),
         slug: finalSlug,
@@ -97,7 +132,7 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
         compatibility: compatList.length
           ? compatList
           : ["Smart TV", "Android TV", "iOS / Apple TV", "Windows / Mac", "MAG / Formuler"],
-        image_urls: [imageUrl.trim() || "/logo.webp"],
+        image_urls: [finalImageUrl],
         stock_management_enabled: stockEnabled,
         is_active: isActive,
         is_bestseller: false,
@@ -108,6 +143,7 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
       await createAdminProduct(payload);
       toast.success("تمت إضافة المنتج بنجاح!");
       setOpen(false);
+
       // Reset form
       setNameAr("");
       setSlug("");
@@ -116,7 +152,7 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
       setDescription("");
       setFeaturesText("");
       setCompatText("Smart TV\nAndroid TV\niOS / Apple TV\nWindows / Mac\nMAG / Formuler");
-      setImageUrl("/logo.webp");
+      handleRemoveImage();
       onCreated();
     } catch (err: any) {
       toast.error("تعذرت إضافة المنتج: " + (err?.message || "خطأ غير متوقع"));
@@ -128,7 +164,7 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[var(--gold)] text-black font-bold hover:bg-[var(--gold)]/90 gap-2">
+        <Button className="bg-[var(--gold)] text-black font-bold hover:bg-[var(--gold)]/90 gap-2 text-xs sm:text-sm">
           <Plus className="h-4 w-4" />
           إضافة منتج جديد
         </Button>
@@ -166,7 +202,7 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full h-10 px-3 rounded-md bg-background border border-input text-sm"
+                className="w-full h-10 px-3 rounded-md bg-background border border-input text-sm cursor-pointer"
               >
                 <option value="">بدون تصنيف</option>
                 {categories.map((c) => (
@@ -205,15 +241,68 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
             </div>
           </div>
 
-          {/* رابط الصورة */}
-          <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1">رابط صورة المنتج</label>
-            <Input
-              placeholder="/logo.webp أو رابط صورة"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              dir="ltr"
+          {/* رفع صورة المنتج من الجهاز */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-muted-foreground">صورة المنتج</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFileSelect(f);
+              }}
             />
+
+            {imagePreview ? (
+              <div className="relative flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+                <img
+                  src={imagePreview}
+                  alt="معاينة الصورة"
+                  className="h-16 w-16 rounded-lg object-cover border border-border"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold truncate text-foreground">
+                    {imageFile?.name || "صورة مختارة"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {imageFile ? `${(imageFile.size / 1024).toFixed(1)} KB` : ""}
+                  </p>
+                  <span className="inline-block mt-1 text-[10px] text-emerald-500 font-bold">
+                    جاهزة للرفع عند الحفظ ✓
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRemoveImage}
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  title="إلغاء الصورة"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/20 p-5 text-center transition-colors hover:border-accent hover:bg-accent/5"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card border border-border text-muted-foreground">
+                  <Upload className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground">
+                    اضغط لاختيار صورة من جهازك
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    JPG, PNG, WEBP (الحد الأقصى 2MB) — أو سيتم استخدام الشعار كافتراضي
+                  </p>
+                </div>
+              </button>
+            )}
           </div>
 
           {/* الوصف */}
@@ -286,11 +375,10 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                  جاري الحفظ...
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" /> جاري الإضافة...
                 </>
               ) : (
-                "حفظ وإضافة المنتج"
+                "إضافة المنتج"
               )}
             </Button>
           </DialogFooter>
