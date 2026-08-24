@@ -352,6 +352,8 @@ export async function initiatePayment(
     failure_url: input.failUrl,
     callback_url: input.callbackUrl,
     term_url_3ds: input.successUrl,
+  };
+
   const primaryBase = getBaseUrl();
   const fallbackBase =
     primaryBase.includes("app-api")
