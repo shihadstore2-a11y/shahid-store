@@ -87,10 +87,17 @@ function LoginPage() {
     });
 
     if (error) {
-      toast.error("بيانات الدخول غير صحيحة");
+      const msg = (error.message || "").toLowerCase();
+      if (msg.includes("email not confirmed")) {
+        toast.error("الحساب قيد التفعيل. حاول مرة أخرى أو تواصل مع الدعم.");
+      } else if (msg.includes("invalid login credentials")) {
+        toast.error("بيانات الدخول غير صحيحة (تأكد من صحة البريد/الجوال وكلمة المرور).");
+      } else {
+        toast.error(error.message || "بيانات الدخول غير صحيحة");
+      }
       return;
     }
-    toast.success("تم تسجيل الدخول");
+    toast.success("تم تسجيل الدخول بنجاح");
     navigate({ to: search.redirect as never });
   };
 

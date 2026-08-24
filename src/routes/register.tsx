@@ -96,34 +96,33 @@ function RegisterPage() {
       toast.error("صيغة الجوّال غير صحيحة");
       return;
     }
-    const { error } = await supabase.auth.signUp({
-      email: v.email,
+    const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+      email: v.email.trim(),
       password: v.password,
       options: {
         emailRedirectTo: window.location.origin + "/account",
-        data: { full_name: v.full_name, phone: v.phone },
+        data: { full_name: v.full_name.trim(), phone: v.phone.trim() },
       },
     });
-    if (error) {
-      const msg = (error.message || "").toLowerCase();
-      const code = (error as { code?: string }).code || "";
+
+    if (signUpErr) {
+      const msg = (signUpErr.message || "").toLowerCase();
+      const code = (signUpErr as { code?: string }).code || "";
 
       if (
         msg.includes("weak_password") ||
         msg.includes("pwned") ||
         msg.includes("compromised") ||
-        msg.includes("haveibeenpwned") ||
         code === "weak_password"
       ) {
-        toast.error(
-          "كلمة المرور هذه شائعة أو مسرَّبة في خروقات سابقة. اختر كلمة أقوى (8+ أحرف، أرقام، رموز، وحروف كبيرة)."
-        );
+        toast.error("كلمة المرور ضعيفة. اختر كلمة أقوى (8+ أحرف، أرقام ورموز).");
       } else if (
         msg.includes("already") ||
         msg.includes("registered") ||
         code === "user_already_exists"
       ) {
-        toast.error("هذا البريد مسجَّل مسبقاً. حاول تسجيل الدخول.");
+        toast.error("هذا البريد مسجَّل مسبقاً. جاري تحويلك لتسجيل الدخول...");
+        setTimeout(() => navigate({ to: "/login" }), 1500);
       } else if (
         msg.includes("rate") ||
         msg.includes("too many") ||
@@ -132,14 +131,28 @@ function RegisterPage() {
         toast.error("محاولات كثيرة. انتظر دقيقة وحاول مرّة أخرى.");
       } else if (msg.includes("invalid") && msg.includes("email")) {
         toast.error("البريد الإلكتروني غير صحيح.");
-      } else if (msg.includes("phone")) {
-        toast.error("رقم الجوال غير صحيح.");
       } else {
-        toast.error("تعذّر إنشاء الحساب. حاول مرّة أخرى.");
+        toast.error(signUpErr.message || "تعذّر إنشاء الحساب. حاول مرّة أخرى.");
       }
       return;
     }
-    // auto-confirm ON → session ready immediately, no email verification needed
+
+    // تسجيل الدخول المباشر فوراً لإنشاء الجلسة في المتصفح
+    try {
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email: v.email.trim(),
+        password: v.password,
+      });
+
+      if (signInData?.session) {
+        toast.success("تم إنشاء الحساب وتسجيل الدخول بنجاح 🎉");
+        navigate({ to: "/account" });
+        return;
+      }
+    } catch (e) {
+      console.warn("[Register] auto-login fallback:", e);
+    }
+
     toast.success("تم إنشاء حسابك بنجاح");
     navigate({ to: "/account" });
   };
