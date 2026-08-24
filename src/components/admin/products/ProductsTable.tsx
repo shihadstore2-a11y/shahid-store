@@ -33,9 +33,7 @@ export function ProductsTable({
             <TableHead className="w-[60px]">الصورة</TableHead>
             <TableHead>الاسم</TableHead>
             <TableHead>الفئة</TableHead>
-            <TableHead>السعر الأصلي</TableHead>
-            <TableHead>سعر العرض</TableHead>
-            <TableHead>الخصم</TableHead>
+            <TableHead className="min-w-[150px]">التسعير</TableHead>
             <TableHead>نشط</TableHead>
             <TableHead>نظام المخزون</TableHead>
             <TableHead>الأكثر طلباً</TableHead>

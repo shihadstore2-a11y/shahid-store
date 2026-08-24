@@ -104,45 +104,44 @@ export function ProductRow({
         )}
       </TableCell>
 
-      {/* سعر أصلي */}
-      <TableCell>
-        <InlineEditField
-          type="number"
-          value={product.base_price}
-          onSave={(v) => onUpdate(product.id, { base_price: Number(v) })}
-          ariaLabel="السعر الأصلي"
-          formatDisplay={(v) => formatSAR(Number(v))}
-          className="text-xs font-bold"
-        />
-      </TableCell>
-
-      {/* سعر العرض */}
-      <TableCell>
-        <InlineEditField
-          type="number"
-          value={product.sale_price ?? ""}
-          onSave={(v) =>
-            onUpdate(product.id, {
-              sale_price: v === "" || v == null ? null : Number(v),
-            })
-          }
-          ariaLabel="سعر العرض"
-          formatDisplay={(v) =>
-            v == null || v === "" ? "—" : formatSAR(Number(v))
-          }
-          className="text-xs font-bold text-[var(--sale-price)]"
-        />
-      </TableCell>
-
-      {/* خصم */}
-      <TableCell>
-        {discount > 0 ? (
-          <span className="inline-flex rounded-md bg-[var(--sale-price)]/15 px-2 py-0.5 text-xs font-black text-[var(--sale-price)]">
-            -{discount}%
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
+      {/* التسعير */}
+      <TableCell className="min-w-[150px]">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="text-[10px] font-bold text-muted-foreground">سعر البيع:</span>
+            <InlineEditField
+              type="number"
+              value={product.sale_price ?? ""}
+              placeholder="بدون عرض"
+              onSave={(v) =>
+                onUpdate(product.id, {
+                  sale_price: v === "" || v == null ? null : Number(v),
+                })
+              }
+              ariaLabel="سعر العرض أو البيع"
+              formatDisplay={(v) =>
+                v == null || v === "" ? `${formatSAR(product.base_price)} (الأساسي)` : formatSAR(Number(v))
+              }
+              className="text-xs font-black text-accent"
+            />
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px]">
+            <span className="text-[10px] text-muted-foreground">قبل الخصم:</span>
+            <InlineEditField
+              type="number"
+              value={product.base_price}
+              onSave={(v) => onUpdate(product.id, { base_price: Number(v) })}
+              ariaLabel="السعر الأصلي قبل الخصم"
+              formatDisplay={(v) => formatSAR(Number(v))}
+              className={cn(
+                "text-[11px]",
+                product.sale_price !== null
+                  ? "line-through text-muted-foreground font-semibold"
+                  : "text-muted-foreground"
+              )}
+            />
+          </div>
+        </div>
       </TableCell>
 
       {/* is_active */}

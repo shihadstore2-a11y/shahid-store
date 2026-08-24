@@ -108,6 +108,20 @@ export const Route = createFileRoute("/product/$slug")({
   component: ProductDetailPage,
 });
 
+function inferDurationMonths(p: {
+  duration_months?: number | null;
+  slug?: string;
+  name_ar?: string;
+}): number {
+  if (p.duration_months && p.duration_months > 1) return p.duration_months;
+  const combined = `${p.slug || ""} ${p.name_ar || ""}`.toLowerCase();
+  if (/1y|1-year|annual|سنة|١٢ شهر|12 شهر|سنوي/.test(combined)) return 12;
+  if (/6m|6-month|٦ أشهر|6 أشهر|6 شهر/.test(combined)) return 6;
+  if (/3m|3-month|٣ أشهر|3 أشهر|3 شهر/.test(combined)) return 3;
+  if (/15m|سنة \+ 3|15 شهر/.test(combined)) return 15;
+  return p.duration_months ?? 1;
+}
+
 function ProductDetailPage() {
   const loaderData = Route.useLoaderData() as {
     product: Product | null;
@@ -136,7 +150,7 @@ function ProductDetailPage() {
     ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
     : 0;
 
-  const months = p.duration_months ?? 1;
+  const months = inferDurationMonths(p);
   const perMonth = months > 1 ? Math.round(currentPrice / months) : null;
 
   return (

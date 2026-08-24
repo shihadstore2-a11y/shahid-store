@@ -179,6 +179,44 @@ export async function createAdminProduct(product: AdminProductInsert) {
 }
 
 export async function deleteAdminProduct(id: string) {
+  // 1. حذف صور المنتج من Storage (مستودع product-images ومستودع products)
+  try {
+    const { data: prodData } = await supabase
+      .from("products")
+      .select("image_urls")
+      .eq("id", id)
+      .single();
+
+    // حذف المجلد بالكامل من Storage إن وجد
+    const { data: filesInFolder } = await supabase.storage
+      .from("product-images")
+      .list(id);
+
+    if (filesInFolder && filesInFolder.length > 0) {
+      const paths = filesInFolder.map((f) => `${id}/${f.name}`);
+      await supabase.storage.from("product-images").remove(paths);
+    }
+
+    // حذف أي روابط صور مباشرة تنتمي للـ Storage
+    if (prodData?.image_urls && Array.isArray(prodData.image_urls)) {
+      const storagePaths: string[] = [];
+      for (const url of prodData.image_urls) {
+        if (typeof url === "string" && url.includes("/product-images/")) {
+          const idx = url.indexOf("/product-images/");
+          if (idx !== -1) {
+            storagePaths.push(url.slice(idx + "/product-images/".length));
+          }
+        }
+      }
+      if (storagePaths.length > 0) {
+        await supabase.storage.from("product-images").remove(storagePaths);
+      }
+    }
+  } catch (storageErr) {
+    console.warn("تعذر حذف بعض صور المنتج من التخزين:", storageErr);
+  }
+
+  // 2. حذف سجل المنتج من قاعدة البيانات
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) throw error;
   return true;
