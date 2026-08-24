@@ -223,7 +223,19 @@ export async function deleteAdminProduct(id: string) {
     console.warn("تعذر حذف بعض صور المنتج من التخزين:", storageErr);
   }
 
-  // 2. حذف سجل المنتج من قاعدة البيانات
+  // 2. حذف سجل المنتج ومرفقاته من قاعدة البيانات عبر الإجراء المباشر
+  try {
+    const { data: rpcRes, error: rpcErr } = await supabase.rpc("delete_product_admin", {
+      _product_id: id,
+    });
+    if (!rpcErr && rpcRes) {
+      return true;
+    }
+  } catch (rpcEx) {
+    console.warn("RPC delete_product_admin failed, fallback to direct delete:", rpcEx);
+  }
+
+  // حذف مباشر كخيار بديل
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) throw error;
   return true;

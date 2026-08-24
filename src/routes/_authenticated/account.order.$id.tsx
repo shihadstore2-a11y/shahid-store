@@ -79,13 +79,55 @@ const STATUS_AR: Record<string, { label: string; cls: string }> = {
   fulfilled: { label: "مُسلَّم 🎁", cls: "bg-emerald-500/15 text-emerald-200 border border-emerald-400/40" },
 };
 
+import { supabase } from "@/integrations/supabase/client";
+
 function OrderDetailPage() {
   const { id } = Route.useParams();
   const fetchOrder = useServerFn(getMyOrderView);
 
   const { data: order, isLoading, isError } = useQuery({
     queryKey: ["my-order", id],
-    queryFn: () => fetchOrder({ data: { id } }),
+    queryFn: async () => {
+      // 1. محاولة جلب البيانات من السيرفر
+      try {
+        const res = await fetchOrder({ data: { id } });
+        if (res) return res;
+      } catch (err) {
+        console.warn("[OrderDetailPage] fetchOrder server function error, using direct DB:", err);
+      }
+
+      // 2. جلب الطلب مباشرة من قاعدة البيانات
+      const { data: dbOrder, error: dbErr } = await supabase
+        .from("orders")
+        .select("*")
+        .or(`id.eq.${id},order_number.eq.${id}`)
+        .maybeSingle();
+
+      if (dbErr || !dbOrder) {
+        throw notFound();
+      }
+
+      return {
+        id: String(dbOrder.id),
+        order_number: String(dbOrder.order_number),
+        status: String(dbOrder.status),
+        payment_method: String(dbOrder.payment_method ?? "card"),
+        created_at: String(dbOrder.created_at),
+        fulfilled_at: (dbOrder.fulfilled_at as string | null) ?? null,
+        customer_name: String(dbOrder.customer_name ?? ""),
+        customer_phone: String(dbOrder.customer_phone ?? ""),
+        subtotal: Number(dbOrder.subtotal ?? 0),
+        discount: Number(dbOrder.discount ?? 0),
+        vat: Number(dbOrder.vat ?? 0),
+        total: Number(dbOrder.total ?? 0),
+        coupon_code: (dbOrder.coupon_code as string | null) ?? null,
+        items: Array.isArray(dbOrder.items) ? (dbOrder.items as any[]) : [],
+        subscription_username: dbOrder.subscription_username as string | null,
+        subscription_password: dbOrder.subscription_password as string | null,
+        subscription_url: dbOrder.subscription_url as string | null,
+        subscription_extra_info: (dbOrder.subscription_extra_info as Record<string, unknown> | null) ?? null,
+      };
+    },
     retry: shouldRetry,
   });
 
