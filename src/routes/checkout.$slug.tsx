@@ -571,8 +571,9 @@ function CheckoutPage() {
         });
 
         if (!res.ok) {
-          setErrorMessage(res.error || "تعذّر فتح صفحة الدفع. يرجى المحاولة لاحقاً.");
-          toast.error("تعذّر فتح بوابة الدفع");
+          const msg = res.error || "تعذّر فتح صفحة الدفع. يرجى المحاولة لاحقاً.";
+          setErrorMessage(msg);
+          toast.error(msg);
           return;
         }
 
@@ -581,10 +582,11 @@ function CheckoutPage() {
           window.location.href = res.redirectUrl;
         }
         return;
-      } catch (err) {
+      } catch (err: any) {
         console.error("EdfaPay checkout failed", err);
-        setErrorMessage("تعذّر الاتصال ببوابة الدفع. يرجى المحاولة لاحقاً.");
-        toast.error("تعذّر فتح بوابة الدفع");
+        const errMsg = err?.message || "تعذّر الاتصال ببوابة الدفع. يرجى المحاولة لاحقاً.";
+        setErrorMessage(errMsg);
+        toast.error("خطأ في بوابة الدفع: " + errMsg);
         return;
       }
     }

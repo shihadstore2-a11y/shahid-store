@@ -352,82 +352,102 @@ export async function initiatePayment(
     failure_url: input.failUrl,
     callback_url: input.callbackUrl,
     term_url_3ds: input.successUrl,
-  };
+  const primaryBase = getBaseUrl();
+  const fallbackBase =
+    primaryBase.includes("app-api")
+      ? "https://demo-api.edfapay.com"
+      : "https://app-api.edfapay.com";
 
-  const url = `${getBaseUrl()}/api/v1/payment-gateway/initiate`;
+  const candidateUrls = [
+    `${primaryBase}/api/v1/payment-gateway/initiate`,
+    `${fallbackBase}/api/v1/payment-gateway/initiate`,
+  ];
 
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify(body),
-    });
-  } catch (err) {
-    console.error("[EdfaPay] network error during initiate:", err);
-    return { ok: false, error: "تعذّر الاتصال ببوابة الدفع" };
-  }
+  let lastErrorMsg = "تعذّر الاتصال ببوابة الدفع";
+  let lastRaw: unknown = null;
 
-  let rawText: string | null = null;
-  let json: unknown = null;
-  try {
-    rawText = await response.text();
-    if (rawText) {
-      try {
-        json = JSON.parse(rawText);
-      } catch {
-        json = null;
-      }
-    }
-  } catch {
-    rawText = "[unable to read response body]";
-  }
-
-  if (!response.ok) {
-    const messageFromJson =
-      json && typeof json === "object" && "message" in (json as Record<string, unknown>)
-        ? String((json as Record<string, unknown>).message)
-        : null;
-    const errMsg = messageFromJson || `EdfaPay HTTP ${response.status}`;
-
-    console.error("[EdfaPay] initiate failed:", {
-      status: response.status,
-      statusText: response.statusText,
-      errorBody: rawText,
-      errorJson: json,
-      sentPayload: body,
-      endpoint: url,
-    });
-
-    // Log failure to DB for forensic debugging
+  for (const url of candidateUrls) {
+    let response: Response;
     try {
-      await supabaseAdmin.from("payment_transactions").insert({
-        order_id: input.orderId,
-        order_number: input.orderNumber,
-        provider: "edfapay",
-        amount,
-        currency,
-        status: "failed",
-        callback_payload: {
-          phase: "initiate_failed",
-          http_status: response.status,
-          sent_payload: body,
-          raw_response: (json ?? rawText ?? null) as never,
-        } as never,
-        last_error: `HTTP ${response.status}: ${(messageFromJson || rawText || "").slice(0, 500)}`,
+      response = await fetch(url, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(body),
       });
-    } catch (logErr) {
-      console.error("[EdfaPay] failed to log transaction:", logErr);
+    } catch (err: any) {
+      console.error(`[EdfaPay] network error on ${url}:`, err);
+      lastErrorMsg = `خطأ في الاتصال بالبوابة (${err?.message || "Network Error"})`;
+      continue;
     }
 
-    return { ok: false, error: errMsg, raw: json ?? rawText };
+    let rawText: string | null = null;
+    let json: unknown = null;
+    try {
+      rawText = await response.text();
+      if (rawText) {
+        try {
+          json = JSON.parse(rawText);
+        } catch {
+          json = null;
+        }
+      }
+    } catch {
+      rawText = "[unable to read response body]";
+    }
+
+    if (!response.ok) {
+      const messageFromJson =
+        json && typeof json === "object" && "message" in (json as Record<string, unknown>)
+          ? String((json as Record<string, unknown>).message)
+          : null;
+      lastErrorMsg = messageFromJson || `EdfaPay HTTP ${response.status}: ${rawText?.slice(0, 100)}`;
+      lastRaw = json ?? rawText;
+
+      console.error(`[EdfaPay] initiate failed on ${url}:`, {
+        status: response.status,
+        statusText: response.statusText,
+        errorBody: rawText,
+        errorJson: json,
+      });
+
+      // إذا كان 401 أو 404، جرّب الـ Endpoint البديل (demo vs live)
+      if (response.status === 401 || response.status === 404) {
+        continue;
+      }
+      break;
+    }
+
+    const redirectUrl = extractRedirectUrl(json);
+    if (!redirectUrl) {
+      console.error("[EdfaPay] no redirect_url in response:", json);
+      return { ok: false, error: "استجابة بوابة الدفع غير متوقعة — لم يتم إرجاع رابط الدفع", raw: json };
+    }
+
+    const sessionId = extractSessionId(json);
+    return { ok: true, redirectUrl, sessionId, raw: json };
   }
 
-  const redirectUrl = extractRedirectUrl(json);
-  if (!redirectUrl) {
-    console.error("[EdfaPay] no redirect_url in response:", json);
-    return { ok: false, error: "استجابة بوابة الدفع غير متوقعة", raw: json };
+  // Log failure to DB for forensic debugging
+  try {
+    await supabaseAdmin.from("payment_transactions").insert({
+      order_id: input.orderId,
+      order_number: input.orderNumber,
+      provider: "edfapay",
+      amount,
+      currency,
+      status: "failed",
+      callback_payload: {
+        phase: "initiate_failed",
+        sent_payload: body,
+        raw_response: lastRaw as never,
+      } as never,
+      last_error: lastErrorMsg.slice(0, 500),
+    });
+  } catch (logErr) {
+    console.error("[EdfaPay] failed to log transaction:", logErr);
   }
+
+  return { ok: false, error: lastErrorMsg, raw: lastRaw };
 
   const sessionId = extractSessionId(json);
 
