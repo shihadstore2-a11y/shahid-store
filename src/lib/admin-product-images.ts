@@ -82,3 +82,35 @@ export async function updateProductImageUrls(
     .eq("id", productId);
   if (error) throw error;
 }
+
+export type StoreMediaItem = {
+  url: string;
+  sourceProductName?: string;
+};
+
+/** جلب كافة الصور المرفوعة سابقاً في المتجر لإعادة استخدامها في أي منتج */
+export async function fetchStoreMediaLibrary(): Promise<StoreMediaItem[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("name_ar, image_urls")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const urlMap = new Map<string, StoreMediaItem>();
+  for (const row of data ?? []) {
+    const list = Array.isArray(row.image_urls) ? row.image_urls : [];
+    for (const url of list) {
+      if (typeof url === "string" && url.trim() && !url.includes("/logo.webp")) {
+        if (!urlMap.has(url)) {
+          urlMap.set(url, {
+            url,
+            sourceProductName: row.name_ar,
+          });
+        }
+      }
+    }
+  }
+
+  return Array.from(urlMap.values());
+}
+
