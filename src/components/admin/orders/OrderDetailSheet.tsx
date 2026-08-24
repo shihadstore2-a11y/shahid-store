@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Gift, MessageCircle, MoreVertical, Package } from "lucide-react";
+import { Copy, Gift, MessageCircle, MoreVertical, Package, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 import { toast } from "sonner";
 import {
@@ -55,6 +56,41 @@ export function OrderDetailSheet({
     ...adminOrderDetailQueryOptions(orderId ?? ""),
     enabled: !!orderId && open,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!orderId) return;
+      try {
+        const { error: rpcErr } = await supabase.rpc("delete_order_admin", {
+          _order_id: orderId,
+        });
+        if (rpcErr) {
+          await supabase.from("orders").delete().eq("id", orderId);
+        }
+      } catch {
+        await supabase.from("orders").delete().eq("id", orderId);
+      }
+    },
+    onSuccess: () => {
+      toast.success("تم حذف الطلب بنجاح 🗑️");
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      onOpenChange(false);
+    },
+    onError: (err: unknown) => {
+      toast.error("فشل حذف الطلب: " + (err instanceof Error ? err.message : "خطأ غير متوقع"));
+    },
+  });
+
+  const handleDeleteOrder = () => {
+    if (!order) return;
+    if (
+      window.confirm(
+        `هل أنت متأكد من حذف الطلب #${order.order_number} للعميل (${order.customer_name}) نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.`,
+      )
+    ) {
+      deleteMutation.mutate();
+    }
+  };
 
   const statusMutation = useMutation({
     mutationFn: (status: OrderStatus) => updateOrderStatus(orderId!, status),
@@ -288,6 +324,16 @@ ${items}
                 >
                   <MessageCircle className="h-4 w-4" />
                   إرسال رسالة WhatsApp
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={handleDeleteOrder}
+                  disabled={deleteMutation.isPending}
+                  className="gap-2 border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  حذف الطلب نهائياً 🗑️
                 </Button>
               </section>
             </div>

@@ -66,15 +66,45 @@ function OrdersPage() {
   const whatsappNumber = useWhatsappNumber();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["my-orders", user?.id],
+    queryKey: ["my-orders", user?.id, user?.email, user?.phone],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!user) return [];
+      const userEmail = user.email ? user.email.toLowerCase().trim() : null;
+      const userPhone = user.phone || (user.user_metadata?.phone as string | undefined) || null;
+
+      // 1. استخدام RPC لربط وجلب الطلبات
+      try {
+        const { data: rpcOrders, error: rpcErr } = await supabase.rpc(
+          "get_my_customer_orders",
+          {
+            _user_id: user.id,
+            _email: userEmail,
+            _phone: userPhone,
+          },
+        );
+        if (!rpcErr && rpcOrders && Array.isArray(rpcOrders)) {
+          return rpcOrders;
+        }
+      } catch (e) {
+        console.warn("[OrdersPage] RPC failed, fallback to direct query:", e);
+      }
+
+      // 2. Fallback query
+      let q = supabase
         .from("orders")
-        .select("id, order_number, total, status, created_at, fulfilled_at")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+        .select("id, order_number, total, status, created_at, fulfilled_at");
+
+      if (userEmail && userPhone) {
+        q = q.or(`user_id.eq.${user.id},customer_email.ilike.${userEmail},customer_phone.eq.${userPhone}`);
+      } else if (userEmail) {
+        q = q.or(`user_id.eq.${user.id},customer_email.ilike.${userEmail}`);
+      } else {
+        q = q.eq("user_id", user.id);
+      }
+
+      const { data: directData, error: directErr } = await q.order("created_at", { ascending: false });
+      if (directErr) throw directErr;
+      return directData ?? [];
     },
     enabled: !!user,
   });

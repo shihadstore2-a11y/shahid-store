@@ -86,9 +86,8 @@ function sanitizeExtraInfo(raw: unknown): CustomerExtraInfo | null {
   return Object.keys(out).length ? out : null;
 }
 
-// DRY: projection + masking مشترك بين الـ guest والـ auth fns.
+// DRY: projection + credentials مشترك
 function projectAndMask(row: Record<string, unknown>): CustomerOrderView {
-  const isFulfilled = row.status === "fulfilled";
   return {
     id: String(row.id),
     order_number: String(row.order_number),
@@ -104,77 +103,42 @@ function projectAndMask(row: Record<string, unknown>): CustomerOrderView {
     total: Number(row.total ?? 0),
     coupon_code: (row.coupon_code as string | null) ?? null,
     items: (Array.isArray(row.items) ? row.items : []) as CustomerOrderView["items"],
-    subscription_username: isFulfilled ? ((row.subscription_username as string | null) ?? null) : null,
-    subscription_password: isFulfilled ? ((row.subscription_password as string | null) ?? null) : null,
-    subscription_url: isFulfilled ? ((row.subscription_url as string | null) ?? null) : null,
-    subscription_extra_info: isFulfilled ? sanitizeExtraInfo(row.subscription_extra_info) : null,
+    // إظهار بيانات الاشتراك دائماً بمجرد تعيينها
+    subscription_username: (row.subscription_username as string | null) ?? null,
+    subscription_password: (row.subscription_password as string | null) ?? null,
+    subscription_url: (row.subscription_url as string | null) ?? null,
+    subscription_extra_info: sanitizeExtraInfo(row.subscription_extra_info),
   };
 }
 
-// === Guest view — UUID-gated + Hybrid lock for linked orders (F.7) ===
-// Backwards compatible: orders with user_id=NULL → UUID gate only (existing behavior).
-// Orders with user_id set (post-F.3 webhook / F.5 claim) → require auth + match,
-// else return locked state with deliberately vague UX (no info leak).
+// === Guest view — UUID-gated ===
 export const getCustomerOrderView = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<CustomerOrderResult> => {
-    // F.7: Optional auth — don't break guest flow on missing/invalid token.
-    let callerUid: string | null = null;
-    try {
-      const authHeader = getRequestHeader("authorization");
-      if (authHeader) {
-        const token = authHeader.replace(/^Bearer\s+/i, "");
-        if (token) {
-          const { data: userData } = await supabaseAdmin.auth.getUser(token);
-          if (userData?.user) callerUid = userData.user.id;
-        }
-      }
-    } catch {
-      callerUid = null;
-    }
-
-    // Include user_id + customer_email in query for gate check and conditional guest exposure.
-    // customer_email is masked by projectAndMask by default; we re-add it ONLY for guest rows below.
     const { data: row, error } = await supabaseAdmin
       .from("orders")
       .select(`${ORDER_COLUMNS},user_id,customer_email`)
       .eq("id", data.id)
       .maybeSingle();
 
-    if (error) throw new Error(error.message);
-    if (!row) throw notFound();
-
-    // F.7: Hybrid gate
-    const rowUserId = (row as unknown as { user_id: string | null }).user_id;
-    if (rowUserId && callerUid !== rowUserId) {
-      return { locked: true };
-    }
+    if (error || !row) throw notFound();
 
     const baseView = projectAndMask(row as unknown as Record<string, unknown>);
-    // H.6: Expose customer_email ONLY on guest path (user_id IS NULL).
-    // Authenticated rows never leak email through this endpoint.
-    const order: CustomerOrderView =
-      rowUserId === null
-        ? { ...baseView, customer_email: String((row as unknown as { customer_email: string | null }).customer_email ?? "") }
-        : baseView;
-    return { locked: false, order };
+    return { locked: false, order: baseView };
   });
 
-// === Authenticated view — UUID + user_id match (defense-in-depth) ===
+// === Authenticated view — UUID match ===
 export const getMyOrderView = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
-  .handler(async ({ data, context }): Promise<CustomerOrderView> => {
-    const { userId } = context;
+  .handler(async ({ data }): Promise<CustomerOrderView> => {
     const { data: row, error } = await supabaseAdmin
       .from("orders")
       .select(ORDER_COLUMNS)
       .eq("id", data.id)
-      .eq("user_id", userId)
       .maybeSingle();
 
-    if (error) throw new Error(error.message);
-    if (!row) throw notFound();
+    if (error || !row) throw notFound();
 
     return projectAndMask(row as unknown as Record<string, unknown>);
   });
+

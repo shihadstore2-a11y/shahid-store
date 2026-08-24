@@ -36,15 +36,17 @@ export function FulfillModal({
   const [extraJson, setExtraJson] = useState("");
   const orderId = order?.id;
 
+  const targetEmail = order?.customer_email || order?.customer_phone || "";
+
   useEffect(() => {
     if (open && orderId) {
-      setUsername("");
+      setUsername(targetEmail);
       setPassword("");
       setShowPassword(false);
       setUrl("");
       setExtraJson("");
     }
-  }, [open, orderId]);
+  }, [open, orderId, targetEmail]);
 
   const jsonValidation = useMemo(() => {
     const raw = extraJson.trim();
@@ -165,14 +167,14 @@ export function FulfillModal({
 
           <div>
             <Label className="mb-1.5 block text-xs font-bold text-muted-foreground">
-              👤 اسم المستخدم أو البريد (أو الكود)
+              👤 بريد / حساب العميل المستلم (تلقائي)
             </Label>
             <Input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="user123 أو name@example.com"
+              value={order.customer_email || username || order.customer_phone || "عميل المتجر"}
+              readOnly
+              disabled
+              className="bg-muted/50 text-foreground cursor-not-allowed opacity-90 font-medium"
               dir="ltr"
-              maxLength={255}
             />
           </div>
 
