@@ -83,6 +83,20 @@ export const PhoneInputIntl = React.forwardRef<HTMLInputElement, PhoneInputIntlP
     const [open, setOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
 
+    // مزامنة القيمة عند تغيرها من الخارج (مثل تحميل بيانات المستخدم المسجل)
+    React.useEffect(() => {
+      if (value !== undefined) {
+        const val = legacyToE164(value);
+        if (val) {
+          const c = detectCountry(val);
+          setCountry(c);
+          setDisplay(formatAsYouType(val, c));
+        } else if (!value) {
+          setDisplay("");
+        }
+      }
+    }, [value]);
+
     const selected = findCountry(country);
 
     const emit = React.useCallback(
@@ -218,7 +232,7 @@ export const PhoneInputIntl = React.forwardRef<HTMLInputElement, PhoneInputIntlP
             aria-invalid={invalid || undefined}
             onChange={(e) => handleChange(e.target.value)}
             onBlur={onBlur}
-            placeholder={placeholder ?? selected.dial.replace("+", "") + " XXX XXX XXX"}
+            placeholder={placeholder ?? (country === "SA" ? "5XX XXX XXX" : "XXX XXX XXX")}
             className={cn(
               "h-full w-full bg-transparent ps-9 pe-3 text-base font-bold tabular-nums tracking-wide text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground/60",
               inputClassName,

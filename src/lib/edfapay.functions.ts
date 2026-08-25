@@ -178,14 +178,16 @@ export const verifyAndConfirmPayment = createServerFn({ method: "POST" })
         { _order_id: orderId },
       );
       if (!rpcErr && rpcRes && typeof rpcRes === "object" && (rpcRes as Record<string, unknown>).success) {
+        const rpcData = rpcRes as Record<string, unknown>;
         return {
           ok: true as const,
           confirmed: true,
           order: {
             id: orderId,
-            order_number: (rpcRes as Record<string, unknown>).order_number as string || order?.order_number || orderId,
-            total: (rpcRes as Record<string, unknown>).total as number || order?.total || 0,
-            status: "paid",
+            order_number: (rpcData.order_number as string) || order?.order_number || orderId,
+            total: (rpcData.total as number) || order?.total || 0,
+            status: (rpcData.status as string) || "paid",
+            auto_claimed: Boolean(rpcData.auto_claimed),
           },
         };
       }

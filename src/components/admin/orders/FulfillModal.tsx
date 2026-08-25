@@ -30,7 +30,7 @@ export function FulfillModal({
   const queryClient = useQueryClient();
   const fulfillFn = useServerFn(fulfillOrder);
 
-  const [username, setUsername] = useState("");
+  const [subscriptionUsername, setSubscriptionUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [url, setUrl] = useState("");
@@ -41,13 +41,14 @@ export function FulfillModal({
 
   useEffect(() => {
     if (open && orderId) {
-      setUsername(targetEmail);
+      // Pre-fill subscription username from existing order data if present
+      setSubscriptionUsername(order?.subscription_username ?? "");
       setPassword("");
       setShowPassword(false);
-      setUrl("");
+      setUrl(order?.subscription_url ?? "");
       setExtraJson("");
     }
-  }, [open, orderId, targetEmail]);
+  }, [open, orderId]);
 
   const jsonValidation = useMemo(() => {
     const raw = extraJson.trim();
@@ -165,7 +166,7 @@ export function FulfillModal({
 
     mutation.mutate({
       orderId: order.id,
-      subscription_username: order.customer_email || username.trim() || order.customer_phone || "عميل المتجر",
+      subscription_username: subscriptionUsername.trim() || order.customer_email || order.customer_phone || "عميل المتجر",
       subscription_password: password || "N/A",
       subscription_url: url.trim() || undefined,
       subscription_extra_info: extraInfoToSend,
@@ -174,7 +175,7 @@ export function FulfillModal({
 
   if (!order) return null;
 
-  const disabled = (!username.trim() && !password) || !jsonValidation.ok || mutation.isPending;
+  const disabled = !password || !jsonValidation.ok || mutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -194,17 +195,37 @@ export function FulfillModal({
             أدخل بيانات الاشتراك أو كود التفعيل للعميل. بعد الحفظ، تتحوّل حالة الطلب إلى &quot;fulfilled&quot; ويستلم العميل بياناته فوراً.
           </div>
 
+          {/* بريد العميل (للقراءة فقط - مرجع) */}
           <div>
             <Label className="mb-1.5 block text-xs font-bold text-muted-foreground">
-              👤 بريد / حساب العميل المستلم (تلقائي)
+              📧 بريد العميل المستلم (مرجع)
             </Label>
             <Input
-              value={order.customer_email || username || order.customer_phone || "عميل المتجر"}
+              value={targetEmail || "عميل المتجر"}
               readOnly
               disabled
               className="bg-muted/50 text-foreground cursor-not-allowed opacity-90 font-medium"
               dir="ltr"
             />
+          </div>
+
+          {/* اسم المستخدم الخاص بالخدمة / الاشتراك */}
+          <div>
+            <Label className="mb-1.5 block text-xs font-bold text-muted-foreground">
+              👤 اسم مستخدم الخدمة / الاشتراك
+            </Label>
+            <Input
+              type="text"
+              value={subscriptionUsername}
+              onChange={(e) => setSubscriptionUsername(e.target.value)}
+              placeholder="مثال: user123 أو john@stream.tv"
+              dir="ltr"
+              maxLength={200}
+              className="font-mono text-sm"
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground/70">
+              اسم الحساب على منصة الخدمة (يختلف عن بريد العميل)
+            </p>
           </div>
 
           <div>

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Lock, Package } from "lucide-react";
+import { CheckCircle2, Clock, Lock, Package, RefreshCw } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { CredentialsCard } from "@/components/orders/CredentialsCard";
 import { OrderStatusBanner } from "@/components/orders/OrderStatusBanner";
@@ -64,15 +64,22 @@ function SuccessPage() {
   const { user } = useAuth();
   const fetchOrder = useServerFn(getCustomerOrderView);
 
-  const { data: result, isLoading, isError, error } = useQuery({
+  const { data: result, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["customer-order", id],
     queryFn: () => fetchOrder({ data: { id } }),
     retry: shouldRetry,
+    // إعادة التحقق كل 8 ثواني إذا الطلب ما زال في paid
+    refetchInterval: (query) => {
+      const d = query.state.data;
+      if (d && !d.locked && d.order?.status === "paid") return 8000;
+      return false;
+    },
   });
 
   const isLocked = result?.locked === true || getErrorMessage(error) === "ORDER_LOCKED";
   const order = result?.locked === false ? result.order : null;
   const isFulfilled = order?.status === "fulfilled";
+  const isPaid = order?.status === "paid";
 
   const waMessage = order
     ? isFulfilled
@@ -161,12 +168,12 @@ function SuccessPage() {
             <CheckCircle2 className="h-9 w-9" />
           </div>
           <h1 className="mt-4 text-2xl font-black sm:text-3xl">
-            {isFulfilled ? "اشتراكك جاهز! 🎁" : "تم استلام طلبك!"}
+            {isFulfilled ? "اشتراكك جاهز! 🎁" : "تم تأكيد دفعتك ✅"}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {isFulfilled
               ? "ستجد بيانات الاشتراك أدناه. احفظها في مكان آمن."
-              : "سنتواصل معك قريباً لتأكيد الطلب وإكمال التفعيل."}
+              : "استلمنا دفعتك بنجاح. جارٍ تجهيز وتسليم الاشتراك إليك."}
           </p>
 
           <div className="mt-6 rounded-2xl border border-dashed border-border bg-secondary/40 p-4 text-right">
@@ -227,6 +234,31 @@ function SuccessPage() {
             احفظ رقم الطلب في مكان آمن لمتابعة حالته لاحقاً.
           </p>
         </div>
+
+        {/* ─── بانر حالة paid — تجهيز وتسليم ─── */}
+        {isPaid && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 shadow-[var(--shadow-card)]">
+            <div className="flex items-start gap-3">
+              <Clock className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+              <div className="flex-1 text-right">
+                <p className="text-sm font-black text-amber-300">
+                  جارٍ تجهيز وتسليم اشتراكك ⏳
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  سيظهر الاشتراك تلقائياً هنا فور التسليم. يتم التحقق تلقائياً كل 8 ثواني.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-2 text-amber-400 hover:bg-amber-500/20"
+                title="تحديث الحالة"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {!user &&
           (order.status === "paid" || isFulfilled) &&

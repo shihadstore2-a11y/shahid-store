@@ -87,11 +87,15 @@ function sanitizeExtraInfo(raw: unknown): CustomerExtraInfo | null {
 }
 
 // DRY: projection + credentials مشترك
+// ⚠️ الأمان: بيانات الاشتراك تُعرض فقط عند status = 'fulfilled'
 function projectAndMask(row: Record<string, unknown>): CustomerOrderView {
+  const status = String(row.status ?? "");
+  const isFulfilled = status === "fulfilled";
+
   return {
     id: String(row.id),
     order_number: String(row.order_number),
-    status: String(row.status),
+    status,
     payment_method: String(row.payment_method ?? "card"),
     created_at: String(row.created_at),
     fulfilled_at: (row.fulfilled_at as string | null) ?? null,
@@ -103,13 +107,15 @@ function projectAndMask(row: Record<string, unknown>): CustomerOrderView {
     total: Number(row.total ?? 0),
     coupon_code: (row.coupon_code as string | null) ?? null,
     items: (Array.isArray(row.items) ? row.items : []) as CustomerOrderView["items"],
-    // إظهار بيانات الاشتراك دائماً بمجرد تعيينها
-    subscription_username: (row.subscription_username as string | null) ?? null,
-    subscription_password: (row.subscription_password as string | null) ?? null,
-    subscription_url: (row.subscription_url as string | null) ?? null,
-    subscription_extra_info: sanitizeExtraInfo(row.subscription_extra_info),
+    // ⚠️ إظهار بيانات الاشتراك فقط عند status = fulfilled
+    // في أي حالة أخرى (paid, pending, failed, cancelled) تُخفى تماماً
+    subscription_username: isFulfilled ? ((row.subscription_username as string | null) ?? null) : null,
+    subscription_password: isFulfilled ? ((row.subscription_password as string | null) ?? null) : null,
+    subscription_url: isFulfilled ? ((row.subscription_url as string | null) ?? null) : null,
+    subscription_extra_info: isFulfilled ? sanitizeExtraInfo(row.subscription_extra_info) : null,
   };
 }
+
 
 // === Guest view — UUID-gated ===
 export const getCustomerOrderView = createServerFn({ method: "POST" })

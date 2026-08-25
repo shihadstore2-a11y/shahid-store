@@ -186,13 +186,13 @@ function PaymentSuccessPage() {
       <SiteLayout>
         <section className="mx-auto max-w-xl px-4 py-20 text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-400" />
-          <h1 className="mt-6 text-3xl font-black">تم الدفع بنجاح</h1>
+          <h1 className="mt-6 text-3xl font-black">تم الدفع بنجاح ✅</h1>
           <p className="mt-3 text-muted-foreground">
             تم استلام مبلغ {formatSAR(payment!.amount)} — رقم الطلب{" "}
             <span className="font-bold text-accent">{payment!.order_number}</span>
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            يتم نقلك إلى صفحة الطلب...
+            يتم نقلك إلى صفحة طلبك وبيانات الاشتراك...
           </p>
         </section>
       </SiteLayout>

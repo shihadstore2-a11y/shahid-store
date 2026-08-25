@@ -252,67 +252,66 @@ function CheckoutPage() {
   // H.2.1: Track name fill source to resolve F.4 vs H.2 precedence (DB > Google metadata > user typing wins)
   const [nameSource, setNameSource] = useState<"empty" | "f4" | "h2" | "user">("empty");
 
-  // H.2: Prefill name + phone from profiles (read-only). Runs once per user.
-  // Silent fallback to F.4 (user_metadata) if profile row missing or query fails.
+  // Prefill customer name, phone, and email immediately when logged in
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user) return;
     let cancelled = false;
+
+    // 1. التعبئة المباشرة من بيانات الجلسة والميتاداتا
+    if (user.email && !watch("customer_email")) {
+      setValue("customer_email", user.email, { shouldValidate: true });
+    }
+
+    const metaName =
+      (user.user_metadata?.full_name as string | undefined) ||
+      (user.user_metadata?.name as string | undefined);
+    if (metaName && !watch("customer_name")) {
+      setValue("customer_name", metaName, { shouldValidate: true });
+      setNameSource("f4");
+    }
+
+    const metaPhone =
+      (user.user_metadata?.phone as string | undefined) ||
+      (user.phone as string | undefined);
+    if (metaPhone && !watch("customer_phone")) {
+      const e164 = toE164(metaPhone, "SA");
+      if (e164) {
+        setValue("customer_phone", e164, { shouldValidate: true, shouldDirty: true });
+        setPhoneInitial(e164);
+      }
+    }
+
+    // 2. التحقق من جدول profiles لجلب أحدث البيانات إن وُجدت
     (async () => {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("full_name, phone")
+          .select("full_name, phone, email")
           .eq("user_id", user.id)
           .maybeSingle();
+
         if (cancelled || error || !data) return;
+
         if (data.full_name) {
-          // H.2.2: Functional setter reads LIVE nameSource (avoids stale closure).
-          // Decision happens inside callback; side effect (setValue) runs outside.
-          let shouldWrite = false;
-          setNameSource((curr) => {
-            const currentName = watch("customer_name");
-            if (!currentName || curr === "f4") {
-              shouldWrite = true;
-              return "h2";
-            }
-            return curr; // preserve "user" or other
-          });
-          if (shouldWrite) {
-            setValue("customer_name", data.full_name, { shouldValidate: true });
-          }
+          setValue("customer_name", data.full_name, { shouldValidate: true });
+          setNameSource("h2");
         }
-        if (data.phone && !watch("customer_phone")) {
-          // Phone may be legacy 05XXXXXXXX (pre-J.1 records) or already E.164.
+        if (data.phone) {
           const e164 = toE164(data.phone, "SA");
           if (e164) {
-            setValue("customer_phone", e164, { shouldValidate: true });
+            setValue("customer_phone", e164, { shouldValidate: true, shouldDirty: true });
             setPhoneInitial(e164);
           }
         }
-      } catch {
-        /* silent: F.4 useEffect remains the fallback */
+      } catch (err) {
+        console.warn("[checkout] profiles fetch error:", err);
       }
     })();
+
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
-
-
-
-  useEffect(() => {
-    if (user?.email) setValue("customer_email", user.email);
-    // F.4: auto-fill name from Google user_metadata (only if field still empty)
-    const fullName =
-      (user?.user_metadata?.full_name as string | undefined) ||
-      (user?.user_metadata?.name as string | undefined);
-    if (fullName && !watch("customer_name")) {
-      setValue("customer_name", fullName);
-      setNameSource("f4");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, user?.user_metadata, setValue]);
+  }, [user?.id, user?.email, user?.phone, user?.user_metadata]);
 
   const paymentMethod = watch("payment_method");
   const phoneRaw = watch("customer_phone");

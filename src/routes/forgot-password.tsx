@@ -41,8 +41,16 @@ function ForgotPasswordPage() {
 
   const onSubmit = async (v: Vals) => {
     const email = v.email.trim().toLowerCase();
+    const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
+    const centralRelay = "https://shahidstore.net/auth/callback";
+    
+    // إذا كان الطلب من نطاق مختلف عن المنصة الرئيسية، يمر عبر بوابة المصادقة المركزية لنقله لمتجره فوراً
+    const redirectUrl = (currentOrigin && !currentOrigin.includes("shahidstore.net"))
+      ? `${centralRelay}?return_to=${encodeURIComponent(`${currentOrigin}/reset-password`)}`
+      : `${centralRelay}`;
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: redirectUrl,
     });
 
     if (error) {
