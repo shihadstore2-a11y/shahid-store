@@ -1,7 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { createAdminUserServerFn } from "@/lib/admin-users.functions";
+import {
+  createAdminUserServerFn,
+  adminResetPasswordServerFn,
+  deleteAdminUserServerFn,
+} from "@/lib/admin-users.functions";
 
 export type AdminRole = Database["public"]["Enums"]["admin_role"];
 export type AdminUserRow = Database["public"]["Tables"]["admin_users"]["Row"];
@@ -114,12 +118,35 @@ export async function updateAdminUser(payload: UpdateAdminPayload): Promise<void
 
   // تحديث كلمة المرور في حال إدخالها
   if (password && password.trim().length >= 6 && adminRow?.email) {
-    const { data: rpcRes, error: rpcErr } = await supabase.rpc("admin_reset_user_password_rpc", {
-      _target_email: adminRow.email,
-      _new_password: password.trim(),
-    });
-    if (rpcErr || (rpcRes && (rpcRes as any).success === false)) {
-      throw new Error((rpcRes as any)?.error || rpcErr?.message || "تعذّر تغيير كلمة المرور");
+    let resetSucceeded = false;
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc("admin_reset_user_password_rpc", {
+        _target_email: adminRow.email,
+        _new_password: password.trim(),
+      });
+
+      if (!rpcErr && (!rpcRes || (rpcRes as any).success !== false)) {
+        resetSucceeded = true;
+      }
+    } catch (rpcEx) {
+      console.warn("[updateAdminUser] RPC exception, falling back to serverFn:", rpcEx);
+    }
+
+    // إذا فشل الـ RPC أو لم تكن الدالة موجودة بعد في الـ cache، نستخدم دالة السيرفر فوراً
+    if (!resetSucceeded) {
+      try {
+        const { data: authSession } = await supabase.auth.getSession();
+        const token = authSession.session?.access_token;
+        await adminResetPasswordServerFn({
+          data: {
+            email: adminRow.email,
+            password: password.trim(),
+            authToken: token,
+          },
+        });
+      } catch (fnErr: any) {
+        throw new Error(fnErr.message || "تعذّر تغيير كلمة المرور");
+      }
     }
   }
 
@@ -138,6 +165,35 @@ export async function updateAdminUser(payload: UpdateAdminPayload): Promise<void
     } catch (e) {
       console.warn("[updateAdminUser] profiles upsert error:", e);
     }
+  }
+}
+
+export async function deleteAdminUser(id: string): Promise<void> {
+  // 1. محاولة الحذف عبر Supabase مباشرة
+  try {
+    const { error } = await supabase
+      .from("admin_users")
+      .delete()
+      .eq("id", id);
+
+    if (!error) return;
+  } catch (clientErr) {
+    console.warn("[deleteAdminUser] client delete failed, trying serverFn:", clientErr);
+  }
+
+  // 2. Fallback إلى دالة السيرفر
+  const { data: authSession } = await supabase.auth.getSession();
+  const token = authSession.session?.access_token;
+
+  const res = await deleteAdminUserServerFn({
+    data: {
+      id,
+      authToken: token,
+    },
+  });
+
+  if (!res || !res.ok) {
+    throw new Error("فشل حذف المستخدم من الإدارة");
   }
 }
 

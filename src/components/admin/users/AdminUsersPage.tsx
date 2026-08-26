@@ -10,10 +10,12 @@ import { UserStatsStrip } from "@/components/admin/users/UserStatsStrip";
 import { CreateAdminDialog } from "@/components/admin/users/CreateAdminDialog";
 import { EditAdminDialog } from "@/components/admin/users/EditAdminDialog";
 import { DeactivateAdminDialog } from "@/components/admin/users/DeactivateAdminDialog";
+import { DeleteAdminDialog } from "@/components/admin/users/DeleteAdminDialog";
 import { ManagePermissionsDialog } from "@/components/admin/users/ManagePermissionsDialog";
 import {
   adminUsersQueryOptions,
   setAdminActive,
+  deleteAdminUser,
   type AdminUserRow,
 } from "@/lib/admin-users";
 import { useAdminUser } from "@/hooks/useAdminUser";
@@ -25,6 +27,7 @@ export function AdminUsersContent() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<AdminUserRow | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<AdminUserRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminUserRow | null>(null);
   const [permsTarget, setPermsTarget] = useState<AdminUserRow | null>(null);
 
   const toggleActive = useMutation({
@@ -38,13 +41,23 @@ export function AdminUsersContent() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const removeAdmin = useMutation({
+    mutationFn: (id: string) => deleteAdminUser(id),
+    onSuccess: async () => {
+      toast.success("تم حذف المستخدم من الإدارة وإعادته كعميل بنجاح");
+      await qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      setDeleteTarget(null);
+    },
+    onError: (e: Error) => toast.error(e.message || "فشل حذف المستخدم"),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black sm:text-3xl">إدارة المستخدمين</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            إنشاء وتعديل وتعطيل حسابات المشرفين
+            إنشاء وتعديل وتعطيل وحذف حسابات المشرفين
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)} className="gap-2">
@@ -76,6 +89,7 @@ export function AdminUsersContent() {
                 if (u.is_active) setDeactivateTarget(u);
                 else toggleActive.mutate({ id: u.id, isActive: true });
               }}
+              onDelete={setDeleteTarget}
             />
           </div>
           <div className="grid gap-3 lg:hidden">
@@ -90,6 +104,7 @@ export function AdminUsersContent() {
                   if (u.is_active) setDeactivateTarget(u);
                   else toggleActive.mutate({ id: u.id, isActive: true });
                 }}
+                onDelete={() => setDeleteTarget(u)}
               />
             ))}
           </div>
@@ -110,6 +125,16 @@ export function AdminUsersContent() {
           }
         }}
         pending={toggleActive.isPending}
+      />
+      <DeleteAdminDialog
+        user={deleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            removeAdmin.mutate(deleteTarget.id);
+          }
+        }}
+        pending={removeAdmin.isPending}
       />
       <ManagePermissionsDialog user={permsTarget} onClose={() => setPermsTarget(null)} />
     </div>

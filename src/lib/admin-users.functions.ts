@@ -167,3 +167,101 @@ export const createAdminUserServerFn = createServerFn({ method: "POST" })
       user_id: targetUserId,
     };
   });
+
+export const adminResetPasswordServerFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        email: z.string().email(),
+        password: z.string().min(6),
+        authToken: z.string().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const cleanEmail = data.email.toLowerCase().trim();
+
+    // 1. العثور على المستخدم
+    const { data: listData, error: listErr } =
+      await supabaseAdmin.auth.admin.listUsers();
+    const targetUser = listData?.users?.find(
+      (u) => u.email?.toLowerCase() === cleanEmail,
+    );
+
+    if (!targetUser) {
+      throw new Error("المستخدم غير موجود في سجلات المصادقة");
+    }
+
+    // 2. تحديث كلمة المرور وتأكيد البريد مباشرة
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
+      targetUser.id,
+      {
+        password: data.password,
+        email_confirm: true,
+      },
+    );
+
+    if (updErr) {
+      throw new Error(`تعذّر تحديث كلمة المرور: ${updErr.message}`);
+    }
+
+    // 3. تفعيل في admin_users
+    await supabaseAdmin
+      .from("admin_users")
+      .update({ is_active: true, updated_at: new Date().toISOString() })
+      .or(`user_id.eq.${targetUser.id},email.ilike.${cleanEmail}`);
+
+    return {
+      ok: true as const,
+      user_id: targetUser.id,
+    };
+  });
+
+export const deleteAdminUserServerFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string(),
+        authToken: z.string().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    // 1. جلب بيانات المشرف
+    const { data: adminRow } = await supabaseAdmin
+      .from("admin_users")
+      .select("id, user_id, email, full_name")
+      .eq("id", data.id)
+      .maybeSingle();
+
+    if (!adminRow) {
+      throw new Error("المستخدم غير موجود");
+    }
+
+    // 2. حذفه من جدول admin_users (يعيده كعميل)
+    const { error: delErr } = await supabaseAdmin
+      .from("admin_users")
+      .delete()
+      .eq("id", data.id);
+
+    if (delErr) {
+      throw new Error(`تعذّر إزالة المستخدم من الإدارة: ${delErr.message}`);
+    }
+
+    // 3. تحديث الميتاداتا في Auth لإزالة الصلاحيات الإدارية
+    if (adminRow.user_id) {
+      try {
+        await supabaseAdmin.auth.admin.updateUserById(adminRow.user_id, {
+          user_metadata: { role: "customer" },
+        });
+      } catch (e) {
+        console.warn("[deleteAdminUserServerFn] auth metadata update:", e);
+      }
+    }
+
+    return {
+      ok: true as const,
+      message: "تم حذف المستخدم من الإدارة وإعادته كعميل بنجاح",
+    };
+  });
+

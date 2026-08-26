@@ -1,4 +1,4 @@
-import { Pencil, Power, PowerOff, ShieldCheck } from "lucide-react";
+import { Pencil, Power, PowerOff, ShieldCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AdminUserRow } from "@/lib/admin-users";
 import { UserRoleBadge } from "./UserRoleBadge";
@@ -10,12 +10,14 @@ export function UserCard({
   onEdit,
   onManagePerms,
   onToggle,
+  onDelete,
 }: {
   user: AdminUserRow;
   isMe: boolean;
   onEdit: () => void;
   onManagePerms: () => void;
   onToggle: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
@@ -39,15 +41,15 @@ export function UserCard({
           <span className="text-xs text-muted-foreground" dir="ltr">{user.phone}</span>
         )}
       </div>
-      <div className="flex gap-2 pt-1">
-        <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={onEdit} disabled={isMe}>
+      <div className="grid grid-cols-4 gap-1.5 pt-1">
+        <Button variant="outline" size="sm" className="gap-1 px-2 text-xs" onClick={onEdit} disabled={isMe}>
           <Pencil className="h-3.5 w-3.5" />
           تعديل
         </Button>
         <Button
           variant="outline"
           size="sm"
-          className="flex-1 gap-1"
+          className="gap-1 px-2 text-xs"
           onClick={onManagePerms}
           disabled={isMe || user.role === "super_admin"}
         >
@@ -57,12 +59,22 @@ export function UserCard({
         <Button
           variant="outline"
           size="sm"
-          className={`flex-1 gap-1 ${user.is_active ? "text-destructive" : "text-green-400"}`}
+          className={`gap-1 px-2 text-xs ${user.is_active ? "text-amber-500" : "text-green-400"}`}
           onClick={onToggle}
           disabled={isMe}
         >
           {user.is_active ? <PowerOff className="h-3.5 w-3.5" /> : <Power className="h-3.5 w-3.5" />}
           {user.is_active ? "تعطيل" : "تفعيل"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1 px-2 text-xs text-destructive hover:bg-destructive/10"
+          onClick={onDelete}
+          disabled={isMe}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          حذف
         </Button>
       </div>
     </div>

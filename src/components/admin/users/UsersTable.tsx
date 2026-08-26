@@ -1,4 +1,4 @@
-import { Pencil, Power, PowerOff, ShieldCheck } from "lucide-react";
+import { Pencil, Power, PowerOff, ShieldCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AdminUserRow } from "@/lib/admin-users";
 import { UserRoleBadge } from "./UserRoleBadge";
@@ -10,12 +10,14 @@ export function UsersTable({
   onEdit,
   onManagePerms,
   onToggle,
+  onDelete,
 }: {
   users: AdminUserRow[];
   currentUserId: string | null;
   onEdit: (u: AdminUserRow) => void;
   onManagePerms: (u: AdminUserRow) => void;
   onToggle: (u: AdminUserRow) => void;
+  onDelete: (u: AdminUserRow) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -48,7 +50,7 @@ export function UsersTable({
                 <td className="px-4 py-3"><UserStatusBadge active={u.is_active} /></td>
                 <td className="px-4 py-3 text-xs text-muted-foreground" dir="ltr">{u.phone || "—"}</td>
                 <td className="px-4 py-3">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-1.5">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -79,9 +81,19 @@ export function UsersTable({
                       onClick={() => onToggle(u)}
                       disabled={isMe}
                       title={isMe ? "لا يمكن تعطيل حسابك" : u.is_active ? "تعطيل" : "تفعيل"}
-                      className={u.is_active ? "text-destructive hover:text-destructive" : "text-green-400 hover:text-green-300"}
+                      className={u.is_active ? "text-amber-500 hover:text-amber-600" : "text-green-400 hover:text-green-300"}
                     >
                       {u.is_active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDelete(u)}
+                      disabled={isMe}
+                      title={isMe ? "لا يمكن حذف حسابك" : "حذف من الإدارة وإعادته كعميل"}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </td>
