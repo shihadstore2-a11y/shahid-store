@@ -90,10 +90,11 @@ export type UpdateAdminPayload = {
   full_name?: string;
   phone?: string | null;
   role?: AdminRole;
+  password?: string;
 };
 
 export async function updateAdminUser(payload: UpdateAdminPayload): Promise<void> {
-  const { id, ...rest } = payload;
+  const { id, password, ...rest } = payload;
   
   const { data: adminRow } = await supabase
     .from("admin_users")
@@ -111,14 +112,25 @@ export async function updateAdminUser(payload: UpdateAdminPayload): Promise<void
 
   if (error) throw new Error(error.message);
 
+  // تحديث كلمة المرور في حال إدخالها
+  if (password && password.trim().length >= 6 && adminRow?.email) {
+    const { data: rpcRes, error: rpcErr } = await supabase.rpc("admin_reset_user_password_rpc", {
+      _target_email: adminRow.email,
+      _new_password: password.trim(),
+    });
+    if (rpcErr || (rpcRes && (rpcRes as any).success === false)) {
+      throw new Error((rpcRes as any)?.error || rpcErr?.message || "تعذّر تغيير كلمة المرور");
+    }
+  }
+
   if (adminRow?.user_id) {
     try {
       await supabase.from("profiles").upsert(
         {
+          id: adminRow.user_id,
           user_id: adminRow.user_id,
           full_name: rest.full_name,
           phone: rest.phone ?? null,
-          role: rest.role,
           email: adminRow.email,
         },
         { onConflict: "user_id" },

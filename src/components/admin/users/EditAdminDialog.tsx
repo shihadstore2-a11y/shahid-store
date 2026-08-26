@@ -23,12 +23,14 @@ export function EditAdminDialog({
   const qc = useQueryClient();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState<AdminRole>("staff");
 
   useEffect(() => {
     if (user) {
       setFullName(user.full_name || "");
       setPhone(user.phone || "");
+      setPassword("");
       setRole(user.role);
     }
   }, [user]);
@@ -36,7 +38,7 @@ export function EditAdminDialog({
   const m = useMutation({
     mutationFn: updateAdminUser,
     onSuccess: async () => {
-      toast.success("تم تحديث المستخدم");
+      toast.success("تم تحديث بيانات المستخدم وكلمة المرور بنجاح");
       await qc.invalidateQueries({ queryKey: ["admin", "users"] });
       onClose();
     },
@@ -52,6 +54,7 @@ export function EditAdminDialog({
       full_name: fullName.trim(),
       phone: phone.trim() || null,
       role,
+      password: password.trim() ? password.trim() : undefined,
     });
   };
 
@@ -59,11 +62,11 @@ export function EditAdminDialog({
     <Dialog open={!!user} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>تعديل مستخدم</DialogTitle>
+          <DialogTitle>تعديل حساب المشرف / الموظف</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-sm font-bold">الإيميل</Label>
+            <Label className="text-sm font-bold">البريد الإلكتروني</Label>
             <Input dir="ltr" value={user.email} disabled />
           </div>
           <div className="space-y-1.5">
@@ -71,8 +74,21 @@ export function EditAdminDialog({
             <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-bold">الجوال</Label>
-            <Input dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <Label className="text-sm font-bold">رقم الجوال</Label>
+            <Input dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+9665... أو +212..." />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-bold">تعيين كلمة مرور جديدة (اختياري)</Label>
+            <Input
+              type="password"
+              dir="ltr"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="اتركها فارغة إذا كنت لا تريد تغييرها"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              يمكنك كتابة كلمة مرور جديدة هنا لتفعيل حساب الموظف فوراً دون الحاجة لرسائل البريد.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label className="text-sm font-bold">الصلاحية</Label>
@@ -88,7 +104,7 @@ export function EditAdminDialog({
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose}>إلغاء</Button>
             <Button type="submit" disabled={m.isPending}>
-              {m.isPending ? "جارٍ الحفظ…" : "حفظ"}
+              {m.isPending ? "جارٍ الحفظ…" : "حفظ التعديلات"}
             </Button>
           </DialogFooter>
         </form>
