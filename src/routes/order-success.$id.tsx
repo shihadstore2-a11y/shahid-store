@@ -11,6 +11,7 @@ import { formatSAR } from "@/lib/format";
 import { durationLabel } from "@/lib/order";
 import { useWhatsappLink } from "@/lib/whatsapp";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 // لا نُعيد المحاولة على notFound (404) أو ORDER_LOCKED — هدر بلا فائدة.
 function shouldRetry(failureCount: number, error: unknown): boolean {
@@ -66,7 +67,88 @@ function SuccessPage() {
 
   const { data: result, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["customer-order", id],
-    queryFn: () => fetchOrder({ data: { id } }),
+    queryFn: async () => {
+      // 1. محاولة الجلب عبر server function
+      try {
+        const res = await fetchOrder({ data: { id } });
+        if (res && res.order) return res;
+      } catch (e) {
+        console.warn("[SuccessPage] fetchOrder serverFn fallback:", e);
+      }
+
+      // 2. محاولة الجلب المباشر عبر RPC من العميل
+      try {
+        const { data: rpcData } = await supabase.rpc("get_order_delivery_status", {
+          _order_id: id,
+        });
+
+        if (rpcData && typeof rpcData === "object" && (rpcData as Record<string, unknown>).order_number) {
+          const row = rpcData as Record<string, unknown>;
+          const isFulfilled = row.status === "fulfilled";
+          return {
+            locked: false,
+            order: {
+              id: String(row.id),
+              order_number: String(row.order_number),
+              status: String(row.status),
+              payment_method: String(row.payment_method ?? "card"),
+              created_at: String(row.created_at),
+              fulfilled_at: (row.fulfilled_at as string | null) ?? null,
+              customer_name: String(row.customer_name ?? ""),
+              customer_phone: String(row.customer_phone ?? ""),
+              subtotal: Number(row.subtotal ?? 0),
+              discount: Number(row.discount ?? 0),
+              vat: Number(row.vat ?? 0),
+              total: Number(row.total ?? 0),
+              coupon_code: (row.coupon_code as string | null) ?? null,
+              items: (Array.isArray(row.items) ? row.items : []) as any,
+              subscription_username: isFulfilled ? ((row.subscription_username as string | null) ?? null) : null,
+              subscription_password: isFulfilled ? ((row.subscription_password as string | null) ?? null) : null,
+              subscription_url: isFulfilled ? ((row.subscription_url as string | null) ?? null) : null,
+              subscription_extra_info: isFulfilled ? (row.subscription_extra_info as any) : null,
+            },
+          };
+        }
+      } catch (e) {
+        console.warn("[SuccessPage] RPC fallback error:", e);
+      }
+
+      // 3. محاولة الجلب المباشر من جدول orders
+      const { data: tableData } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (tableData) {
+        const isFulfilled = tableData.status === "fulfilled";
+        return {
+          locked: false,
+          order: {
+            id: String(tableData.id),
+            order_number: String(tableData.order_number),
+            status: String(tableData.status),
+            payment_method: String(tableData.payment_method ?? "card"),
+            created_at: String(tableData.created_at),
+            fulfilled_at: (tableData.fulfilled_at as string | null) ?? null,
+            customer_name: String(tableData.customer_name ?? ""),
+            customer_phone: String(tableData.customer_phone ?? ""),
+            subtotal: Number(tableData.subtotal ?? 0),
+            discount: Number(tableData.discount ?? 0),
+            vat: Number(tableData.vat ?? 0),
+            total: Number(tableData.total ?? 0),
+            coupon_code: (tableData.coupon_code as string | null) ?? null,
+            items: (Array.isArray(tableData.items) ? tableData.items : []) as any,
+            subscription_username: isFulfilled ? ((tableData.subscription_username as string | null) ?? null) : null,
+            subscription_password: isFulfilled ? ((tableData.subscription_password as string | null) ?? null) : null,
+            subscription_url: isFulfilled ? ((tableData.subscription_url as string | null) ?? null) : null,
+            subscription_extra_info: isFulfilled ? (tableData.subscription_extra_info as any) : null,
+          },
+        };
+      }
+
+      return null;
+    },
     retry: shouldRetry,
     // إعادة التحقق كل 8 ثواني إذا الطلب ما زال في paid
     refetchInterval: (query) => {
