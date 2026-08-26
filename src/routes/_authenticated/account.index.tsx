@@ -78,19 +78,60 @@ function ProfilePage() {
 
   const onSubmit = async (v: Vals) => {
     if (!user) return;
+    const cleanName = v.full_name.trim();
+    const cleanPhone = v.phone.trim();
+
+    // 1. تحديث جدول profiles
     const { error } = await supabase
       .from("profiles")
       .upsert(
-        { user_id: user.id, full_name: v.full_name, phone: v.phone, email: user.email },
+        {
+          user_id: user.id,
+          full_name: cleanName,
+          phone: cleanPhone,
+          email: user.email,
+          updated_at: new Date().toISOString(),
+        },
         { onConflict: "user_id" },
       );
     if (error) {
       toast.error("تعذّر حفظ البيانات");
       return;
     }
-    toast.success("تم حفظ الملف الشخصي");
+
+    // 2. تحديث بيانات المصادقة في Supabase Auth
+    try {
+      await supabase.auth.updateUser({
+        data: {
+          full_name: cleanName,
+          phone: cleanPhone,
+        },
+      });
+    } catch (authErr) {
+      console.warn("[account] updateUser error:", authErr);
+    }
+
+    // 3. تحديث admin_users إن كان المشرف مسجلاً فيه
+    try {
+      await supabase
+        .from("admin_users")
+        .update({
+          full_name: cleanName,
+          phone: cleanPhone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+    } catch (adminErr) {
+      console.warn("[account] admin_users update error (non-blocking):", adminErr);
+    }
+
+    toast.success("تم حفظ الملف الشخصي بنجاح");
     // claim guest orders
-    await supabase.rpc("claim_orders_by_phone", { _phone: normalizePhone(v.phone) });
+    try {
+      await supabase.rpc("claim_orders_by_phone", { _phone: normalizePhone(v.phone) });
+    } catch (e) {
+      console.warn("[account] claim_orders_by_phone error:", e);
+    }
   };
 
   if (loading) return <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">جارٍ التحميل...</div>;

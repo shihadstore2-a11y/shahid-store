@@ -94,8 +94,39 @@ export type UpdateAdminPayload = {
 
 export async function updateAdminUser(payload: UpdateAdminPayload): Promise<void> {
   const { id, ...rest } = payload;
-  const { error } = await supabase.from("admin_users").update(rest).eq("id", id);
+  
+  const { data: adminRow } = await supabase
+    .from("admin_users")
+    .select("user_id, email")
+    .eq("id", id)
+    .maybeSingle();
+
+  const { error } = await supabase
+    .from("admin_users")
+    .update({
+      ...rest,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
   if (error) throw new Error(error.message);
+
+  if (adminRow?.user_id) {
+    try {
+      await supabase.from("profiles").upsert(
+        {
+          user_id: adminRow.user_id,
+          full_name: rest.full_name,
+          phone: rest.phone ?? null,
+          role: rest.role,
+          email: adminRow.email,
+        },
+        { onConflict: "user_id" },
+      );
+    } catch (e) {
+      console.warn("[updateAdminUser] profiles upsert error:", e);
+    }
+  }
 }
 
 export async function setAdminActive(id: string, isActive: boolean): Promise<void> {

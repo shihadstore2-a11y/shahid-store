@@ -495,16 +495,27 @@ function CheckoutPage() {
     }
 
     // H.3: Persist checkout data to profile (authenticated only).
-    // Silent fail — order already succeeded, profile write non-blocking.
     if (finalUserId) {
       try {
         await supabase
           .from("profiles")
-          .update({
-            full_name: data.customer_name,
-            phone: data.customer_phone,
-          })
-          .eq("user_id", finalUserId);
+          .upsert(
+            {
+              user_id: finalUserId,
+              full_name: data.customer_name.trim(),
+              phone: data.customer_phone.trim(),
+              email: data.customer_email.toLowerCase().trim(),
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" },
+          );
+
+        await supabase.auth.updateUser({
+          data: {
+            full_name: data.customer_name.trim(),
+            phone: data.customer_phone.trim(),
+          },
+        });
       } catch (e) {
         console.warn("[H.3] profile write failed (non-blocking)", e);
       }

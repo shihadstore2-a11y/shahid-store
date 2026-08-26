@@ -56,252 +56,60 @@ function PaymentSuccessPage() {
   const navigate = useNavigate();
   const verifyPaymentFn = useServerFn(verifyAndConfirmPayment);
 
-  const [payment, setPayment] = useState<PaymentStatus | null>(null);
-  const [polling, setPolling] = useState(true);
-  const [attempts, setAttempts] = useState(0);
-  const [retryCount, setRetryCount] = useState(0);
-
-  const pollOnce = useCallback(async (): Promise<PaymentStatus | null> => {
-    if (!orderId) return null;
-
-    // 1. استدعاء التحقق من السيرفر (يفحص DB أولاً ثم EdfaPay S2S)
-    try {
-      const res = await verifyPaymentFn({ data: { orderId } });
-
-      // الدفع مؤكد (من DB أو EdfaPay) → نجاح
-      if (res.ok && res.confirmed) {
-        return {
-          order_id: orderId,
-          order_number: res.order?.order_number || orderId,
-          status: res.order?.status || "paid",
-          amount: Number(res.order?.total || 0),
-          provider: "edfapay",
-          updated_at: new Date().toISOString(),
-        };
-      }
-
-      // الدفع فشل أو ملغي → حالة نهائية
-      if (res.ok && !res.confirmed && (res as any).status === "failed") {
-        return {
-          order_id: orderId, order_number: orderId,
-          status: "failed", amount: 0, provider: "edfapay",
-          updated_at: new Date().toISOString(),
-        };
-      }
-      if (res.ok && !res.confirmed && (res as any).status === "cancelled") {
-        return {
-          order_id: orderId, order_number: orderId,
-          status: "cancelled", amount: 0, provider: "edfapay",
-          updated_at: new Date().toISOString(),
-        };
-      }
-
-      // pending → نستمر بالـ polling
-    } catch (err) {
-      console.warn("[PaymentSuccess] verification attempt failed:", err);
-    }
-
-    // 2. فحص DB كإجراء احتياطي (ربما الـ webhook أكد الدفع)
-    try {
-      const { data } = await supabase.rpc("get_payment_status", {
-        _order_id: orderId,
-      });
-      return (data as PaymentStatus[] | null)?.[0] ?? null;
-    } catch {
-      return null;
-    }
-  }, [orderId, verifyPaymentFn]);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   useEffect(() => {
     if (!orderId) {
-      setPolling(false);
+      navigate({ to: "/" });
       return;
     }
 
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let localAttempts = 0;
+    let isMounted = true;
 
-    async function poll() {
-      const row = await pollOnce();
-      if (cancelled) return;
-
-      if (row) {
-        setPayment(row);
-        if (isSuccessStatus(row.status)) {
-          setPolling(false);
-          setTimeout(() => {
-            navigate({ to: "/order-success/$id", params: { id: orderId! } });
-          }, 1200);
-          return;
+    async function handleSuccess() {
+      try {
+        // تأكيد الدفع فوراً عبر دالة السيرفر
+        const res = await verifyPaymentFn({ data: { orderId: orderId! } });
+        if (isMounted && res.ok && res.order?.order_number) {
+          setOrderNumber(res.order.order_number);
         }
-        if (isTerminalFailureStatus(row.status)) {
-          setPolling(false);
-          navigate({ to: "/payment/failed", search: { order: orderId! } });
-          return;
-        }
+      } catch (e) {
+        console.warn("[PaymentSuccess] instant verify exception:", e);
       }
 
-      localAttempts += 1;
-      setAttempts(localAttempts);
-
-      if (localAttempts < MAX_ATTEMPTS) {
-        timer = setTimeout(poll, POLL_INTERVAL_MS);
-      } else {
-        setPolling(false);
-        // بعد انتهاء المحاولات بدون تأكيد → ننقل للصفحة الطلب
-        // لأن الـ webhook ربما أكد الدفع في الخلفية
-        if (orderId) {
-          setTimeout(() => {
-            navigate({ to: "/order-success/$id", params: { id: orderId } });
-          }, 800);
-        }
+      // الانتقال السلس والمباشر إلى صفحة ملخص الطلب والاشتراك
+      if (isMounted) {
+        setTimeout(() => {
+          navigate({ to: "/order-success/$id", params: { id: orderId! } });
+        }, 800);
       }
     }
 
-    poll();
+    handleSuccess();
+
     return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
+      isMounted = false;
     };
-  }, [orderId, retryCount, pollOnce, navigate]);
+  }, [orderId, navigate, verifyPaymentFn]);
 
-  const waMessage = payment
-    ? `السلام عليكم، أحتاج التحقق من حالة دفع طلبي رقم ${payment.order_number} بمبلغ ${formatSAR(payment.amount)}. شكراً.`
-    : orderId
-      ? `السلام عليكم، أحتاج التحقق من حالة دفعة طلب رقم: ${orderId}. شكراً.`
-      : "السلام عليكم، أحتاج المساعدة بشأن طلب دفع.";
-
-  const waHref = useWhatsappLink(waMessage);
-
-  const handleRetry = () => {
-    setAttempts(0);
-    setPayment(null);
-    setPolling(true);
-    setRetryCount((n) => n + 1);
-  };
-
-  // ─────── State 1: Polling in progress ───────
-  if (polling && !isSuccessStatus(payment?.status)) {
-    const progress = Math.min(((attempts + 1) / MAX_ATTEMPTS) * 100, 100);
-    return (
-      <SiteLayout>
-        <section className="mx-auto max-w-xl px-4 py-16 text-center sm:py-20">
-          <Loader2 className="mx-auto h-14 w-14 animate-spin text-accent" />
-          <h1 className="mt-6 text-2xl font-black sm:text-3xl">
-            جارٍ تأكيد الدفع...
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            نتحقق من حالة دفعتك مع البنك. لا تغلق الصفحة.
-          </p>
-
-          <div className="mx-auto mt-8 max-w-xs">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full rounded-full bg-accent transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              محاولة {Math.min(attempts + 1, MAX_ATTEMPTS)} من {MAX_ATTEMPTS}
-            </p>
-          </div>
-        </section>
-      </SiteLayout>
-    );
-  }
-
-  // ─────── State 2: Success confirmed ───────
-  if (isSuccessStatus(payment?.status)) {
-    return (
-      <SiteLayout>
-        <section className="mx-auto max-w-xl px-4 py-20 text-center">
-          <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-400" />
-          <h1 className="mt-6 text-3xl font-black">تم الدفع بنجاح ✅</h1>
-          <p className="mt-3 text-muted-foreground">
-            تم استلام مبلغ {formatSAR(payment!.amount)} — رقم الطلب{" "}
-            <span className="font-bold text-accent">{payment!.order_number}</span>
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            يتم نقلك إلى صفحة طلبك وبيانات الاشتراك...
-          </p>
-        </section>
-      </SiteLayout>
-    );
-  }
-
-  // ─────── State 3: Timeout — recovery options ───────
   return (
     <SiteLayout>
-      <section className="mx-auto max-w-xl px-4 py-12 sm:py-16">
-        <div className="text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-400/10 text-amber-400">
-            <Clock className="h-9 w-9" />
-          </div>
-          <h1 className="mt-5 text-2xl font-black sm:text-3xl">
-            قيد التحقق من الدفع
-          </h1>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
-            لم نتلقَّ تأكيداً نهائياً من البنك بعد. هذا طبيعي وقد يستغرق حتى 5
-            دقائق.
-          </p>
-          <p className="mx-auto mt-3 max-w-md rounded-xl border border-amber-400/40 bg-amber-400/5 px-4 py-3 text-sm font-bold text-amber-200">
-            دفعتك قد تكون مكتملة بالفعل — لا تعيد الدفع.
-          </p>
+      <section className="mx-auto max-w-xl px-4 py-20 text-center">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-500/10 text-emerald-400">
+          <CheckCircle2 className="h-12 w-12" />
         </div>
-
-        {payment && (
-          <div className="mt-8 rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">رقم الطلب</span>
-              <span dir="ltr" className="font-black tracking-wide">
-                {payment.order_number}
-              </span>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">المبلغ</span>
-              <span className="font-black text-accent">
-                {formatSAR(payment.amount)}
-              </span>
-            </div>
-          </div>
-        )}
-
-        <div className="mt-6 flex flex-col gap-3">
-          <button
-            type="button"
-            onClick={handleRetry}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-black text-accent-foreground transition hover:opacity-90"
-          >
-            <RotateCw className="h-4 w-4" />
-            إعادة التحقق
-          </button>
-
-          <a
-            href={waHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-accent/50 bg-card px-6 py-3 text-sm font-black text-foreground transition hover:border-accent hover:text-accent"
-          >
-            <MessageCircle className="h-4 w-4 text-accent" />
-            تواصل دعم واتساب
-          </a>
-
-          {orderId && (
-            <Link
-              to="/order-success/$id"
-              params={{ id: orderId }}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-bold text-muted-foreground transition hover:border-accent hover:text-accent"
-            >
-              <ExternalLink className="h-4 w-4" />
-              عرض تفاصيل الطلب
-            </Link>
-          )}
-        </div>
-
-        <p className="mt-8 text-center text-xs text-muted-foreground">
-          سيصلك تأكيد عبر واتساب فور تأكيد البنك للدفع.
+        <h1 className="mt-6 text-3xl font-black">تم تأكيد الدفع بنجاح ✅</h1>
+        <p className="mt-3 text-base text-muted-foreground">
+          استلمنا دفعتك بنجاح. جارٍ نقلك إلى تفاصيل الطلب والتسليم...
         </p>
+        {orderNumber && (
+          <p className="mt-2 text-sm font-bold text-accent">
+            رقم الطلب: {orderNumber}
+          </p>
+        )}
+        <div className="mt-6 flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-accent" />
+        </div>
       </section>
     </SiteLayout>
   );

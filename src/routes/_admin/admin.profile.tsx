@@ -23,16 +23,60 @@ function ProfilePage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPwd, setSavingPwd] = useState(false);
 
+  useEffect(() => {
+    if (adminUser) {
+      setFullName(adminUser.full_name ?? "");
+      setPhone(adminUser.phone ?? "");
+    }
+  }, [adminUser]);
+
   const saveProfile = async () => {
     if (!adminUser) return;
     setSavingProfile(true);
-    const { error } = await supabase
-      .from("admin_users")
-      .update({ full_name: fullName, phone })
-      .eq("id", adminUser.id);
-    setSavingProfile(false);
-    if (error) toast.error("تعذّر الحفظ");
-    else toast.success("تم حفظ التعديلات");
+    try {
+      const cleanName = fullName.trim();
+      const cleanPhone = phone.trim() || null;
+
+      // 1. تحديث جدول admin_users
+      const { error: adminErr } = await supabase
+        .from("admin_users")
+        .update({
+          full_name: cleanName,
+          phone: cleanPhone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", adminUser.id);
+
+      if (adminErr) throw adminErr;
+
+      // 2. تحديث جدول profiles
+      if (adminUser.user_id) {
+        await supabase.from("profiles").upsert(
+          {
+            user_id: adminUser.user_id,
+            full_name: cleanName,
+            phone: cleanPhone,
+            email: adminUser.email,
+          },
+          { onConflict: "user_id" },
+        );
+      }
+
+      // 3. تحديث بيانات المصادقة Auth Metadata
+      await supabase.auth.updateUser({
+        data: {
+          full_name: cleanName,
+          phone: cleanPhone,
+        },
+      });
+
+      toast.success("تم حفظ التعديلات بنجاح");
+    } catch (error: any) {
+      console.error("[ProfilePage] save error:", error);
+      toast.error("تعذّر حفظ التعديلات");
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const changePwd = async () => {
