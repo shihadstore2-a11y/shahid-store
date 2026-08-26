@@ -68,20 +68,24 @@ function PaymentSuccessPage() {
 
     async function handleSuccess() {
       try {
-        // تأكيد الدفع فوراً عبر دالة السيرفر
-        const res = await verifyPaymentFn({ data: { orderId: orderId! } });
-        if (isMounted && res.ok && res.order?.order_number) {
-          setOrderNumber(res.order.order_number);
+        // تأكيد الدفع فوراً عبر دالة السيرفر والـ RPC المباشر
+        const [res] = await Promise.allSettled([
+          verifyPaymentFn({ data: { orderId: orderId! } }),
+          supabase.rpc("process_successful_payment", { _order_id: orderId! }),
+        ]);
+
+        if (isMounted && res.status === "fulfilled" && res.value.ok && res.value.order?.order_number) {
+          setOrderNumber(res.value.order.order_number);
         }
       } catch (e) {
         console.warn("[PaymentSuccess] instant verify exception:", e);
       }
 
-      // الانتقال السلس والمباشر إلى صفحة ملخص الطلب والاشتراك
+      // الانتقال المباشر إلى صفحة ملخص الطلب والتسليم
       if (isMounted) {
         setTimeout(() => {
           navigate({ to: "/order-success/$id", params: { id: orderId! } });
-        }, 800);
+        }, 600);
       }
     }
 

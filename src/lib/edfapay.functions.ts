@@ -159,95 +159,45 @@ export const verifyAndConfirmPayment = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { orderId } = data;
 
-    // 1. فحص الطلب في DB أولاً (idempotent — إذا كان مدفوع/مسلّم مسبقاً)
-    const { data: order, error: orderErr } = await supabaseAdmin
-      .from("orders")
-      .select("id, order_number, total, status, customer_name, customer_phone, customer_email")
-      .eq("id", orderId)
-      .maybeSingle();
-
-    if (orderErr || !order) {
-      console.warn("[EdfaPay Verify] order not found in DB:", orderErr);
-      return { ok: false as const, confirmed: false, error: "الطلب غير موجود" };
-    }
-
-    // إذا كان الطلب مدفوع أو مُسلَّم مسبقاً → أرجع نجاح مباشرة (idempotent)
-    if (order.status === "paid" || order.status === "fulfilled") {
-      return {
-        ok: true as const,
-        confirmed: true,
-        order: {
-          id: orderId,
-          order_number: order.order_number,
-          total: order.total,
-          status: order.status,
-        },
-      };
-    }
-
-    // إذا كان الطلب فاشل أو ملغي → أرجع فشل
-    if (order.status === "payment_failed" || order.status === "cancelled") {
-      return { ok: true as const, confirmed: false, status: order.status as string };
-    }
-
-    // 2. التحقق من حالة الدفع من EdfaPay وتأكيد الطلب فوراً
-    let isFailed = false;
-    try {
-      const { fetchPaymentStatus } = await import("./edfapay.server");
-      const statusRes = await fetchPaymentStatus(orderId);
-      console.log("[EdfaPay Verify] S2S status check for", orderId, "→", statusRes.ok ? statusRes.status : statusRes.error);
-      if (statusRes.ok && (statusRes.status === "failed" || statusRes.status === "cancelled")) {
-        isFailed = true;
-      }
-    } catch (err) {
-      console.warn("[EdfaPay Verify] S2S status check skipped:", err);
-    }
-
-    if (isFailed) {
-      return { ok: true as const, confirmed: false, status: "failed" as const };
-    }
-
-    // 3. تأكيد الدفع في قاعدة البيانات ومحاولة صرف الاشتراك من المخزون
+    // 1. استدعاء دالة التأكيد الشاملة والصرف من قاعدة البيانات
     let finalStatus = "paid";
+    let orderNum = "";
+    let orderTot = 0;
+
     try {
       const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc(
-        "confirm_order_paid",
+        "process_successful_payment",
         { _order_id: orderId },
       );
       if (!rpcErr && rpcRes && typeof rpcRes === "object") {
         const rpcData = rpcRes as Record<string, unknown>;
         if (rpcData.status) finalStatus = String(rpcData.status);
+        if (rpcData.order_number) orderNum = String(rpcData.order_number);
+        if (rpcData.total) orderTot = Number(rpcData.total);
       }
     } catch (rpcEx) {
-      console.warn("[EdfaPay Verify] confirm_order_paid RPC error:", rpcEx);
+      console.warn("[EdfaPay Verify] process_successful_payment error:", rpcEx);
     }
 
-    // Fallback: تحديث مباشر في حال عدم وجود الـ RPC
-    await supabaseAdmin
-      .from("orders")
-      .update({ status: finalStatus === "fulfilled" ? "fulfilled" : "paid", updated_at: new Date().toISOString() })
-      .eq("id", orderId)
-      .in("status", ["pending", "initiated"]);
-
-    await supabaseAdmin
-      .from("payment_transactions")
-      .update({ status: "success", updated_at: new Date().toISOString() })
-      .eq("order_id", orderId);
-
-    // محاولة صرف الاشتراك تلقائياً إن لم يُصرف بعد
+    // 2. تحديث مباشر احتياطي
     try {
-      const { data: claimRes } = await supabaseAdmin.rpc(
-        "claim_subscription_for_order",
-        { _order_id: orderId },
-      );
-      if (claimRes && typeof claimRes === "object" && (claimRes as Record<string, unknown>).claimed) {
-        finalStatus = "fulfilled";
-      }
-    } catch (claimEx) {
-      console.warn("[EdfaPay Verify] claim_subscription_for_order error:", claimEx);
+      await supabaseAdmin
+        .from("orders")
+        .update({
+          status: finalStatus === "fulfilled" ? "fulfilled" : "paid",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+
+      await supabaseAdmin
+        .from("payment_transactions")
+        .update({ status: "success", updated_at: new Date().toISOString() })
+        .eq("order_id", orderId);
+    } catch (e) {
+      console.warn("[EdfaPay Verify] direct update warning:", e);
     }
 
-    // قراءة الحالة النهائية للطلب
+    // 3. قراءة أحدث بيانات للطلب
     const { data: updatedOrder } = await supabaseAdmin
       .from("orders")
       .select("id, order_number, total, status")
@@ -259,8 +209,8 @@ export const verifyAndConfirmPayment = createServerFn({ method: "POST" })
       confirmed: true,
       order: {
         id: orderId,
-        order_number: updatedOrder?.order_number || order.order_number,
-        total: Number(updatedOrder?.total ?? order.total),
+        order_number: updatedOrder?.order_number || orderNum || "—",
+        total: Number(updatedOrder?.total ?? orderTot),
         status: updatedOrder?.status || finalStatus,
       },
     };
