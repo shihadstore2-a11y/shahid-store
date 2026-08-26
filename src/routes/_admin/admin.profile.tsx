@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, KeyRound, LogOut } from "lucide-react";
 import { useAdminUser } from "@/hooks/useAdminUser";
 import { supabase } from "@/integrations/supabase/client";

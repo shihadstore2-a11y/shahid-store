@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +22,7 @@ const schema = z.object({
         const cleaned = v.replace(/[\s\-()]/g, "");
         return /^(?:\+|00)?[1-9]\d{6,14}$/.test(cleaned) || /^(?:0)?5\d{8}$/.test(cleaned);
       },
-      "يرجى إدخال رقم جوال صحيح مع رمز الدولة (مثل: +212705507060 أو +9665...)",
+      "يرجى إدخال رقم جوال صحيح مع رمز الدولة (مثل: +966500451602)",
     ),
 });
 type Vals = z.infer<typeof schema>;
@@ -30,6 +30,7 @@ type Vals = z.infer<typeof schema>;
 function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const {
     register,
     handleSubmit,
@@ -50,10 +51,23 @@ function ProfilePage() {
           .select("full_name, phone")
           .eq("user_id", user.id)
           .maybeSingle();
+
+        // فحص هل المستخدم لديه حساب إداري
+        const { data: adminData } = await supabase
+          .from("admin_users")
+          .select("id, role, is_active")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (adminData && !cancelled) {
+          setIsAdmin(true);
+        }
+
         if (cancelled) return;
         const metaName = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || "";
         const metaPhone = (user.user_metadata?.phone as string) || (user.phone as string) || "";
-        
+
         const finalName = data?.full_name || metaName;
         const finalPhone = data?.phone || metaPhone;
 
@@ -66,13 +80,14 @@ function ProfilePage() {
         if (user.id && ((!data?.full_name && metaName) || (!data?.phone && metaPhone))) {
           supabase.from("profiles").upsert(
             {
+              id: user.id,
               user_id: user.id,
               full_name: finalName,
               phone: finalPhone,
               email: user.email,
             },
             { onConflict: "user_id" },
-          ).then(() => {});
+          ).then(() => { });
         }
       } catch (e) {
         console.error("[account] unexpected error:", e);
@@ -90,25 +105,7 @@ function ProfilePage() {
     const cleanName = v.full_name.trim();
     const cleanPhone = v.phone.trim();
 
-    // 1. تحديث جدول profiles
-    const { error } = await supabase
-      .from("profiles")
-      .upsert(
-        {
-          user_id: user.id,
-          full_name: cleanName,
-          phone: cleanPhone,
-          email: user.email,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" },
-      );
-    if (error) {
-      toast.error("تعذّر حفظ البيانات");
-      return;
-    }
-
-    // 2. تحديث بيانات المصادقة في Supabase Auth
+    // 1. تحديث بيانات المصادقة في Supabase Auth
     try {
       await supabase.auth.updateUser({
         data: {
@@ -118,6 +115,34 @@ function ProfilePage() {
       });
     } catch (authErr) {
       console.warn("[account] updateUser error:", authErr);
+    }
+
+    // 2. تحديث جدول profiles
+    try {
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update({
+          full_name: cleanName,
+          phone: cleanPhone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+
+      if (updErr) {
+        await supabase.from("profiles").upsert(
+          {
+            id: user.id,
+            user_id: user.id,
+            full_name: cleanName,
+            phone: cleanPhone,
+            email: user.email,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" },
+        );
+      }
+    } catch (profErr) {
+      console.warn("[account] profiles write error:", profErr);
     }
 
     // 3. تحديث admin_users إن كان المشرف مسجلاً فيه
@@ -146,10 +171,29 @@ function ProfilePage() {
   if (loading) return <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">جارٍ التحميل...</div>;
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]"
-    >
+    <div className="space-y-4">
+      {isAdmin && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-black text-lg">👑</span>
+            <div>
+              <p className="text-sm font-black text-foreground">حساب إداري للمتجر</p>
+              <p className="text-xs text-muted-foreground">أنت مسجّل بصلاحية إدارية في لوحة التحكم.</p>
+            </div>
+          </div>
+          <Link
+            to="/admin/dashboard"
+            className="rounded-xl bg-primary px-4 py-2 text-xs font-black text-primary-foreground hover:bg-primary/90 transition"
+          >
+            الانتقال للوحة الإدارة ⚡
+          </Link>
+        </div>
+      )}
+
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]"
+      >
       <h2 className="text-lg font-black">الملف الشخصي</h2>
       <Field label="الاسم الكامل" error={errors.full_name?.message}>
         <input {...register("full_name")} className="inputx" autoComplete="name" />
@@ -170,6 +214,7 @@ function ProfilePage() {
       </button>
       <style>{`.inputx{display:block;width:100%;border-radius:0.5rem;border:1px solid var(--input);background:var(--background);padding:0.625rem 0.75rem;font-size:0.875rem;color:var(--foreground);outline:none}.inputx:focus{box-shadow:0 0 0 2px var(--ring)}`}</style>
     </form>
+    </div>
   );
 }
 
