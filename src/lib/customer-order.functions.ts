@@ -121,15 +121,34 @@ function projectAndMask(row: Record<string, unknown>): CustomerOrderView {
 export const getCustomerOrderView = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<CustomerOrderResult> => {
-    const { data: row, error } = await supabaseAdmin
+    let row: Record<string, unknown> | null = null;
+
+    const { data: adminRow, error: adminErr } = await supabaseAdmin
       .from("orders")
       .select(`${ORDER_COLUMNS},user_id,customer_email`)
       .eq("id", data.id)
       .maybeSingle();
 
-    if (error || !row) throw notFound();
+    if (adminRow) {
+      row = adminRow as unknown as Record<string, unknown>;
+    } else {
+      if (adminErr) console.warn("[getCustomerOrderView] supabaseAdmin error:", adminErr.message);
+      // محاولة عبر RPC آمن إذا تعذر الـ direct select
+      try {
+        const { data: rpcRow } = await supabaseAdmin.rpc("get_order_delivery_status", {
+          _order_id: data.id,
+        });
+        if (rpcRow && typeof rpcRow === "object" && (rpcRow as Record<string, unknown>).order_number) {
+          row = rpcRow as Record<string, unknown>;
+        }
+      } catch (e) {
+        console.warn("[getCustomerOrderView] RPC fallback exception:", e);
+      }
+    }
 
-    const baseView = projectAndMask(row as unknown as Record<string, unknown>);
+    if (!row) throw notFound();
+
+    const baseView = projectAndMask(row);
     return { locked: false, order: baseView };
   });
 

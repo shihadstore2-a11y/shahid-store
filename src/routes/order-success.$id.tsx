@@ -151,9 +151,36 @@ function SuccessPage() {
   }
 
   if (isError || !order) {
-    // notFound() من serverFn → يُعرَض notFoundComponent تلقائياً عند throw من loader؛
-    // مع useQuery نُعالجه يدوياً:
-    throw notFound();
+    return (
+      <SiteLayout>
+        <section className="mx-auto max-w-md px-4 py-16 text-center">
+          <div className="rounded-3xl border border-border bg-card p-8 shadow-[var(--shadow-card)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400">
+              <RefreshCw className="h-8 w-8 animate-spin" />
+            </div>
+            <h1 className="mt-4 text-xl font-black sm:text-2xl">جارٍ جلب تفاصيل طلبك</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              تم استلام دفعتك بنجاح. نُجري تحديثاً لسجلات طلبك الآن...
+            </p>
+            <div className="mt-6 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-black text-primary-foreground hover:bg-primary/90"
+              >
+                <RefreshCw className="h-4 w-4" /> تحديث الصفحة الآن
+              </button>
+              <Link
+                to="/track-order"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-bold text-foreground hover:border-primary hover:text-primary"
+              >
+                <Package className="h-4 w-4" /> تتبّع برقم الطلب
+              </Link>
+            </div>
+          </div>
+        </section>
+      </SiteLayout>
+    );
   }
 
   return (
