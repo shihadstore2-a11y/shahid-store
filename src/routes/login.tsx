@@ -27,10 +27,12 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-// H.9: auto-detect email vs Saudi phone
+// H.9: auto-detect email vs phone (supports all countries and Saudi local)
 const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
-const isPhoneCandidate = (v: string) =>
-  /^(?:\+?966|00966|0)?5\d{8}$/.test(v.replace(/[\s\-()]/g, ""));
+const isPhoneCandidate = (v: string) => {
+  const cleaned = v.replace(/[\s\-()]/g, "");
+  return /^(?:\+|00)?[1-9]\d{6,14}$/.test(cleaned) || /^(?:0)?5\d{8}$/.test(cleaned);
+};
 
 const schema = z.object({
   identifier: z
@@ -39,7 +41,7 @@ const schema = z.object({
     .min(1, "أدخل البريد أو رقم الجوال")
     .refine(
       (v) => isEmail(v) || isPhoneCandidate(v),
-      "أدخل بريداً صحيحاً أو رقم جوال سعودي (05XXXXXXXX)",
+      "أدخل بريداً صحيحاً أو رقم جوال مع مفتاح الدولة",
     ),
   password: z.string().min(6, "كلمة المرور قصيرة"),
 });
@@ -65,7 +67,7 @@ function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<Vals>({ resolver: zodResolver(schema) });
 
-  // H.9 Senior Addition 1: UX hint — show when phone detected
+  // UX hint — show when phone detected
   const showsPhoneHint =
     identifierValue.length > 0 && isPhoneCandidate(identifierValue) && !isEmail(identifierValue);
 
@@ -75,17 +77,23 @@ function LoginPage() {
     if (isEmail(v.identifier)) {
       emailToUse = v.identifier.trim();
     } else if (isPhoneCandidate(v.identifier)) {
-      const { data: email, error: lookupErr } = await supabase.rpc(
-        "get_email_by_phone",
-        { _phone: v.identifier },
-      );
-      if (lookupErr || !email) {
-        toast.error("بيانات الدخول غير صحيحة");
+      try {
+        const { data: email, error: lookupErr } = await supabase.rpc(
+          "get_email_by_phone",
+          { _phone: v.identifier.trim() },
+        );
+        if (lookupErr || !email) {
+          toast.error("بيانات الدخول غير صحيحة (تأكد من رقم الجوال أو استخدم البريد الإلكتروني).");
+          return;
+        }
+        emailToUse = email;
+      } catch (err) {
+        console.warn("[login] get_email_by_phone exception:", err);
+        toast.error("تعذّر التحقق من رقم الجوال، يرجى تجربة البريد الإلكتروني.");
         return;
       }
-      emailToUse = email;
     } else {
-      toast.error("أدخل بريداً صحيحاً أو رقم جوال سعودي");
+      toast.error("أدخل بريداً صحيحاً أو رقم جوال صالح");
       return;
     }
 
@@ -98,8 +106,13 @@ function LoginPage() {
       const msg = (error.message || "").toLowerCase();
       if (msg.includes("email not confirmed")) {
         toast.error("الحساب قيد التفعيل. حاول مرة أخرى أو تواصل مع الدعم.");
-      } else if (msg.includes("invalid login credentials")) {
+      } else if (
+        msg.includes("invalid login credentials") ||
+        msg.includes("invalid_credentials")
+      ) {
         toast.error("بيانات الدخول غير صحيحة (تأكد من صحة البريد/الجوال وكلمة المرور).");
+      } else if (msg.includes("database error") || msg.includes("schema")) {
+        toast.error("حصل خطأ مؤقت في التحقق. يرجى تجربة تسجيل الدخول عبر البريد الإلكتروني مباشرة.");
       } else {
         toast.error(error.message || "بيانات الدخول غير صحيحة");
       }

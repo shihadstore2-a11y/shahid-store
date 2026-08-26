@@ -52,10 +52,10 @@ function ProfilePage() {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        // فحص هل المستخدم لديه حساب إداري
+        // فحص هل المستخدم لديه حساب إداري وجلب بياناته
         const { data: adminData } = await supabase
           .from("admin_users")
-          .select("id, role, is_active")
+          .select("id, role, is_active, full_name, phone")
           .eq("user_id", user.id)
           .eq("is_active", true)
           .maybeSingle();
@@ -68,8 +68,8 @@ function ProfilePage() {
         const metaName = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || "";
         const metaPhone = (user.user_metadata?.phone as string) || (user.phone as string) || "";
 
-        const finalName = data?.full_name || metaName;
-        const finalPhone = data?.phone || metaPhone;
+        const finalName = data?.full_name || adminData?.full_name || metaName || "";
+        const finalPhone = data?.phone || adminData?.phone || metaPhone || "";
 
         reset({
           full_name: finalName,
