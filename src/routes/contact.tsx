@@ -31,7 +31,16 @@ export const Route = createFileRoute("/contact")({
 
 const schema = z.object({
   name: z.string().trim().min(2, "الاسم قصير").max(80),
-  phone: z.string().trim().regex(/^(?:\+?966|0)?5\d{8}$/u, "رقم الجوال غير صحيح"),
+  phone: z
+    .string()
+    .trim()
+    .refine(
+      (v) => {
+        const cleaned = v.replace(/[\s\-()]/g, "");
+        return /^(?:\+|00)?[1-9]\d{6,14}$/.test(cleaned) || /^(?:0)?5\d{8}$/.test(cleaned);
+      },
+      "يرجى إدخال رقم جوال صحيح مع رمز الدولة (مثل: +212... أو +966...)",
+    ),
   topic: z.string().trim().min(2, "اختر موضوعاً").max(60),
   message: z.string().trim().min(5, "الرسالة قصيرة").max(500),
 });

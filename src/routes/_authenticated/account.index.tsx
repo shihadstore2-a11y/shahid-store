@@ -14,7 +14,16 @@ export const Route = createFileRoute("/_authenticated/account/")({
 
 const schema = z.object({
   full_name: z.string().trim().min(2, "الاسم قصير").max(80),
-  phone: z.string().trim().regex(/^(?:\+?966|0)?5\d{8}$/u, "رقم الجوال غير صحيح"),
+  phone: z
+    .string()
+    .trim()
+    .refine(
+      (v) => {
+        const cleaned = v.replace(/[\s\-()]/g, "");
+        return /^(?:\+|00)?[1-9]\d{6,14}$/.test(cleaned) || /^(?:0)?5\d{8}$/.test(cleaned);
+      },
+      "يرجى إدخال رقم جوال صحيح مع رمز الدولة (مثل: +212705507060 أو +9665...)",
+    ),
 });
 type Vals = z.infer<typeof schema>;
 
@@ -165,11 +174,12 @@ function ProfilePage() {
 }
 
 function normalizePhone(p: string) {
-  let s = p.trim();
-  if (s.startsWith("+966")) s = "966" + s.slice(4);
-  else if (s.startsWith("0")) s = "966" + s.slice(1);
-  else if (s.startsWith("5")) s = "966" + s;
-  return s;
+  let s = p.trim().replace(/[\s\-()]/g, "");
+  if (s.startsWith("+")) return s;
+  if (s.startsWith("00")) return "+" + s.slice(2);
+  if (s.startsWith("05") && s.length === 10) return "+966" + s.slice(1);
+  if (s.startsWith("5") && s.length === 9) return "+966" + s;
+  return s.startsWith("+") ? s : "+" + s;
 }
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
