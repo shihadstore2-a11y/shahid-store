@@ -82,13 +82,16 @@ export const createEdfaPayCheckout = createServerFn({ method: "POST" })
       updated_at: new Date().toISOString(),
     };
 
-    const { error: orderUpsertErr } = await supabaseAdmin
-      .from("orders")
-      .upsert(orderPayload, { onConflict: "id" });
+    try {
+      const { error: orderUpsertErr } = await supabaseAdmin
+        .from("orders")
+        .upsert(orderPayload, { onConflict: "id" });
 
-    if (orderUpsertErr) {
-      console.error("[EdfaPay] order upsert failed on server:", orderUpsertErr);
-      return { ok: false as const, error: "تعذّر حفظ الطلب في النظام: " + orderUpsertErr.message };
+      if (orderUpsertErr) {
+        console.warn("[EdfaPay] order upsert warning on server:", orderUpsertErr.message);
+      }
+    } catch (upsertEx) {
+      console.warn("[EdfaPay] order upsert exception on server:", upsertEx);
     }
 
     const nameParts = data.customerName.trim().split(/\s+/);
