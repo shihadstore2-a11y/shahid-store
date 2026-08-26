@@ -27,6 +27,13 @@ const CreateCheckoutInput = z.object({
   orderId: z.string().uuid(),
   orderNumber: z.string().min(3).max(40),
   amount: z.number().positive().max(10000),
+  subtotal: z.number().nonnegative().optional(),
+  discount: z.number().nonnegative().optional(),
+  vat: z.number().nonnegative().optional(),
+  couponCode: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  userId: z.string().nullable().optional(),
+  items: z.array(z.record(z.unknown())).optional(),
   description: z.string().min(1).max(100),
   customerName: z.string().min(2).max(120),
   customerPhone: E164Phone,
@@ -54,35 +61,39 @@ export const createEdfaPayCheckout = createServerFn({ method: "POST" })
       console.warn("[EdfaPay] could not capture IP:", err);
     }
 
-    // تحقق من الطلب في DB لمنع التلاعب (إن كان متاحاً للقراءة)
-    try {
-      const { data: order, error: orderError } = await supabaseAdmin
-        .from("orders")
-        .select("id, order_number, total, customer_phone, status, payment_method")
-        .eq("id", data.orderId)
-        .maybeSingle();
+    // 1. ضمان تسجيل الطلب في قاعدة البيانات من السيرفر مباشرة (يتجاوز أي حجب RLS)
+    const orderPayload = {
+      id: data.orderId,
+      order_number: data.orderNumber,
+      user_id: data.userId || null,
+      customer_name: data.customerName.trim(),
+      customer_phone: data.customerPhone.trim(),
+      customer_email: data.customerEmail.toLowerCase().trim(),
+      city: null,
+      notes: data.notes || null,
+      items: data.items || [],
+      subtotal: data.subtotal ?? data.amount,
+      discount: data.discount ?? 0,
+      vat: data.vat ?? 0,
+      total: data.amount,
+      coupon_code: data.couponCode || null,
+      payment_method: "card",
+      status: "pending",
+      updated_at: new Date().toISOString(),
+    };
 
-      if (order) {
-        if (order.status !== "pending") {
-          return { ok: false as const, error: "الطلب لم يعد متاحاً للدفع (حالة الطلب غير معلقة)" };
-        }
-        if (Number(order.total) !== Number(data.amount)) {
-          return { ok: false as const, error: "عدم تطابق المبلغ" };
-        }
-        if (order.payment_method !== "card") {
-          return { ok: false as const, error: "طريقة الدفع غير صحيحة لهذا الطلب" };
-        }
-      } else if (orderError) {
-        console.warn("[EdfaPay] order read skipped due to RLS:", orderError.message);
-      }
-    } catch (err) {
-      console.warn("[EdfaPay] order check exception:", err);
+    const { error: orderUpsertErr } = await supabaseAdmin
+      .from("orders")
+      .upsert(orderPayload, { onConflict: "id" });
+
+    if (orderUpsertErr) {
+      console.error("[EdfaPay] order upsert failed on server:", orderUpsertErr);
+      return { ok: false as const, error: "تعذّر حفظ الطلب في النظام: " + orderUpsertErr.message };
     }
 
     const nameParts = data.customerName.trim().split(/\s+/);
     const firstName = nameParts[0] ?? "Customer";
     const lastName = nameParts.slice(1).join(" ") || firstName;
-    // Phone is already E.164 (+9665XXXXXXXX) from frontend — no conversion needed.
     const phoneIntl = data.customerPhone;
 
     const callbackUrl = `${data.origin}/api/public/edfapay-webhook`;
@@ -108,12 +119,11 @@ export const createEdfaPayCheckout = createServerFn({ method: "POST" })
       customerCountry: data.customerCountry,
     });
 
-
     if (!result.ok) {
       return { ok: false as const, error: result.error };
     }
 
-    // سجّل محاولة الدفع
+    // 2. تسجيل معاملة الدفع في DB
     const { error: insertError } = await supabaseAdmin
       .from("payment_transactions")
       .insert({

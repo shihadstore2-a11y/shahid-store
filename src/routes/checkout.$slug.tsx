@@ -552,7 +552,7 @@ function CheckoutPage() {
       }
     }
 
-    // مسار الدفع البطاقي — EdfaPay
+    // مسار الدفع البطاقي — EdfaPay (إنشاء الطلب وحفظه في السيرفر فوراً)
     if (data.payment_method === "card") {
       try {
         const customerEmail = data.customer_email;
@@ -560,14 +560,29 @@ function CheckoutPage() {
           data: {
             orderId,
             orderNumber,
+            userId: finalUserId,
             amount: finalTotals.totalIncl,
+            subtotal: finalTotals.subtotalExcl,
+            discount: finalTotals.discountIncl,
+            vat: finalTotals.vat,
+            couponCode: finalCouponCode,
+            notes: data.notes || null,
+            items: [
+              {
+                product_id: product.id,
+                product_slug: product.slug,
+                product_name: product.name_ar,
+                duration_months: product.duration_months,
+                unit_price: unitPrice,
+                qty,
+              },
+            ],
             description: `${product.name_ar} × ${qty}${finalCouponCode ? ` [${finalCouponCode}]` : ""}`.slice(0, 100),
             customerName: data.customer_name,
-            customerPhone: data.customer_phone,
+            customerPhone: data.customerPhone,
             customerCountry: detectCountry(data.customer_phone),
             customerEmail,
             origin: window.location.origin,
-
           },
         });
 
