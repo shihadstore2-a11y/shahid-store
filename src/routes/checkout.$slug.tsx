@@ -579,7 +579,7 @@ function CheckoutPage() {
             ],
             description: `${product.name_ar} × ${qty}${finalCouponCode ? ` [${finalCouponCode}]` : ""}`.slice(0, 100),
             customerName: data.customer_name,
-            customerPhone: data.customerPhone,
+            customerPhone: data.customer_phone,
             customerCountry: detectCountry(data.customer_phone),
             customerEmail,
             origin: window.location.origin,
