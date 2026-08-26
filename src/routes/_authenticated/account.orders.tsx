@@ -83,7 +83,10 @@ function OrdersPage() {
           },
         );
         if (!rpcErr && rpcOrders && Array.isArray(rpcOrders)) {
-          return rpcOrders;
+          // استبعاد الطلبات غير المدفوعة (pending / initiated)
+          return rpcOrders.filter((o: any) =>
+            ["paid", "fulfilled", "refunded", "cancelled"].includes(o.status),
+          );
         }
       } catch (e) {
         console.warn("[OrdersPage] RPC failed, fallback to direct query:", e);
