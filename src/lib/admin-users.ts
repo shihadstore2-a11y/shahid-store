@@ -32,7 +32,16 @@ export type CreateAdminPayload = {
 
 export async function createAdminUser(payload: CreateAdminPayload): Promise<void> {
   try {
-    const res = await createAdminUserServerFn({ data: payload });
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+
+    const res = await createAdminUserServerFn({
+      data: {
+        ...payload,
+        authToken: token,
+      },
+    });
+
     if (!res || !res.ok) {
       throw new Error("فشل إنشاء المستخدم الإداري");
     }

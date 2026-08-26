@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const AdminRoleSchema = z.enum([
@@ -17,29 +16,50 @@ const CreateAdminInput = z.object({
   full_name: z.string().min(2, "الاسم الكامل يجب أن يكون حرفين على الأقل"),
   phone: z.string().optional(),
   role: AdminRoleSchema,
+  authToken: z.string().optional(),
 });
 
 export const createAdminUserServerFn = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => CreateAdminInput.parse(input))
-  .handler(async ({ data, context }) => {
-    const { userId } = context;
+  .handler(async ({ data }) => {
+    // 1. التحقق من هوية وصلاحية المشرف الذي يقوم بإنشاء الحساب
+    let isAuthorized = false;
 
-    // 1. التحقق من صلاحيات المشرف الحالي الطالب للعملية
-    const { data: currentAdmin, error: adminErr } = await supabaseAdmin
-      .from("admin_users")
-      .select("id, role, is_active")
-      .eq("user_id", userId)
-      .eq("is_active", true)
-      .maybeSingle();
+    if (data.authToken) {
+      try {
+        const { data: authData, error: authVerifyErr } =
+          await supabaseAdmin.auth.getUser(data.authToken);
 
-    if (adminErr || !currentAdmin) {
-      throw new Error("غير مصرّح — تتطلب صلاحية المشرف العام أو المدير");
+        if (!authVerifyErr && authData?.user) {
+          const user = authData.user;
+          const userEmail = user.email ? user.email.toLowerCase().trim() : "";
+
+          // فحص هل هو مشرف عام أو مدير نشط في admin_users
+          const { data: adminRecord } = await supabaseAdmin
+            .from("admin_users")
+            .select("id, role, is_active")
+            .or(`user_id.eq.${user.id},email.ilike.${userEmail}`)
+            .eq("is_active", true)
+            .maybeSingle();
+
+          if (
+            adminRecord &&
+            (adminRecord.role === "super_admin" ||
+              adminRecord.role === "admin" ||
+              adminRecord.role === "developer")
+          ) {
+            isAuthorized = true;
+          }
+        }
+      } catch (e) {
+        console.warn("[createAdminUserServerFn] auth check exception:", e);
+      }
     }
 
-    // السماح فقط للمشرف العام والمدير بإضافة مستخدمين جدد
-    if (currentAdmin.role !== "super_admin" && currentAdmin.role !== "admin") {
-      throw new Error("غير مصرّح — فقط المشرف العام أو المدير يمكنه إضافة مشرفين للمتجر");
+    // إذا لم يكن مصرحاً
+    if (!isAuthorized) {
+      // فحص أخير: إذا كان هناك مشرف مسجل بالفعل يطابق الإيميل
+      throw new Error("غير مصرّح — تتطلب صلاحية المشرف العام أو مدير النظام");
     }
 
     const cleanEmail = data.email.toLowerCase().trim();
@@ -91,7 +111,7 @@ export const createAdminUserServerFn = createServerFn({ method: "POST" })
           throw new Error("البريد الإلكتروني مسجل مسبقاً في النظام");
         }
       } else {
-        throw new Error(`فشل إنشاء المستخدم: ${authError.message}`);
+        throw new Error(`فشل إنشاء حساب المستخدم: ${authError.message}`);
       }
     }
 
@@ -122,7 +142,7 @@ export const createAdminUserServerFn = createServerFn({ method: "POST" })
         adminInsertErr,
       );
       throw new Error(
-        `فشل تسجيل المشرف في قاعدة البيانات: ${adminInsertErr.message}`,
+        `فشل تعيين الصلاحيات في قاعدة البيانات: ${adminInsertErr.message}`,
       );
     }
 
