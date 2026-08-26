@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { createAdminUserServerFn } from "@/lib/admin-users.functions";
 
 export type AdminRole = Database["public"]["Enums"]["admin_role"];
 export type AdminUserRow = Database["public"]["Tables"]["admin_users"]["Row"];
@@ -30,34 +31,14 @@ export type CreateAdminPayload = {
 };
 
 export async function createAdminUser(payload: CreateAdminPayload): Promise<void> {
-  const { data, error } = await supabase.functions.invoke("create-admin-user", {
-    body: payload,
-  });
-  if (error) {
-    // محاولة قراءة الرسالة من الـ FunctionsHttpError
-    const fnErr = (error as { context?: { json?: () => Promise<{ error?: string }> } }).context;
-    if (fnErr?.json) {
-      try {
-        const body = await fnErr.json();
-        throw new Error(mapAdminError(body?.error));
-      } catch (_) { /* fallthrough */ }
+  try {
+    const res = await createAdminUserServerFn({ data: payload });
+    if (!res || !res.ok) {
+      throw new Error("فشل إنشاء المستخدم الإداري");
     }
-    throw new Error(error.message || "فشل إنشاء المستخدم");
-  }
-  if (data?.error) throw new Error(mapAdminError(data.error));
-}
-
-function mapAdminError(code?: string): string {
-  switch (code) {
-    case "email_exists": return "هذا الإيميل مستخدم بالفعل";
-    case "forbidden": return "غير مصرّح — تتطلب صلاحية مشرف عام";
-    case "unauthorized": return "الجلسة منتهية — أعد تسجيل الدخول";
-    case "missing_fields": return "بعض الحقول المطلوبة فارغة";
-    case "invalid_role": return "الصلاحية غير صحيحة";
-    case "weak_password": return "كلمة السر يجب أن تكون 8 أحرف على الأقل";
-    case "auth_creation_failed": return "فشل إنشاء حساب المصادقة";
-    case "link_failed": return "فشل ربط المستخدم بنظام الإدارة";
-    default: return code || "خطأ غير معروف";
+  } catch (err: any) {
+    console.error("[createAdminUser error]", err);
+    throw new Error(err.message || "فشل إنشاء المستخدم");
   }
 }
 
