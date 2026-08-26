@@ -55,8 +55,6 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
 export const ADMIN_VISIBLE_STATUSES: OrderStatus[] = [
   "paid",
   "fulfilled",
-  "pending",
-  "initiated",
   "payment_failed",
   "refunded",
   "cancelled",

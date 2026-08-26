@@ -71,7 +71,7 @@ function SuccessPage() {
     // إعادة التحقق كل 8 ثواني إذا الطلب ما زال في paid
     refetchInterval: (query) => {
       const d = query.state.data;
-      if (d && !d.locked && d.order?.status === "paid") return 8000;
+      if (d && !d.locked && (d.order?.status === "paid")) return 8000;
       return false;
     },
   });

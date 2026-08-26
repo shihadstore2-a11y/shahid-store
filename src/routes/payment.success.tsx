@@ -64,28 +64,52 @@ function PaymentSuccessPage() {
   const pollOnce = useCallback(async (): Promise<PaymentStatus | null> => {
     if (!orderId) return null;
 
-    // 1. استدعاء التحقق المباشر من السيرفر
+    // 1. استدعاء التحقق من السيرفر (يفحص DB أولاً ثم EdfaPay S2S)
     try {
       const res = await verifyPaymentFn({ data: { orderId } });
+
+      // الدفع مؤكد (من DB أو EdfaPay) → نجاح
       if (res.ok && res.confirmed) {
         return {
           order_id: orderId,
           order_number: res.order?.order_number || orderId,
-          status: "paid",
+          status: res.order?.status || "paid",
           amount: Number(res.order?.total || 0),
           provider: "edfapay",
           updated_at: new Date().toISOString(),
         };
       }
+
+      // الدفع فشل أو ملغي → حالة نهائية
+      if (res.ok && !res.confirmed && (res as any).status === "failed") {
+        return {
+          order_id: orderId, order_number: orderId,
+          status: "failed", amount: 0, provider: "edfapay",
+          updated_at: new Date().toISOString(),
+        };
+      }
+      if (res.ok && !res.confirmed && (res as any).status === "cancelled") {
+        return {
+          order_id: orderId, order_number: orderId,
+          status: "cancelled", amount: 0, provider: "edfapay",
+          updated_at: new Date().toISOString(),
+        };
+      }
+
+      // pending → نستمر بالـ polling
     } catch (err) {
-      console.warn("[PaymentSuccess] active verification attempt failed:", err);
+      console.warn("[PaymentSuccess] verification attempt failed:", err);
     }
 
-    // 2. فحص DB عبر RPC كإجراء احتياطي
-    const { data } = await supabase.rpc("get_payment_status", {
-      _order_id: orderId,
-    });
-    return (data as PaymentStatus[] | null)?.[0] ?? null;
+    // 2. فحص DB كإجراء احتياطي (ربما الـ webhook أكد الدفع)
+    try {
+      const { data } = await supabase.rpc("get_payment_status", {
+        _order_id: orderId,
+      });
+      return (data as PaymentStatus[] | null)?.[0] ?? null;
+    } catch {
+      return null;
+    }
   }, [orderId, verifyPaymentFn]);
 
   useEffect(() => {
@@ -125,6 +149,13 @@ function PaymentSuccessPage() {
         timer = setTimeout(poll, POLL_INTERVAL_MS);
       } else {
         setPolling(false);
+        // بعد انتهاء المحاولات بدون تأكيد → ننقل للصفحة الطلب
+        // لأن الـ webhook ربما أكد الدفع في الخلفية
+        if (orderId) {
+          setTimeout(() => {
+            navigate({ to: "/order-success/$id", params: { id: orderId } });
+          }, 800);
+        }
       }
     }
 

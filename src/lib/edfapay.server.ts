@@ -450,10 +450,6 @@ export async function initiatePayment(
   }
 
   return { ok: false, error: lastErrorMsg, raw: lastRaw };
-
-  const sessionId = extractSessionId(json);
-
-  return { ok: true, redirectUrl, sessionId, raw: json };
 }
 
 /**
