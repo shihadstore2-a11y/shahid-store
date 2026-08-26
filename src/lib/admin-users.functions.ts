@@ -181,39 +181,99 @@ export const adminResetPasswordServerFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const cleanEmail = data.email.toLowerCase().trim();
 
-    // 1. العثور على المستخدم
-    const { data: listData, error: listErr } =
-      await supabaseAdmin.auth.admin.listUsers();
+    // 1. العثور على المشرف في جدول admin_users لجلب اسمه وهاتفه ودوره
+    const { data: adminRow } = await supabaseAdmin
+      .from("admin_users")
+      .select("id, user_id, full_name, phone, role")
+      .ilike("email", cleanEmail)
+      .maybeSingle();
+
+    // 2. البحث في auth.users
+    const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
     const targetUser = listData?.users?.find(
       (u) => u.email?.toLowerCase() === cleanEmail,
     );
 
+    let targetUserId: string;
+
     if (!targetUser) {
-      throw new Error("المستخدم غير موجود في سجلات المصادقة");
+      // المستخدم غير موجود في سجلات المصادقة -> نقوم بإنشائه فوراً وتأكيد بريده
+      const { data: created, error: createErr } =
+        await supabaseAdmin.auth.admin.createUser({
+          email: cleanEmail,
+          password: data.password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: adminRow?.full_name || cleanEmail.split("@")[0],
+            phone: adminRow?.phone || null,
+            role: adminRow?.role || "staff",
+          },
+        });
+
+      if (createErr || !created.user) {
+        throw new Error(
+          `تعذّر إنشاء حساب المصادقة للمستخدم: ${createErr?.message || "خطأ غير معروف"}`,
+        );
+      }
+      targetUserId = created.user.id;
+    } else {
+      // المستخدم موجود -> نحدّث كلمة مروره ونؤكد بريده فوراً
+      targetUserId = targetUser.id;
+      const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
+        targetUser.id,
+        {
+          password: data.password,
+          email_confirm: true,
+          user_metadata: {
+            full_name:
+              adminRow?.full_name ||
+              (targetUser.user_metadata?.full_name as string) ||
+              "",
+            phone:
+              adminRow?.phone ||
+              (targetUser.user_metadata?.phone as string) ||
+              null,
+            role: adminRow?.role || "staff",
+          },
+        },
+      );
+
+      if (updErr) {
+        throw new Error(`تعذّر تحديث كلمة المرور: ${updErr.message}`);
+      }
     }
 
-    // 2. تحديث كلمة المرور وتأكيد البريد مباشرة
-    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
-      targetUser.id,
-      {
-        password: data.password,
-        email_confirm: true,
-      },
-    );
-
-    if (updErr) {
-      throw new Error(`تعذّر تحديث كلمة المرور: ${updErr.message}`);
-    }
-
-    // 3. تفعيل في admin_users
+    // 3. تحديث جدول admin_users وتفعيله وربطه بالمعرف
     await supabaseAdmin
       .from("admin_users")
-      .update({ is_active: true, updated_at: new Date().toISOString() })
-      .or(`user_id.eq.${targetUser.id},email.ilike.${cleanEmail}`);
+      .update({
+        user_id: targetUserId,
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      })
+      .or(`user_id.eq.${targetUserId},email.ilike.${cleanEmail}`);
+
+    // 4. تحديث جدول profiles بالتوازي
+    try {
+      await supabaseAdmin.from("profiles").upsert(
+        {
+          id: targetUserId,
+          user_id: targetUserId,
+          email: cleanEmail,
+          full_name: adminRow?.full_name || cleanEmail.split("@")[0],
+          phone: adminRow?.phone || null,
+          role: adminRow?.role || "staff",
+        },
+        { onConflict: "user_id" },
+      );
+    } catch (e) {
+      console.warn("[adminResetPasswordServerFn] profiles upsert warning:", e);
+    }
 
     return {
       ok: true as const,
-      user_id: targetUser.id,
+      user_id: targetUserId,
+      message: "تم تعيين كلمة المرور وتفعيل الحساب بنجاح",
     };
   });
 
