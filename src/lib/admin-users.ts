@@ -31,6 +31,40 @@ export type CreateAdminPayload = {
 };
 
 export async function createAdminUser(payload: CreateAdminPayload): Promise<void> {
+  // 1. محاولة استدعاء دالة RPC في قاعدة البيانات مباشرة (سلس وموثوق 100%)
+  try {
+    const { data: rpcData, error: rpcErr } = await supabase.rpc(
+      "create_admin_user_rpc",
+      {
+        _email: payload.email.trim(),
+        _password: payload.password,
+        _full_name: payload.full_name.trim(),
+        _phone: payload.phone?.trim() || null,
+        _role: payload.role,
+      },
+    );
+
+    if (!rpcErr && rpcData && typeof rpcData === "object") {
+      const res = rpcData as Record<string, unknown>;
+      if (res.success) {
+        return;
+      }
+      if (res.error) {
+        throw new Error(String(res.error));
+      }
+    }
+
+    if (rpcErr) {
+      console.warn("[createAdminUser] RPC error, trying server function fallback:", rpcErr);
+    }
+  } catch (rpcEx: any) {
+    if (rpcEx.message && !rpcEx.message.includes("does not exist") && !rpcEx.message.includes("schema")) {
+      throw rpcEx;
+    }
+    console.warn("[createAdminUser] RPC exception, using server fn fallback:", rpcEx);
+  }
+
+  // 2. Fallback: استدعاء دالة السيرفر
   try {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -46,7 +80,7 @@ export async function createAdminUser(payload: CreateAdminPayload): Promise<void
       throw new Error("فشل إنشاء المستخدم الإداري");
     }
   } catch (err: any) {
-    console.error("[createAdminUser error]", err);
+    console.error("[createAdminUser fallback error]", err);
     throw new Error(err.message || "فشل إنشاء المستخدم");
   }
 }
