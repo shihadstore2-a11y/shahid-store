@@ -92,7 +92,8 @@ function OrdersPage() {
       // 2. Fallback query
       let q = supabase
         .from("orders")
-        .select("id, order_number, total, status, created_at, fulfilled_at");
+        .select("id, order_number, total, status, created_at, fulfilled_at")
+        .in("status", ["paid", "fulfilled", "refunded", "cancelled"]);
 
       if (userEmail && userPhone) {
         q = q.or(`user_id.eq.${user.id},customer_email.ilike.${userEmail},customer_phone.eq.${userPhone}`);

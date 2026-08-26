@@ -55,7 +55,6 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
 export const ADMIN_VISIBLE_STATUSES: OrderStatus[] = [
   "paid",
   "fulfilled",
-  "payment_failed",
   "refunded",
   "cancelled",
 ];
@@ -160,9 +159,11 @@ export async function fetchAdminOrders(filters: OrderFilters): Promise<OrdersPag
 
   let q = supabase.from("orders").select("*", { count: "exact" });
 
-  // تصفية الحالة: إن تم تحديد حالة معينة نفلتر بها، وإلا نعرض كافة الطلبات
+  // تصفية الحالة: إن تم تحديد حالة معينة نفلتر بها، وإلا نعرض فقط الحالات المصرح بعرضها (paid, fulfilled, refunded, cancelled)
   if (filters.status && filters.status !== "all") {
     q = q.eq("status", filters.status);
+  } else {
+    q = q.in("status", ADMIN_VISIBLE_STATUSES);
   }
   const since = rangeStart(filters.dateRange);
   if (since) q = q.gte("created_at", since);
