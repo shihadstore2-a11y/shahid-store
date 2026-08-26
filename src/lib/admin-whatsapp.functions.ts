@@ -5,7 +5,15 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const InputSchema = z.object({
   orderId: z.string().uuid(),
-  template: z.enum(["confirmation", "credentials", "delay", "follow_up", "custom"]),
+  template: z.enum([
+    "confirmation",
+    "credentials",
+    "delay",
+    "follow_up",
+    "abandoned_recovery",
+    "abandoned_discount",
+    "custom",
+  ]),
 });
 
 export const logWhatsappSent = createServerFn({ method: "POST" })

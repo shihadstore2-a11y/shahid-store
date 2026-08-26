@@ -5,6 +5,8 @@ export type WhatsappTemplate =
   | "credentials"
   | "delay"
   | "follow_up"
+  | "abandoned_recovery"
+  | "abandoned_discount"
   | "custom";
 
 export const WHATSAPP_TEMPLATE_LABELS: Record<WhatsappTemplate, string> = {
@@ -12,6 +14,8 @@ export const WHATSAPP_TEMPLATE_LABELS: Record<WhatsappTemplate, string> = {
   credentials: "تسليم الاشتراك",
   delay: "إشعار تأخير",
   follow_up: "متابعة",
+  abandoned_recovery: "استعادة السلة (مساعدة)",
+  abandoned_discount: "استعادة السلة (عرض خصم)",
   custom: "رسالة مخصّصة",
 };
 
@@ -25,6 +29,8 @@ export type WhatsappTemplateData = {
   url?: string;
   custom_text?: string;
   time_estimate?: string;
+  discount_code?: string;
+  discount_percent?: number;
 };
 
 const STORE_SIGN = "فريق شاهد ستور 🌟";
@@ -99,6 +105,42 @@ export function buildOrderMessage(
         "",
         `في خدمتك 💬 — ${STORE_SIGN}`,
       ];
+      return lines.join("\n");
+    }
+
+    case "abandoned_recovery": {
+      const lines = [
+        `السلام عليكم ${name} 👋`,
+        "",
+        "لاحظنا أنك بدأت طلب اشتراك في متجرنا ولم تتمكن من إكمال الدفع.",
+        "",
+      ];
+      if (data.product_name) lines.push(`🛒 المنتج: ${data.product_name}`);
+      if (typeof data.total === "number") lines.push(`💰 المبلغ: ${fmtSAR(data.total)}`);
+      lines.push("");
+      lines.push("هل واجهتك أي مشكلة أثناء الدفع أو تحتاج مساعدة في إتمام الطلب؟");
+      lines.push("");
+      lines.push("نحن هنا لمساعدتك في أي وقت 💬");
+      lines.push(STORE_SIGN);
+      return lines.join("\n");
+    }
+
+    case "abandoned_discount": {
+      const code = data.discount_code?.trim() || "SPECIAL";
+      const lines = [
+        `السلام عليكم ${name} 👋`,
+        "",
+        "سلتك بانتظارك في شاهد ستور! 🎁",
+        "",
+      ];
+      if (data.product_name) lines.push(`🛒 المنتج: ${data.product_name}`);
+      lines.push("");
+      lines.push(`أكمل طلبك الآن واستفد من كود الخصم الحصري: *${code}*`);
+      lines.push("");
+      lines.push("🔗 الرابط: shahidstore.net");
+      lines.push("");
+      lines.push("يسعدنا خدمتك دائماً 🌟");
+      lines.push(STORE_SIGN);
       return lines.join("\n");
     }
 

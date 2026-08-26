@@ -7,6 +7,7 @@ const TITLES: Record<string, string> = {
   "/admin/dashboard": "لوحة التحكم",
   "/admin/profile": "ملفي الشخصي",
   "/admin/orders": "الطلبات",
+  "/admin/abandoned-orders": "السلات المتروكة",
   "/admin/products": "المنتجات",
   "/admin/customers": "العملاء",
   "/admin/coupons": "الكوبونات",

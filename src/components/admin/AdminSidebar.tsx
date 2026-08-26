@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Package, ShoppingBag, Users, Tag, FileText,
+  LayoutDashboard, Package, ShoppingBag, ShoppingCart, Users, Tag, FileText,
   Star, BarChart3, Settings, Shield, User, LogOut, X, BookOpen, Crown,
   Calculator, Receipt, TrendingUp, Lock,
 } from "lucide-react";
@@ -16,6 +16,7 @@ type Item = { to: string; label: string; Icon: LucideIcon; route: AdminRoute };
 const ITEMS: Item[] = [
   { to: "/admin/dashboard", label: "لوحة التحكم", Icon: LayoutDashboard, route: "dashboard" },
   { to: "/admin/orders", label: "الطلبات", Icon: ShoppingBag, route: "orders" },
+  { to: "/admin/abandoned-orders", label: "السلات المتروكة", Icon: ShoppingCart, route: "abandoned-orders" },
   { to: "/admin/products", label: "المنتجات", Icon: Package, route: "products" },
   { to: "/admin/customers", label: "العملاء", Icon: Users, route: "customers" },
   { to: "/admin/coupons", label: "الكوبونات", Icon: Tag, route: "coupons" },

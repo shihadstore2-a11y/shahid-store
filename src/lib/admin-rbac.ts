@@ -5,6 +5,7 @@ import type { AdminRole } from "@/hooks/useAdminUser";
 export type AdminRoute =
   | "dashboard"
   | "orders"
+  | "abandoned-orders"
   | "products"
   | "coupons"
   | "customers"
@@ -39,7 +40,7 @@ export type PermAction = Exclude<keyof Perms, "canAccessRoutes">;
 export const ROLE_PERMISSIONS: Record<AdminRole, Perms> = {
   super_admin: {
     canAccessRoutes: [
-      "dashboard", "orders", "products", "coupons", "customers",
+      "dashboard", "orders", "abandoned-orders", "products", "coupons", "customers",
       "reports", "settings", "users", "activation-guide", "articles", "reviews",
       "accounting-costs", "accounting-expenses", "accounting-reports", "accounting-periods",
       "inventory",
@@ -57,7 +58,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Perms> = {
   },
   admin: {
     canAccessRoutes: [
-      "dashboard", "orders", "products", "coupons", "customers",
+      "dashboard", "orders", "abandoned-orders", "products", "coupons", "customers",
       "reports", "activation-guide", "articles", "reviews",
       "accounting-costs", "accounting-expenses", "accounting-reports",
       "inventory",
@@ -74,7 +75,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Perms> = {
     canManageInventory: true,
   },
   staff: {
-    canAccessRoutes: ["dashboard", "orders", "customers", "reports"],
+    canAccessRoutes: ["dashboard", "orders", "abandoned-orders", "customers", "reports"],
     canModifyProducts: false,
     canModifyCoupons: false,
     canModifyOrders: false,
@@ -88,7 +89,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Perms> = {
   },
   developer: {
     canAccessRoutes: [
-      "dashboard", "orders", "products", "coupons", "customers",
+      "dashboard", "orders", "abandoned-orders", "products", "coupons", "customers",
       "reports", "settings", "activation-guide", "articles", "reviews",
       "accounting-reports",
       "inventory",
@@ -106,7 +107,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Perms> = {
   },
   // مشاهد الطلبات والكوبونات: قراءة فقط بدون أي تعديل
   orders_coupons_viewer: {
-    canAccessRoutes: ["dashboard", "orders", "coupons"],
+    canAccessRoutes: ["dashboard", "orders", "abandoned-orders", "coupons"],
     canModifyProducts: false,
     canModifyCoupons: false,
     canModifyOrders: false,
