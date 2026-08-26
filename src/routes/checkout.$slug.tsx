@@ -257,7 +257,7 @@ function CheckoutPage() {
     if (!user) return;
     let cancelled = false;
 
-    // 1. التعبئة المباشرة من بيانات الجلسة والميتاداتا
+    // 1. التعبئة المباشرة الأولية من بيانات الجلسة والميتاداتا
     if (user.email && !watch("customer_email")) {
       setValue("customer_email", user.email, { shouldValidate: true });
     }
@@ -274,37 +274,68 @@ function CheckoutPage() {
       (user.user_metadata?.phone as string | undefined) ||
       (user.phone as string | undefined);
     if (metaPhone && !watch("customer_phone")) {
-      const e164 = toE164(metaPhone, "SA");
+      const e164 = toE164(metaPhone) || (metaPhone.startsWith("+") ? metaPhone : "+" + metaPhone.replace(/\D/g, ""));
       if (e164) {
         setValue("customer_phone", e164, { shouldValidate: true, shouldDirty: true });
         setPhoneInitial(e164);
       }
     }
 
-    // 2. التحقق من جدول profiles لجلب أحدث البيانات إن وُجدت
+    // 2. التحقق من جدول profiles وجدول المشرفين admin_users لجلب أحدث البيانات بدقة
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("full_name, phone, email")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const [profileRes, adminRes] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("full_name, phone, email")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("admin_users")
+            .select("full_name, phone, email")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+        ]);
 
-        if (cancelled || error || !data) return;
+        if (cancelled) return;
 
-        if (data.full_name) {
-          setValue("customer_name", data.full_name, { shouldValidate: true });
+        const pData = profileRes.data;
+        const aData = adminRes.data;
+
+        const finalName =
+          pData?.full_name ||
+          aData?.full_name ||
+          metaName ||
+          "";
+
+        const finalPhone =
+          pData?.phone ||
+          aData?.phone ||
+          metaPhone ||
+          "";
+
+        const finalEmail =
+          pData?.email ||
+          aData?.email ||
+          user.email ||
+          "";
+
+        if (finalName) {
+          setValue("customer_name", finalName, { shouldValidate: true });
           setNameSource("h2");
         }
-        if (data.phone) {
-          const e164 = toE164(data.phone, "SA");
+        if (finalEmail && !watch("customer_email")) {
+          setValue("customer_email", finalEmail, { shouldValidate: true });
+        }
+        if (finalPhone) {
+          const e164 = toE164(finalPhone) || (finalPhone.startsWith("+") ? finalPhone : "+" + finalPhone.replace(/\D/g, ""));
           if (e164) {
             setValue("customer_phone", e164, { shouldValidate: true, shouldDirty: true });
             setPhoneInitial(e164);
           }
         }
       } catch (err) {
-        console.warn("[checkout] profiles fetch error:", err);
+        console.warn("[checkout] profiles/admin_users fetch error:", err);
       }
     })();
 
