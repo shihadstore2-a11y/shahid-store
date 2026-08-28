@@ -57,7 +57,31 @@ export const validateCoupon = createServerFn({ method: "POST" })
 
     if (error) {
       console.error("[validateCoupon] db error:", error);
-      return { valid: false as const, error: "تعذّر التحقّق من الكود حالياً. يرجى المحاولة لاحقاً." };
+
+      // محاولة استعلام مبسط بحقلين أساسيين فقط (في حال غياب حقل معين في قاعدة البيانات)
+      try {
+        const { data: simpleCoupon, error: simpleErr } = await supabaseAdmin
+          .from("coupons")
+          .select("code, discount_percent")
+          .ilike("code", cleanCode)
+          .maybeSingle();
+
+        if (!simpleErr && simpleCoupon) {
+          const discAmt = Math.round(((data.subtotalIncl * simpleCoupon.discount_percent) / 100) * 100) / 100;
+          return {
+            valid: true as const,
+            coupon: {
+              code: simpleCoupon.code,
+              discount_percent: simpleCoupon.discount_percent,
+              discount_amount: discAmt,
+            },
+          };
+        }
+      } catch (simpleEx) {
+        console.warn("[validateCoupon] simple fallback error:", simpleEx);
+      }
+
+      return { valid: false as const, error: `تعذّر التحقّق من الكود: ${error.message || "خطأ غير متوقع"}` };
     }
 
     if (!coupon) {
