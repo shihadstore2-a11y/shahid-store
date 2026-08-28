@@ -202,42 +202,23 @@ export const Route = createFileRoute("/api/public/edfapay-webhook")({
           });
         }
 
-        // حدّث الطلب نفسه فقط للحالات النهائية
+        // حدّث الطلب ونفّذ التسليم الفوري الذري
         if (verifiedStatus === "success") {
-          await supabaseAdmin
-            .from("orders")
-            .update({ status: "paid" })
-            .eq("id", orderId);
-
-          // 🆕 D.2 (27 May 2026): Auto-claim subscription from inventory (non-blocking)
           try {
-            const { data: claimResult, error: claimErr } = await supabaseAdmin
-              .rpc("claim_subscription_for_order", { _order_id: orderId });
+            const { data: procRes, error: procErr } = await supabaseAdmin
+              .rpc("process_successful_payment", { _order_id: orderId });
 
-            if (claimErr) {
-              console.warn(`[D.2] RPC error for order ${orderId}:`, claimErr.message);
+            if (procErr) {
+              console.warn(`[EdfaPay Webhook] process_successful_payment RPC error for ${orderId}:`, procErr.message);
+              // Fallback مباشر
+              await supabaseAdmin.from("orders").update({ status: "paid" }).eq("id", orderId);
+              await supabaseAdmin.rpc("claim_subscription_for_order", { _order_id: orderId });
             } else {
-              const result = claimResult as {
-                claimed?: boolean;
-                reason?: string;
-                is_bundle?: boolean;
-                providers?: string[];
-                inventory_ids?: string[];
-              } | null;
-              if (result?.claimed) {
-                console.log(`[D.2] ✅ Auto-claimed for order ${orderId}:`, {
-                  is_bundle: result.is_bundle,
-                  providers: result.providers,
-                  inventory_ids: result.inventory_ids,
-                });
-              } else {
-                console.log(`[D.2] ℹ️ No claim for order ${orderId}:`, result);
-                // Order stays 'paid' (not 'fulfilled'); manual WhatsApp delivery applies
-              }
+              console.log(`[EdfaPay Webhook] ✅ Successfully processed payment for ${orderId}:`, procRes);
             }
           } catch (e) {
-            // CRITICAL: Don't fail webhook on claim error — order is already paid
-            console.error(`[D.2] ❌ Auto-claim failed (non-fatal) for ${orderId}:`, e);
+            console.error(`[EdfaPay Webhook] ❌ Payment processing exception for ${orderId}:`, e);
+            await supabaseAdmin.from("orders").update({ status: "paid" }).eq("id", orderId);
           }
 
 
