@@ -10,7 +10,7 @@ const ACTIVE_SUPABASE_KEY = "sb_publishable_g9kiBfUjgH4cIg_gSfZB7g_ON2-X8TQ";
 
 function getCleanUrl(): string {
   const envUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  if (!envUrl || envUrl.includes("ibcobmfg")) {
+  if (!envUrl || !envUrl.includes("gnmkfnwmvjcfomwnnlgh")) {
     return ACTIVE_SUPABASE_URL;
   }
   return envUrl;
@@ -21,7 +21,8 @@ function getCleanKey(): string {
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!envKey || envKey.includes("ibcobmfg")) {
+
+  if (!envKey || envKey.startsWith("eyJ") || envKey.includes("ibcobmfg")) {
     return ACTIVE_SUPABASE_KEY;
   }
   return envKey;

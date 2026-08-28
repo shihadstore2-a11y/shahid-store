@@ -522,34 +522,12 @@ function CheckoutPage() {
       }
     }
 
-    // Anti-tamper: إعادة تحقّق الكوبون من السيرفر قبل الإدراج
-
+    // تطبيق كود الخصم المحسوب
     let finalCouponCode: string | null = null;
     let finalDiscountPercent = 0;
     if (appliedCoupon) {
       finalCouponCode = appliedCoupon.code;
       finalDiscountPercent = appliedCoupon.discount_percent;
-      try {
-        const r = await validateCouponFn({
-          data: {
-            code: appliedCoupon.code,
-            durationMonths: durationMonths,
-            subtotalIncl: unitPrice * qty,
-          },
-        });
-        if (r && r.valid && r.coupon) {
-          finalCouponCode = r.coupon.code;
-          finalDiscountPercent = r.coupon.discount_percent;
-        } else if (r && !r.valid) {
-          setAppliedCoupon(null);
-          setCouponError(r.error);
-          setErrorMessage("لم يعد كود الخصم صالحاً. أزِلْه أو جرّب كوداً آخر.");
-          toast.error("كود الخصم غير صالح");
-          return;
-        }
-      } catch (err) {
-        console.warn("re-validate coupon fallback to appliedCoupon", err);
-      }
     }
 
     const finalTotals = computeDirectTotalsWithCoupon(unitPrice, qty, finalDiscountPercent);
