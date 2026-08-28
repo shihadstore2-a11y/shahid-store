@@ -16,36 +16,42 @@ const Input = z.object({
 export const validateCoupon = createServerFn({ method: "POST" })
   .inputValidator((input) => Input.parse(input))
   .handler(async ({ data }) => {
+    const cleanCode = data.code.trim();
+
+    // 1. استعلام مرن غير حساس لحالة الأحرف
     const { data: coupon, error } = await supabaseAdmin
       .from("coupons")
       .select("code, discount_percent, applies_to_duration_min, valid_until, is_active")
-      .eq("code", data.code)
+      .ilike("code", cleanCode)
       .eq("is_active", true)
       .maybeSingle();
 
     if (error) {
-      console.error("[validateCoupon] db error", error);
-      return { valid: false as const, error: "تعذّر التحقّق من الكود حالياً" };
+      console.error("[validateCoupon] db error:", error);
+      return { valid: false as const, error: "تعذّر التحقّق من الكود حالياً. يرجى المحاولة لاحقاً." };
     }
 
     if (!coupon) {
-      return { valid: false as const, error: "كود غير صالح" };
+      return { valid: false as const, error: "كود الخصم غير صحيح أو غير مفعّل" };
     }
 
-    if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) {
-      return { valid: false as const, error: "انتهت صلاحية هذا الكود" };
+    // 2. التحقق من تاريخ انتهاء الصلاحية
+    if (coupon.valid_until && new Date(coupon.valid_until).getTime() < Date.now()) {
+      return { valid: false as const, error: "عذراً، انتهت صلاحية هذا الكوبون" };
     }
 
-    // applies_to_duration_min مُخزَّن كأيام
-    const durationDays = data.durationMonths * 30;
-    if ((coupon.applies_to_duration_min ?? 0) > durationDays) {
+    // 3. التحقق من الحد الأدنى للمدة (دعم الإدخال بالأشهر أو بالأيام)
+    const rawMin = coupon.applies_to_duration_min ?? 0;
+    const minMonths = rawMin > 12 ? Math.round(rawMin / 30) : rawMin;
+
+    if (minMonths > 0 && data.durationMonths < minMonths) {
       return {
         valid: false as const,
-        error: `هذا الكود يتطلب اشتراكاً مدته ${coupon.applies_to_duration_min} يوماً على الأقل`,
+        error: `هذا الكود مخصص للباقات مدة ${minMonths} أشهر فأكثر (مدة الباقة الحالية: ${data.durationMonths} شهر)`,
       };
     }
 
-    const discountIncl = Math.round((data.subtotalIncl * coupon.discount_percent) / 100 * 100) / 100;
+    const discountIncl = Math.round(((data.subtotalIncl * coupon.discount_percent) / 100) * 100) / 100;
 
     return {
       valid: true as const,

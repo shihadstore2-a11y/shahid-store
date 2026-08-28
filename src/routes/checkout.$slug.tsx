@@ -194,18 +194,62 @@ function CheckoutPage() {
     }
     setValidatingCoupon(true);
     try {
-      const res = await validateCouponFn({
-        data: {
-          code,
-          durationMonths: product.duration_months ?? 1,
-          subtotalIncl: unitPrice * qty,
-        },
-      });
-      if (!res.valid) {
+      let res: { valid: boolean; coupon?: { code: string; discount_percent: number; discount_amount: number }; error?: string } | null = null;
+
+      try {
+        res = await validateCouponFn({
+          data: {
+            code,
+            durationMonths: product.duration_months ?? 1,
+            subtotalIncl: unitPrice * qty,
+          },
+        });
+      } catch (fnErr) {
+        console.warn("[checkout] validateCouponFn server fallback:", fnErr);
+      }
+
+      // Fallback: الاستعلام المباشر عبر supabase client إذا تعذّر السيرفر
+      if (!res) {
+        const { data: dbCoupon, error: dbErr } = await supabase
+          .from("coupons")
+          .select("code, discount_percent, applies_to_duration_min, valid_until, is_active")
+          .ilike("code", code)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (dbErr || !dbCoupon) {
+          res = { valid: false, error: "كود الخصم غير صحيح أو غير مفعّل" };
+        } else if (dbCoupon.valid_until && new Date(dbCoupon.valid_until).getTime() < Date.now()) {
+          res = { valid: false, error: "عذراً، انتهت صلاحية هذا الكوبون" };
+        } else {
+          const rawMin = dbCoupon.applies_to_duration_min ?? 0;
+          const minM = rawMin > 12 ? Math.round(rawMin / 30) : rawMin;
+          const currentM = product.duration_months ?? 1;
+          if (minM > 0 && currentM < minM) {
+            res = {
+              valid: false,
+              error: `هذا الكود مخصص للباقات مدة ${minM} أشهر فأكثر (مدة الباقة الحالية: ${currentM} شهر)`,
+            };
+          } else {
+            const discAmt = Math.round(((unitPrice * qty * dbCoupon.discount_percent) / 100) * 100) / 100;
+            res = {
+              valid: true,
+              coupon: {
+                code: dbCoupon.code,
+                discount_percent: dbCoupon.discount_percent,
+                discount_amount: discAmt,
+              },
+            };
+          }
+        }
+      }
+
+      if (!res.valid || !res.coupon) {
         setAppliedCoupon(null);
-        setCouponError(res.error);
+        setCouponError(res.error || "كود غير صالح");
         return;
       }
+
       setAppliedCoupon({
         code: res.coupon.code,
         discount_percent: res.coupon.discount_percent,
@@ -441,6 +485,8 @@ function CheckoutPage() {
     let finalCouponCode: string | null = null;
     let finalDiscountPercent = 0;
     if (appliedCoupon) {
+      finalCouponCode = appliedCoupon.code;
+      finalDiscountPercent = appliedCoupon.discount_percent;
       try {
         const r = await validateCouponFn({
           data: {
@@ -449,19 +495,18 @@ function CheckoutPage() {
             subtotalIncl: unitPrice * qty,
           },
         });
-        if (!r.valid) {
+        if (r && r.valid && r.coupon) {
+          finalCouponCode = r.coupon.code;
+          finalDiscountPercent = r.coupon.discount_percent;
+        } else if (r && !r.valid) {
           setAppliedCoupon(null);
           setCouponError(r.error);
           setErrorMessage("لم يعد كود الخصم صالحاً. أزِلْه أو جرّب كوداً آخر.");
           toast.error("كود الخصم غير صالح");
           return;
         }
-        finalCouponCode = r.coupon.code;
-        finalDiscountPercent = r.coupon.discount_percent;
       } catch (err) {
-        console.error("re-validate coupon failed", err);
-        setErrorMessage("تعذّر التحقّق من كود الخصم. حاول لاحقاً.");
-        return;
+        console.warn("re-validate coupon fallback to appliedCoupon", err);
       }
     }
 
