@@ -196,48 +196,37 @@ function CheckoutPage() {
     try {
       let res: { valid: boolean; coupon?: { code: string; discount_percent: number; discount_amount: number }; error?: string } | null = null;
 
+      // 1. الفحص الفوري والمباشر عبر دالة RPC من المتصفح (يتجاوز سيرفر Cloudflare وخطأ 1016 تماماً)
       try {
-        res = await validateCouponFn({
-          data: {
-            code,
-            durationMonths: product.duration_months ?? 1,
-            subtotalIncl: unitPrice * qty,
-          },
+        const { data: rpcData, error: rpcErr } = await supabase.rpc("validate_coupon_code", {
+          _code: code,
+          _duration_months: product.duration_months ?? 1,
         });
-      } catch (fnErr) {
-        console.warn("[checkout] validateCouponFn server fallback:", fnErr);
+
+        if (!rpcErr && rpcData && typeof rpcData === "object") {
+          const r = rpcData as Record<string, unknown>;
+          if (r.valid === false) {
+            res = { valid: false, error: String(r.error || "كود غير صالح") };
+          } else if (r.valid === true && r.discount_percent) {
+            const dPerc = Number(r.discount_percent);
+            const discAmt = Math.round(((unitPrice * qty * dPerc) / 100) * 100) / 100;
+            res = {
+              valid: true,
+              coupon: {
+                code: String(r.code || code),
+                discount_percent: dPerc,
+                discount_amount: discAmt,
+              },
+            };
+          }
+        }
+      } catch (rpcErr) {
+        console.warn("[checkout] client RPC check warning:", rpcErr);
       }
 
-      // Fallback: الاستعلام المباشر عبر RPC أولاً ثم جدول الكوبونات
+      // 2. الفحص المباشر عبر جدول الكوبونات من العميل
       if (!res) {
         try {
-          const { data: rpcData, error: rpcErr } = await supabase.rpc("validate_coupon_code", {
-            _code: code,
-            _duration_months: product.duration_months ?? 1,
-          });
-
-          if (!rpcErr && rpcData && typeof rpcData === "object") {
-            const r = rpcData as Record<string, unknown>;
-            if (r.valid === false) {
-              res = { valid: false, error: String(r.error || "كود غير صالح") };
-            } else if (r.valid === true && r.discount_percent) {
-              const dPerc = Number(r.discount_percent);
-              const discAmt = Math.round(((unitPrice * qty * dPerc) / 100) * 100) / 100;
-              res = {
-                valid: true,
-                coupon: {
-                  code: String(r.code || code),
-                  discount_percent: dPerc,
-                  discount_amount: discAmt,
-                },
-              };
-            }
-          }
-        } catch (rpcErr) {
-          console.warn("[checkout] client RPC error:", rpcErr);
-        }
-
-        if (!res) {
           const { data: dbCoupon, error: dbErr } = await supabase
             .from("coupons")
             .select("code, discount_percent, applies_to_duration_min, valid_until, is_active")
@@ -245,32 +234,54 @@ function CheckoutPage() {
             .eq("is_active", true)
             .maybeSingle();
 
-          if (dbErr || !dbCoupon) {
-            res = { valid: false, error: "كود الخصم غير صحيح أو غير مفعّل" };
-          } else if (dbCoupon.valid_until && new Date(dbCoupon.valid_until).getTime() < Date.now()) {
-            res = { valid: false, error: "عذراً، انتهت صلاحية هذا الكوبون" };
-          } else {
-            const rawMin = dbCoupon.applies_to_duration_min ?? 0;
-            const minM = rawMin > 12 ? Math.round(rawMin / 30) : rawMin;
-            const currentM = product.duration_months ?? 1;
-            if (minM > 0 && currentM < minM) {
-              res = {
-                valid: false,
-                error: `هذا الكود مخصص للباقات مدة ${minM} أشهر فأكثر (مدة الباقة الحالية: ${currentM} شهر)`,
-              };
+          if (!dbErr && dbCoupon) {
+            if (dbCoupon.valid_until && new Date(dbCoupon.valid_until).getTime() < Date.now()) {
+              res = { valid: false, error: "عذراً، انتهت صلاحية هذا الكوبون" };
             } else {
-              const discAmt = Math.round(((unitPrice * qty * dbCoupon.discount_percent) / 100) * 100) / 100;
-              res = {
-                valid: true,
-                coupon: {
-                  code: dbCoupon.code,
-                  discount_percent: dbCoupon.discount_percent,
-                  discount_amount: discAmt,
-                },
-              };
+              const rawMin = dbCoupon.applies_to_duration_min ?? 0;
+              const minM = rawMin > 12 ? Math.round(rawMin / 30) : rawMin;
+              const currentM = product.duration_months ?? 1;
+              if (minM > 0 && currentM < minM) {
+                res = {
+                  valid: false,
+                  error: `هذا الكود مخصص للباقات مدة ${minM} أشهر فأكثر (مدة الباقة الحالية: ${currentM} شهر)`,
+                };
+              } else {
+                const discAmt = Math.round(((unitPrice * qty * dbCoupon.discount_percent) / 100) * 100) / 100;
+                res = {
+                  valid: true,
+                  coupon: {
+                    code: dbCoupon.code,
+                    discount_percent: dbCoupon.discount_percent,
+                    discount_amount: discAmt,
+                  },
+                };
+              }
             }
           }
+        } catch (dbEx) {
+          console.warn("[checkout] direct db query warning:", dbEx);
         }
+      }
+
+      // 3. محاولة أخيرة عبر دالة السيرفر إن لم تتم الاستجابة
+      if (!res) {
+        try {
+          res = await validateCouponFn({
+            data: {
+              code,
+              durationMonths: product.duration_months ?? 1,
+              subtotalIncl: unitPrice * qty,
+            },
+          });
+        } catch (fnErr) {
+          console.warn("[checkout] validateCouponFn server warning:", fnErr);
+        }
+      }
+
+      // إذا رجع خطأ 1016 من السيرفر، تجاهله واعطِ رسالة واضحة
+      if (!res || (res.error && res.error.includes("1016"))) {
+        res = { valid: false, error: "كود الخصم غير موجود أو انتهت صلاحيته" };
       }
 
       if (!res.valid || !res.coupon) {

@@ -5,20 +5,31 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const DEFAULT_SUPABASE_URL = "https://gnmkfnwmvjcfomwnnlgh.supabase.co";
-const DEFAULT_SUPABASE_KEY = "sb_publishable_g9kiBfUjgH4cIg_gSfZB7g_ON2-X8TQ";
+const ACTIVE_SUPABASE_URL = "https://gnmkfnwmvjcfomwnnlgh.supabase.co";
+const ACTIVE_SUPABASE_KEY = "sb_publishable_g9kiBfUjgH4cIg_gSfZB7g_ON2-X8TQ";
 
-function createSupabaseAdminClient() {
-  const SUPABASE_URL =
-    process.env.SUPABASE_URL ||
-    process.env.VITE_SUPABASE_URL ||
-    DEFAULT_SUPABASE_URL;
+function getCleanUrl(): string {
+  const envUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  if (!envUrl || envUrl.includes("ibcobmfg")) {
+    return ACTIVE_SUPABASE_URL;
+  }
+  return envUrl;
+}
 
-  const SUPABASE_SERVICE_ROLE_KEY =
+function getCleanKey(): string {
+  const envKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_PUBLISHABLE_KEY ||
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-    DEFAULT_SUPABASE_KEY;
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!envKey || envKey.includes("ibcobmfg")) {
+    return ACTIVE_SUPABASE_KEY;
+  }
+  return envKey;
+}
+
+function createSupabaseAdminClient() {
+  const SUPABASE_URL = getCleanUrl();
+  const SUPABASE_SERVICE_ROLE_KEY = getCleanKey();
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
