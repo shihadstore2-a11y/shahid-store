@@ -18,7 +18,36 @@ export const validateCoupon = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const cleanCode = data.code.trim();
 
-    // 1. استعلام مرن غير حساس لحالة الأحرف
+    // 1. محاولة الفحص الذري والآمن عبر RPC يتجاوز أي قيود RLS
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabaseAdmin.rpc("validate_coupon_code", {
+        _code: cleanCode,
+        _duration_months: data.durationMonths,
+      });
+
+      if (!rpcErr && rpcRes && typeof rpcRes === "object") {
+        const res = rpcRes as Record<string, unknown>;
+        if (res.valid === false) {
+          return { valid: false as const, error: String(res.error || "كود غير صالح") };
+        }
+        if (res.valid === true && res.discount_percent) {
+          const discPercent = Number(res.discount_percent);
+          const discAmt = Math.round(((data.subtotalIncl * discPercent) / 100) * 100) / 100;
+          return {
+            valid: true as const,
+            coupon: {
+              code: String(res.code || cleanCode),
+              discount_percent: discPercent,
+              discount_amount: discAmt,
+            },
+          };
+        }
+      }
+    } catch (rpcEx) {
+      console.warn("[validateCoupon] RPC fallback:", rpcEx);
+    }
+
+    // 2. فحص احتياطي مباشر من الجدول
     const { data: coupon, error } = await supabaseAdmin
       .from("coupons")
       .select("code, discount_percent, applies_to_duration_min, valid_until, is_active")

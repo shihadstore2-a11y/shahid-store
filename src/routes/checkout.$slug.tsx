@@ -208,38 +208,67 @@ function CheckoutPage() {
         console.warn("[checkout] validateCouponFn server fallback:", fnErr);
       }
 
-      // Fallback: الاستعلام المباشر عبر supabase client إذا تعذّر السيرفر
+      // Fallback: الاستعلام المباشر عبر RPC أولاً ثم جدول الكوبونات
       if (!res) {
-        const { data: dbCoupon, error: dbErr } = await supabase
-          .from("coupons")
-          .select("code, discount_percent, applies_to_duration_min, valid_until, is_active")
-          .ilike("code", code)
-          .eq("is_active", true)
-          .maybeSingle();
+        try {
+          const { data: rpcData, error: rpcErr } = await supabase.rpc("validate_coupon_code", {
+            _code: code,
+            _duration_months: product.duration_months ?? 1,
+          });
 
-        if (dbErr || !dbCoupon) {
-          res = { valid: false, error: "كود الخصم غير صحيح أو غير مفعّل" };
-        } else if (dbCoupon.valid_until && new Date(dbCoupon.valid_until).getTime() < Date.now()) {
-          res = { valid: false, error: "عذراً، انتهت صلاحية هذا الكوبون" };
-        } else {
-          const rawMin = dbCoupon.applies_to_duration_min ?? 0;
-          const minM = rawMin > 12 ? Math.round(rawMin / 30) : rawMin;
-          const currentM = product.duration_months ?? 1;
-          if (minM > 0 && currentM < minM) {
-            res = {
-              valid: false,
-              error: `هذا الكود مخصص للباقات مدة ${minM} أشهر فأكثر (مدة الباقة الحالية: ${currentM} شهر)`,
-            };
+          if (!rpcErr && rpcData && typeof rpcData === "object") {
+            const r = rpcData as Record<string, unknown>;
+            if (r.valid === false) {
+              res = { valid: false, error: String(r.error || "كود غير صالح") };
+            } else if (r.valid === true && r.discount_percent) {
+              const dPerc = Number(r.discount_percent);
+              const discAmt = Math.round(((unitPrice * qty * dPerc) / 100) * 100) / 100;
+              res = {
+                valid: true,
+                coupon: {
+                  code: String(r.code || code),
+                  discount_percent: dPerc,
+                  discount_amount: discAmt,
+                },
+              };
+            }
+          }
+        } catch (rpcErr) {
+          console.warn("[checkout] client RPC error:", rpcErr);
+        }
+
+        if (!res) {
+          const { data: dbCoupon, error: dbErr } = await supabase
+            .from("coupons")
+            .select("code, discount_percent, applies_to_duration_min, valid_until, is_active")
+            .ilike("code", code)
+            .eq("is_active", true)
+            .maybeSingle();
+
+          if (dbErr || !dbCoupon) {
+            res = { valid: false, error: "كود الخصم غير صحيح أو غير مفعّل" };
+          } else if (dbCoupon.valid_until && new Date(dbCoupon.valid_until).getTime() < Date.now()) {
+            res = { valid: false, error: "عذراً، انتهت صلاحية هذا الكوبون" };
           } else {
-            const discAmt = Math.round(((unitPrice * qty * dbCoupon.discount_percent) / 100) * 100) / 100;
-            res = {
-              valid: true,
-              coupon: {
-                code: dbCoupon.code,
-                discount_percent: dbCoupon.discount_percent,
-                discount_amount: discAmt,
-              },
-            };
+            const rawMin = dbCoupon.applies_to_duration_min ?? 0;
+            const minM = rawMin > 12 ? Math.round(rawMin / 30) : rawMin;
+            const currentM = product.duration_months ?? 1;
+            if (minM > 0 && currentM < minM) {
+              res = {
+                valid: false,
+                error: `هذا الكود مخصص للباقات مدة ${minM} أشهر فأكثر (مدة الباقة الحالية: ${currentM} شهر)`,
+              };
+            } else {
+              const discAmt = Math.round(((unitPrice * qty * dbCoupon.discount_percent) / 100) * 100) / 100;
+              res = {
+                valid: true,
+                coupon: {
+                  code: dbCoupon.code,
+                  discount_percent: dbCoupon.discount_percent,
+                  discount_amount: discAmt,
+                },
+              };
+            }
           }
         }
       }
