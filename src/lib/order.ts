@@ -75,3 +75,45 @@ export function durationLabel(months?: number | null): string {
   if (months === 24) return "سنتان";
   return `${months} شهر`;
 }
+
+export function getProductDurationMonths(product?: {
+  slug?: string;
+  name_ar?: string;
+  duration_months?: number | null;
+} | null): number {
+  if (!product) return 1;
+
+  if (typeof product.duration_months === "number" && product.duration_months > 0) {
+    return product.duration_months;
+  }
+
+  const s = (product.slug ?? "").toLowerCase();
+  const n = (product.name_ar ?? "").toLowerCase();
+
+  // 15 شهراً أو سنة + 3
+  if (s.includes("15m") || s.includes("1y-plus-3") || s.includes("plus-3") || n.includes("15 شهر") || n.includes("سنة + 3") || n.includes("سنة و 3") || n.includes("سنة و3")) {
+    return 15;
+  }
+  // سنتان (24 شهراً)
+  if (s.includes("24m") || s.includes("2y") || n.includes("سنتين") || n.includes("سنتان") || n.includes("24 شهر")) {
+    return 24;
+  }
+  // سنة كاملة (12 شهراً)
+  if (s.includes("12m") || s.includes("-1y") || s.includes("1-year") || s.includes("year") || s.includes("annual") || n.includes("سنة") || n.includes("سنوي") || n.includes("12 شهر")) {
+    return 12;
+  }
+  // 6 أشهر
+  if (s.includes("6m") || s.includes("6-month") || s.includes("half") || n.includes("6 أشهر") || n.includes("6 اشهر") || n.includes("نصف سنوي")) {
+    return 6;
+  }
+  // 3 أشهر
+  if (s.includes("3m") || s.includes("3-month") || s.includes("3-solo") || s.includes("3_months") || n.includes("3 أشهر") || n.includes("3 اشهر") || n.includes("ثلاثة أشهر") || n.includes("ثلاثة اشهر")) {
+    return 3;
+  }
+  // شهران
+  if (s.includes("2m") || n.includes("شهران") || n.includes("شهرين")) {
+    return 2;
+  }
+
+  return 1;
+}

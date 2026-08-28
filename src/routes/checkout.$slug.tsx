@@ -34,6 +34,7 @@ import { fetchProductBySlug } from "@/lib/queries";
 import {
   computeDirectTotalsWithCoupon,
   generateOrderNumber,
+  getProductDurationMonths,
   VAT_RATE,
 } from "@/lib/order";
 import { validateCoupon } from "@/lib/coupons.functions";
@@ -178,6 +179,7 @@ function CheckoutPage() {
 
   const unitPrice = product.sale_price ?? product.base_price;
   const hasDiscount = product.sale_price !== null && product.sale_price < product.base_price;
+  const durationMonths = useMemo(() => getProductDurationMonths(product), [product]);
   const totals = useMemo(
     () => computeDirectTotalsWithCoupon(unitPrice, qty, appliedCoupon?.discount_percent ?? 0),
     [unitPrice, qty, appliedCoupon],
@@ -200,7 +202,7 @@ function CheckoutPage() {
       try {
         const { data: rpcData, error: rpcErr } = await supabase.rpc("validate_coupon_code", {
           _code: code,
-          _duration_months: product.duration_months ?? 1,
+          _duration_months: durationMonths,
         });
 
         if (!rpcErr && rpcData && typeof rpcData === "object") {
@@ -240,7 +242,7 @@ function CheckoutPage() {
             } else {
               const rawMin = dbCoupon.applies_to_duration_min ?? 0;
               const minM = rawMin > 12 ? Math.round(rawMin / 30) : rawMin;
-              const currentM = product.duration_months ?? 1;
+              const currentM = durationMonths;
               if (minM > 0 && currentM < minM) {
                 res = {
                   valid: false,
@@ -270,7 +272,7 @@ function CheckoutPage() {
           res = await validateCouponFn({
             data: {
               code,
-              durationMonths: product.duration_months ?? 1,
+              durationMonths: durationMonths,
               subtotalIncl: unitPrice * qty,
             },
           });
@@ -531,7 +533,7 @@ function CheckoutPage() {
         const r = await validateCouponFn({
           data: {
             code: appliedCoupon.code,
-            durationMonths: product.duration_months ?? 1,
+            durationMonths: durationMonths,
             subtotalIncl: unitPrice * qty,
           },
         });
@@ -572,7 +574,7 @@ function CheckoutPage() {
           product_id: product.id,
           product_slug: product.slug,
           product_name: product.name_ar,
-          duration_months: product.duration_months,
+          duration_months: durationMonths,
           unit_price: unitPrice,
           qty,
         },
@@ -657,7 +659,7 @@ function CheckoutPage() {
                 product_id: product.id,
                 product_slug: product.slug,
                 product_name: product.name_ar,
-                duration_months: product.duration_months,
+                duration_months: durationMonths,
                 unit_price: unitPrice,
                 qty,
               },
@@ -1093,7 +1095,7 @@ function CheckoutPage() {
               </div>
             )}
 
-            <PreOrderWarning slug={product.slug} duration={product.duration_months ?? 1} />
+            <PreOrderWarning slug={product.slug} duration={durationMonths} />
 
             <TrustBar />
 
