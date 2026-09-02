@@ -10,10 +10,10 @@ const ACTIVE_SUPABASE_KEY = "sb_publishable_g9kiBfUjgH4cIg_gSfZB7g_ON2-X8TQ";
 
 function getCleanUrl(): string {
   const envUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  if (!envUrl || !envUrl.includes("gnmkfnwmvjcfomwnnlgh")) {
-    return ACTIVE_SUPABASE_URL;
+  if (envUrl && envUrl.trim()) {
+    return envUrl.trim();
   }
-  return envUrl;
+  return ACTIVE_SUPABASE_URL;
 }
 
 function getCleanKey(): string {
@@ -22,10 +22,13 @@ function getCleanKey(): string {
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-  if (!envKey || envKey.startsWith("eyJ") || envKey.includes("ibcobmfg")) {
-    return ACTIVE_SUPABASE_KEY;
+  if (envKey && envKey.trim()) {
+    // Only reject the defunct dead project key if accidentally passed
+    if (!envKey.includes("ibcobmfg")) {
+      return envKey.trim();
+    }
   }
-  return envKey;
+  return ACTIVE_SUPABASE_KEY;
 }
 
 function createSupabaseAdminClient() {
