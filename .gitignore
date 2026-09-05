@@ -34,3 +34,4 @@ dist-ssr
 # Legacy metadata
 .lovable/
 
+package-lock.json
