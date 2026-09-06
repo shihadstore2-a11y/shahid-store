@@ -5,8 +5,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const ACTIVE_SUPABASE_URL = "https://gnmkfnwmvjcfomwnnlgh.supabase.co";
-const ACTIVE_SUPABASE_KEY = "sb_publishable_g9kiBfUjgH4cIg_gSfZB7g_ON2-X8TQ";
+const ACTIVE_SUPABASE_URL = "https://zvowztkpigjauvyavapl.supabase.co";
+const ACTIVE_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2b3d6dGtwaWdqYXV2eWF2YXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2MDk3NjgsImV4cCI6MjEwMzE4NTc2OH0.YMMzkt9zfsvEMTRLG1Ex78ms2c5NGjE3QoutSYV6C-Y";
 
 function getCleanUrl(): string {
   const envUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
