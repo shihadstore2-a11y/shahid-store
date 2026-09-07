@@ -6,29 +6,25 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const ACTIVE_SUPABASE_URL = "https://zvowztkpigjauvyavapl.supabase.co";
-const ACTIVE_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2b3d6dGtwaWdqYXV2eWF2YXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2MDk3NjgsImV4cCI6MjEwMzE4NTc2OH0.YMMzkt9zfsvEMTRLG1Ex78ms2c5NGjE3QoutSYV6C-Y";
+const ACTIVE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2b3d6dGtwaWdqYXV2eWF2YXBsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzYwOTc2OCwiZXhwIjoyMTAzMTg1NzY4fQ.QLYZahi9vg68lwR-FJaXEh5zELNWzrhvTFh0hPKtFbY";
 
 function getCleanUrl(): string {
   const envUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  if (envUrl && envUrl.trim()) {
+  if (envUrl && envUrl.trim() && !envUrl.includes("gnmkfnwmvjcfomwnnlgh") && !envUrl.includes("ibcobmfg")) {
     return envUrl.trim();
   }
   return ACTIVE_SUPABASE_URL;
 }
 
 function getCleanKey(): string {
-  const envKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_PUBLISHABLE_KEY ||
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const envKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (envKey && envKey.trim()) {
-    // Only reject the defunct dead project key if accidentally passed
-    if (!envKey.includes("ibcobmfg")) {
+    if (!envKey.includes("ibcobmfg") && !envKey.includes("gnmkfnwmvjcfomwnnlgh")) {
       return envKey.trim();
     }
   }
-  return ACTIVE_SUPABASE_KEY;
+  return ACTIVE_SERVICE_ROLE_KEY;
 }
 
 function createSupabaseAdminClient() {
