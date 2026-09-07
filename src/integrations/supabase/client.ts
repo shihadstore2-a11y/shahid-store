@@ -2,20 +2,19 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
+const ACTIVE_SUPABASE_URL = "https://zvowztkpigjauvyavapl.supabase.co";
+const ACTIVE_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2b3d6dGtwaWdqYXV2eWF2YXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2MDk3NjgsImV4cCI6MjEwMzE4NTc2OH0.YMMzkt9zfsvEMTRLG1Ex78ms2c5NGjE3QoutSYV6C-Y";
+
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+  let SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ACTIVE_SUPABASE_URL;
+  let SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || ACTIVE_SUPABASE_KEY;
 
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    const missing = [
-      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
-    ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Please configure SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in your environment variables.`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
+  // Protect against deprecated legacy Supabase project
+  if (SUPABASE_URL.includes('gnmkfnwmvjcfomwnnlgh') || !SUPABASE_URL) {
+    SUPABASE_URL = ACTIVE_SUPABASE_URL;
+    SUPABASE_PUBLISHABLE_KEY = ACTIVE_SUPABASE_KEY;
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -37,4 +36,3 @@ export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>,
     return Reflect.get(_supabase, prop, receiver);
   },
 });
-
