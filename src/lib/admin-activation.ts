@@ -2,6 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { validateImageFile } from "./admin-product-images";
+import { STORE_ID } from "./store-config";
 
 export type ActivationStep = Database["public"]["Tables"]["activation_steps"]["Row"];
 
@@ -108,7 +109,7 @@ export async function uploadActivationStepImage(
 
   const ext = getExtensionFromFile(file);
   const rand = Math.random().toString(36).slice(2, 8);
-  const path = `${step.device_type}/${step.id}/${Date.now()}-${rand}.${ext}`;
+  const path = `${STORE_ID}/${step.device_type}/${step.id}/${Date.now()}-${rand}.${ext}`;
 
   const { error } = await supabase.storage
     .from(ACTIVATION_IMAGES_BUCKET)

@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { Plus, Loader2, Upload, ImageIcon, X } from "lucide-react";
+import { Plus, Loader2, Upload, ImageIcon, X, Images, Check } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +22,7 @@ import {
 import {
   uploadProductImage,
   validateImageFile,
+  fetchStoreMediaLibrary,
 } from "@/lib/admin-product-images";
 
 interface AddProductDialogProps {
@@ -45,8 +47,17 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedLibraryUrl, setSelectedLibraryUrl] = useState<string | null>(null);
+  const [imageSource, setImageSource] = useState<"upload" | "library">("upload");
   const [stockEnabled, setStockEnabled] = useState(true);
   const [isActive, setIsActive] = useState(true);
+
+  // جلب مكتبة وسائط المتجر الحالية
+  const { data: libraryImages = [] } = useQuery({
+    queryKey: ["admin", "store-media-library"],
+    queryFn: fetchStoreMediaLibrary,
+    enabled: open,
+  });
 
   const handleNameChange = (val: string) => {
     setNameAr(val);
@@ -113,11 +124,13 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
     try {
       let finalImageUrl = "/logo.webp";
 
-      // إذا تم اختيار صورة من الجهاز، يتم رفعها لـ Supabase Storage فوراً
-      if (imageFile) {
-        toast.loading("جارٍ رفع صورة المنتج...", { id: "upload-img" });
-        const tempFolderId = crypto.randomUUID();
-        finalImageUrl = await uploadProductImage(tempFolderId, imageFile);
+      // إذا اختار المدير صورة من مكتبة المتجر الحالية
+      if (imageSource === "library" && selectedLibraryUrl) {
+        finalImageUrl = selectedLibraryUrl;
+      } else if (imageFile) {
+        // إذا تم اختيار صورة من الجهاز، يتم رفعها مباشرة إلى مجلد المتجر الموحد STORE_ID
+        toast.loading("جارٍ حفظ صورة المنتج...", { id: "upload-img" });
+        finalImageUrl = await uploadProductImage(finalSlug, imageFile, { customSlug: finalSlug });
         toast.dismiss("upload-img");
       }
 
@@ -241,67 +254,158 @@ export function AddProductDialog({ categories, onCreated }: AddProductDialogProp
             </div>
           </div>
 
-          {/* رفع صورة المنتج من الجهاز */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-muted-foreground">صورة المنتج</label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleFileSelect(f);
-              }}
-            />
-
-            {imagePreview ? (
-              <div className="relative flex items-center gap-3 rounded-xl border border-border bg-card p-3">
-                <img
-                  src={imagePreview}
-                  alt="معاينة الصورة"
-                  className="h-16 w-16 rounded-lg object-cover border border-border"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold truncate text-foreground">
-                    {imageFile?.name || "صورة مختارة"}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {imageFile ? `${(imageFile.size / 1024).toFixed(1)} KB` : ""}
-                  </p>
-                  <span className="inline-block mt-1 text-[10px] text-emerald-500 font-bold">
-                    جاهزة للرفع عند الحفظ ✓
-                  </span>
-                </div>
-                <Button
+          {/* اختيار أو رفع صورة المنتج */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-muted-foreground">صورة المنتج</label>
+              <div className="flex items-center gap-1 rounded-lg bg-zinc-900/90 p-1 border border-zinc-800 text-[11px]">
+                <button
                   type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRemoveImage}
-                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  title="إلغاء الصورة"
+                  onClick={() => setImageSource("upload")}
+                  className={`px-2.5 py-1 rounded-md transition-all ${
+                    imageSource === "upload"
+                      ? "bg-zinc-800 text-white font-bold shadow-sm"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
+                  رفع من الجهاز
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageSource("library")}
+                  className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all ${
+                    imageSource === "library"
+                      ? "bg-zinc-800 text-[var(--gold)] font-bold shadow-sm"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  <Images className="h-3.5 w-3.5" />
+                  <span>مكتبة المتجر</span>
+                  {libraryImages.length > 0 && (
+                    <span className="text-[10px] bg-zinc-700/60 px-1.5 py-0.2 rounded-full text-zinc-300">
+                      {libraryImages.length}
+                    </span>
+                  )}
+                </button>
               </div>
+            </div>
+
+            {imageSource === "upload" ? (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleFileSelect(f);
+                  }}
+                />
+
+                {imagePreview ? (
+                  <div className="relative flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+                    <img
+                      src={imagePreview}
+                      alt="معاينة الصورة"
+                      className="h-16 w-16 rounded-lg object-cover border border-border"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold truncate text-foreground">
+                        {imageFile?.name || "صورة مختارة"}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {imageFile ? `${(imageFile.size / 1024).toFixed(1)} KB` : ""}
+                      </p>
+                      <span className="inline-block mt-1 text-[10px] text-emerald-500 font-bold">
+                        جاهزة للحفظ مباشرة في مجلد المتجر الموحد ✓
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleRemoveImage}
+                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      title="إلغاء الصورة"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/20 p-5 text-center transition-colors hover:border-accent hover:bg-accent/5"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card border border-border text-muted-foreground">
+                      <Upload className="h-5 w-5 text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">
+                        اضغط لاختيار صورة من جهازك
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        JPG, PNG, WEBP (الحد الأقصى 2MB) — تحفظ تلقائياً في مجلد المتجر بدون تكرار
+                      </p>
+                    </div>
+                  </button>
+                )}
+              </>
             ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/20 p-5 text-center transition-colors hover:border-accent hover:bg-accent/5"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card border border-border text-muted-foreground">
-                  <Upload className="h-5 w-5 text-accent" />
+              <div className="space-y-2">
+                <div className="max-h-48 overflow-y-auto rounded-xl border border-border bg-zinc-950/50 p-2.5">
+                  {libraryImages.length === 0 ? (
+                    <p className="text-center py-6 text-xs text-muted-foreground">
+                      لا توجد صور مخزنة حالياً في المتجر. يمكنك الرفع من جهازك أولاً.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-2">
+                      {libraryImages.map((img) => {
+                        const isSelected = selectedLibraryUrl === img.url;
+                        return (
+                          <button
+                            type="button"
+                            key={img.url}
+                            onClick={() => setSelectedLibraryUrl(img.url)}
+                            className={`group relative aspect-video rounded-lg overflow-hidden border-2 transition-all ${
+                              isSelected
+                                ? "border-amber-400 ring-2 ring-amber-400/30 scale-[1.02]"
+                                : "border-border/60 hover:border-muted-foreground/60"
+                            }`}
+                          >
+                            <img
+                              src={img.url}
+                              alt={img.sourceProductName || "صورة المتجر"}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
+                                <div className="bg-amber-400 text-black rounded-full p-0.5 shadow">
+                                  <Check className="h-3 w-3 stroke-[3]" />
+                                </div>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground">
-                    اضغط لاختيار صورة من جهازك
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    JPG, PNG, WEBP (الحد الأقصى 2MB) — أو سيتم استخدام الشعار كافتراضي
-                  </p>
-                </div>
-              </button>
+                {selectedLibraryUrl && (
+                  <div className="flex items-center justify-between text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg">
+                    <span className="truncate">✓ تم اختيار صورة من مكتبة المتجر (تمنع تكرار التخزين)</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLibraryUrl(null)}
+                      className="text-zinc-400 hover:text-white shrink-0 ml-2"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "./store-config";
 
 export const PRODUCT_IMAGES_BUCKET = "product-images";
 export const MAX_IMAGES_PER_PRODUCT = 6;
@@ -34,20 +35,64 @@ function getExtension(file: File): string {
   return "jpg";
 }
 
-/** يرفع ملفاً ويعيد public URL */
-export async function uploadProductImage(productId: string, file: File): Promise<string> {
+function sanitizeFileName(name: string): string {
+  const ext = name.split(".").pop()?.toLowerCase() || "webp";
+  const base = name.slice(0, name.lastIndexOf("."));
+  const clean = base
+    .toLowerCase()
+    .replace(/[^\w\u0621-\u064A0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `${clean || "product"}.${ext}`;
+}
+
+/** 
+ * يرفع ملفاً مباشرة داخل مجلد المتجر الموحد STORE_ID بدون إنشاء مجلدات عشوائية
+ * ويمنع التكرار باستخدام upsert
+ */
+export async function uploadProductImage(
+  identifier: string, // slug or id
+  file: File,
+  options?: { customSlug?: string }
+): Promise<string> {
   const err = validateImageFile(file);
   if (err) throw new Error(err.message);
 
   const ext = getExtension(file);
-  const path = `${productId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  // تحديد اسم ملف نظيف ومفهوم داخل المتجر بدون مجلدات عشوائية
+  let fileName = "";
+  const effectiveSlug = (options?.customSlug || identifier || "").trim();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(effectiveSlug);
+
+  if (effectiveSlug && !isUuid && effectiveSlug !== "temp") {
+    const cleanSlug = effectiveSlug
+      .toLowerCase()
+      .replace(/[^\w\u0621-\u064A0-9-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    
+    const origBase = file.name.slice(0, file.name.lastIndexOf("."))
+      .toLowerCase()
+      .replace(/[^\w\u0621-\u064A0-9-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    if (origBase && origBase !== "image" && origBase !== "file" && !cleanSlug.includes(origBase)) {
+      fileName = `${cleanSlug}-${origBase}.${ext}`;
+    } else {
+      fileName = `${cleanSlug}.${ext}`;
+    }
+  } else {
+    fileName = sanitizeFileName(file.name);
+  }
+
+  // مسار موحد تحت مجلد المتجر STORE_ID بدون أي مجلدات عشوائية
+  const path = `${STORE_ID}/${fileName}`;
 
   const { error } = await supabase.storage
     .from(PRODUCT_IMAGES_BUCKET)
     .upload(path, file, {
       cacheControl: "31536000",
       contentType: file.type,
-      upsert: false,
+      upsert: true, // استبدال الملف في حال وجوده لمنع تكرار الملفات
     });
   if (error) throw error;
 
@@ -88,16 +133,41 @@ export type StoreMediaItem = {
   sourceProductName?: string;
 };
 
-/** جلب كافة الصور المرفوعة سابقاً في المتجر لإعادة استخدامها في أي منتج */
+/** جلب كافة الصور المرفوعة سابقاً في المتجر لإعادة استخدامها ومنع تكرار الرفع */
 export async function fetchStoreMediaLibrary(): Promise<StoreMediaItem[]> {
-  const { data, error } = await supabase
+  const urlMap = new Map<string, StoreMediaItem>();
+
+  // 1. جلب الملفات من مجلد المتجر في الـ Storage مباشرة
+  try {
+    const { data: storageFiles } = await supabase.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .list(STORE_ID, { limit: 100 });
+
+    if (storageFiles && storageFiles.length > 0) {
+      for (const sf of storageFiles) {
+        if (sf.name && !sf.name.startsWith(".")) {
+          const path = `${STORE_ID}/${sf.name}`;
+          const { data } = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path);
+          if (data?.publicUrl) {
+            urlMap.set(data.publicUrl, {
+              url: data.publicUrl,
+              sourceProductName: sf.name,
+            });
+          }
+        }
+      }
+    }
+  } catch (stErr) {
+    console.warn("Storage list fallback to DB:", stErr);
+  }
+
+  // 2. جلب الصور المستخدمة في المنتجات
+  const { data: prods } = await supabase
     .from("products")
     .select("name_ar, image_urls")
     .order("created_at", { ascending: false });
-  if (error) throw error;
 
-  const urlMap = new Map<string, StoreMediaItem>();
-  for (const row of data ?? []) {
+  for (const row of prods ?? []) {
     const list = Array.isArray(row.image_urls) ? row.image_urls : [];
     for (const url of list) {
       if (typeof url === "string" && url.trim() && !url.includes("/logo.webp")) {
@@ -113,4 +183,5 @@ export async function fetchStoreMediaLibrary(): Promise<StoreMediaItem[]> {
 
   return Array.from(urlMap.values());
 }
+
 

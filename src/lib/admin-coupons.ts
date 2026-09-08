@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "./store-config";
 
 export type AdminCoupon = {
   id: string;
@@ -58,6 +59,7 @@ export async function createCoupon(input: CouponInput) {
     valid_until: input.valid_until,
     applies_to_duration_min: input.applies_to_duration_min,
     is_active: true,
+    store_id: STORE_ID,
   };
   const { data, error } = await supabase
     .from("coupons")

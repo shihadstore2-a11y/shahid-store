@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "./store-config";
 
 export type AdminCategory = {
   id: string;
@@ -170,6 +171,7 @@ export async function createAdminProduct(product: AdminProductInsert) {
     .insert([
       {
         ...product,
+        store_id: STORE_ID,
         compatibility: product.compatibility ?? [
           "Smart TV",
           "Android TV",

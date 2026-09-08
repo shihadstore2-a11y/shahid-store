@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "./store-config";
 
 export type AdminCategoryItem = {
   id: string;
@@ -38,6 +39,7 @@ export async function createAdminCategory(payload: AdminCategoryInsert): Promise
         name_ar: payload.name_ar.trim(),
         slug: payload.slug.trim().toLowerCase(),
         sort_order: payload.sort_order ?? 0,
+        store_id: STORE_ID,
       },
     ])
     .select("id, name_ar, slug, sort_order")

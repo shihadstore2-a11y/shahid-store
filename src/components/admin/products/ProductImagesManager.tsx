@@ -113,7 +113,9 @@ export function ProductImagesManager({ product }: Props) {
       try {
         for (const file of toUpload) {
           try {
-            const url = await uploadProductImage(product.id, file);
+            const url = await uploadProductImage(product.slug || product.id, file, {
+              customSlug: product.slug,
+            });
             uploaded.push(url);
             setPendingCount((c) => Math.max(0, c - 1));
           } catch (err: any) {
