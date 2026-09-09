@@ -2,6 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ADMIN_VISIBLE_STATUSES } from "@/lib/admin-orders";
 import type { AdminOrderRow, OrderItemJson } from "@/lib/admin-orders";
+import { STORE_ID } from "./store-config";
 
 export type Customer = {
   customer_phone: string;
@@ -56,6 +57,7 @@ async function loadOrdersForAggregation(period?: CustomerPeriod): Promise<OrderS
   let q = supabase
     .from("orders")
     .select("customer_phone, customer_name, customer_email, total, created_at, status")
+    .eq("store_id", STORE_ID)
     .in("status", ADMIN_VISIBLE_STATUSES)
     .order("created_at", { ascending: false })
     .limit(10000);
@@ -161,6 +163,7 @@ export async function fetchCustomerOrders(phone: string): Promise<AdminOrderRow[
     .from("orders")
     .select("*")
     .eq("customer_phone", phone)
+    .eq("store_id", STORE_ID)
     .in("status", ADMIN_VISIBLE_STATUSES)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -172,21 +175,21 @@ export async function fetchCustomerOrders(phone: string): Promise<AdminOrderRow[
 
 export const adminCustomersQueryOptions = (filters: CustomerFilters) =>
   queryOptions({
-    queryKey: ["admin", "customers", "list", filters],
+    queryKey: ["admin", "customers", "list", STORE_ID, filters],
     queryFn: () => fetchAdminCustomers(filters),
     staleTime: 60_000,
   });
 
 export const adminCustomersStatsQueryOptions = () =>
   queryOptions({
-    queryKey: ["admin", "customers", "stats"],
+    queryKey: ["admin", "customers", "stats", STORE_ID],
     queryFn: fetchAdminCustomersStats,
     staleTime: 60_000,
   });
 
 export const customerOrdersQueryOptions = (phone: string) =>
   queryOptions({
-    queryKey: ["admin", "customers", "orders", phone],
+    queryKey: ["admin", "customers", "orders", STORE_ID, phone],
     queryFn: () => fetchCustomerOrders(phone),
     enabled: !!phone,
     staleTime: 30_000,

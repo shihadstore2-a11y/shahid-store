@@ -9,6 +9,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { STORE_ID } from "./store-config";
 
 const OrderIdInput = z.object({ orderId: z.string().uuid() });
 
@@ -24,6 +25,7 @@ export const getOrderRecovery = createServerFn({ method: "POST" })
       .from("orders")
       .select("id, order_number, customer_name, customer_phone, total, status, items")
       .eq("id", data.orderId)
+      .eq("store_id", STORE_ID)
       .maybeSingle();
 
     if (orderError) throw new Error(orderError.message);
@@ -82,7 +84,8 @@ export const cancelOrder = createServerFn({ method: "POST" })
     const { error: orderError } = await supabaseAdmin
       .from("orders")
       .update({ status: "cancelled", updated_at: new Date().toISOString() })
-      .eq("id", data.orderId);
+      .eq("id", data.orderId)
+      .eq("store_id", STORE_ID);
 
     if (orderError) throw new Error(orderError.message);
 

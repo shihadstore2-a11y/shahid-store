@@ -9,6 +9,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
+import { STORE_ID } from "@/lib/store-config";
 
 type OrderNotif = {
   id: string;
@@ -40,6 +41,7 @@ export function AdminNotifications() {
       const { data, error } = await supabase
         .from("orders")
         .select("id, order_number, customer_name, total, status, created_at, fulfilled_at")
+        .eq("store_id", STORE_ID)
         .eq("is_test", false)
         .in("status", ["paid", "fulfilled"])
         .order("created_at", { ascending: false })

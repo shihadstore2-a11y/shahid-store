@@ -25,6 +25,7 @@ export async function fetchAdminCategories(): Promise<AdminCategoryItem[]> {
   const { data, error } = await supabase
     .from("categories")
     .select("id, name_ar, slug, sort_order")
+    .eq("store_id", STORE_ID)
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data ?? []) as AdminCategoryItem[];
@@ -57,6 +58,7 @@ export async function updateAdminCategory(
     .from("categories")
     .update(payload)
     .eq("id", id)
+    .eq("store_id", STORE_ID)
     .select("id, name_ar, slug, sort_order")
     .single();
   if (error) throw error;
@@ -66,8 +68,8 @@ export async function updateAdminCategory(
 /** حذف تصنيف */
 export async function deleteAdminCategory(id: string): Promise<boolean> {
   // فصل المنتجات المرتبطة بهذا التصنيف أولاً قبل حذفه
-  await supabase.from("products").update({ category_id: null }).eq("category_id", id);
-  const { error } = await supabase.from("categories").delete().eq("id", id);
+  await supabase.from("products").update({ category_id: null }).eq("category_id", id).eq("store_id", STORE_ID);
+  const { error } = await supabase.from("categories").delete().eq("id", id).eq("store_id", STORE_ID);
   if (error) throw error;
   return true;
 }

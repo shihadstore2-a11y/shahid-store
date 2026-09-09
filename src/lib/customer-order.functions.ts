@@ -4,6 +4,7 @@ import { notFound } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { STORE_ID } from "./store-config";
 
 // View آمن للعميل — UUID gated (122-bit unguessable)، يبيّن credentials فقط بعد التسليم.
 // نُسقط: user_id, fulfilled_by, customer_email (privacy)، whatsapp_messages_sent، notes الإدارية.
@@ -127,6 +128,7 @@ export const getCustomerOrderView = createServerFn({ method: "POST" })
       .from("orders")
       .select(`${ORDER_COLUMNS},user_id,customer_email`)
       .eq("id", data.id)
+      .eq("store_id", STORE_ID)
       .maybeSingle();
 
     if (adminRow) {
@@ -160,6 +162,7 @@ export const getMyOrderView = createServerFn({ method: "POST" })
       .from("orders")
       .select(ORDER_COLUMNS)
       .eq("id", data.id)
+      .eq("store_id", STORE_ID)
       .maybeSingle();
 
     if (error || !row) throw notFound();

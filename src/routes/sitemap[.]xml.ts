@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "@/lib/store-config";
 
 const BASE_URL = "https://shahidstore.net";
 
@@ -46,7 +47,8 @@ export const Route = createFileRoute("/sitemap.xml")({
         try {
           const { data } = await supabase
             .from("categories")
-            .select("slug");
+            .select("slug")
+            .eq("store_id", STORE_ID);
           for (const c of data ?? []) {
             if (c?.slug) {
               entries.push({
@@ -65,6 +67,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           const { data } = await supabase
             .from("products")
             .select("slug")
+            .eq("store_id", STORE_ID)
             .eq("is_active", true);
           for (const p of data ?? []) {
             if (p?.slug) {

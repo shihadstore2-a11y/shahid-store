@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { STORE_ID } from "./store-config";
 
 const ExtraInfoSchema = z
   .record(z.string().min(1).max(100), z.union([z.string(), z.number(), z.boolean(), z.null()]))
@@ -66,7 +67,8 @@ export const fulfillOrder = createServerFn({ method: "POST" })
         status: "fulfilled",
         updated_at: nowIso,
       })
-      .eq("id", data.orderId);
+      .eq("id", data.orderId)
+      .eq("store_id", STORE_ID);
 
     if (updErr) {
       console.warn("[fulfillOrder] direct update warning:", updErr.message);

@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ADMIN_VISIBLE_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_VALUES } from "@/lib/admin-orders";
+import { STORE_ID } from "./store-config";
 
 const startOfDay = (d: Date) => {
   const x = new Date(d);
@@ -34,6 +35,7 @@ export async function fetchDashboardKpis(): Promise<DashboardKpis> {
     supabase
       .from("orders")
       .select("total, customer_email, user_id")
+      .eq("store_id", STORE_ID)
       .eq("is_test", false)
       .in("status", ["paid", "fulfilled"]);
 
@@ -85,6 +87,7 @@ export async function fetchSalesLast30Days(): Promise<SalesPoint[]> {
   const { data, error } = await supabase
     .from("orders")
     .select("total, created_at")
+    .eq("store_id", STORE_ID)
     .eq("is_test", false)
     .in("status", ["paid", "fulfilled"])
     .gte("created_at", start.toISOString());
@@ -113,6 +116,7 @@ export async function fetchOrderStatusBreakdown(): Promise<StatusSlice[]> {
   const { data, error } = await supabase
     .from("orders")
     .select("status")
+    .eq("store_id", STORE_ID)
     .in("status", ADMIN_VISIBLE_STATUSES);
   if (error) throw error;
   const counts = new Map<string, number>();
@@ -137,6 +141,7 @@ export async function fetchRecentOrders(limit = 5): Promise<RecentOrder[]> {
   const { data, error } = await supabase
     .from("orders")
     .select("id, order_number, customer_name, total, status, created_at")
+    .eq("store_id", STORE_ID)
     .in("status", ADMIN_VISIBLE_STATUSES)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -158,6 +163,7 @@ export async function fetchTopProducts(limit = 5): Promise<TopProduct[]> {
   const { data, error } = await supabase
     .from("products")
     .select("id, name_ar, slug, sales_count, base_price, icon_key, gradient_key")
+    .eq("store_id", STORE_ID)
     .order("sales_count", { ascending: false })
     .limit(limit);
   if (error) throw error;

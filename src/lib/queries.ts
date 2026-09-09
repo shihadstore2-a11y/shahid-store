@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, Coupon, Product } from "./types";
+import { STORE_ID } from "./store-config";
 
 /**
  * Single roundtrip: fetch all home-page categories + their active products
@@ -14,14 +15,15 @@ export async function fetchHomeCategories(
   const { data, error } = await supabase
     .from("categories")
     .select("slug, products(*)")
+    .eq("store_id", STORE_ID)
     .in("slug", slugs as string[]);
   if (error) throw error;
 
   const grouped: HomeCategoriesData = {};
   for (const slug of slugs) grouped[slug] = [];
-  for (const row of (data ?? []) as { slug: string; products: Product[] | null }[]) {
+  for (const row of (data ?? []) as { slug: string; products: (Product & { store_id?: string })[] | null }[]) {
     const items = (row.products ?? [])
-      .filter((p) => (p as unknown as { is_active: boolean }).is_active)
+      .filter((p) => (p as unknown as { is_active: boolean }).is_active && (!p.store_id || p.store_id === STORE_ID))
       .sort((a, b) => {
         const priceA = a.sale_price != null ? a.sale_price : a.base_price;
         const priceB = b.sale_price != null ? b.sale_price : b.base_price;
@@ -43,7 +45,7 @@ export const homeCategoriesQueryOptions = (
   slugs: readonly string[] = HOME_CATEGORY_SLUGS,
 ) =>
   queryOptions({
-    queryKey: ["home-categories", slugs],
+    queryKey: ["home-categories", STORE_ID, slugs],
     queryFn: () => fetchHomeCategories(slugs),
     staleTime: 5 * 60 * 1000,
   });
@@ -52,6 +54,7 @@ export async function fetchCategories(): Promise<Category[]> {
   const { data, error } = await supabase
     .from("categories")
     .select("*")
+    .eq("store_id", STORE_ID)
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Category[];
@@ -61,6 +64,7 @@ export async function fetchProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
     .select("*")
+    .eq("store_id", STORE_ID)
     .eq("is_active", true);
   if (error) throw error;
   const products = (data ?? []) as unknown as Product[];
@@ -75,6 +79,7 @@ export async function fetchBestsellers(limit = 4): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
     .select("*")
+    .eq("store_id", STORE_ID)
     .eq("is_active", true)
     .eq("is_bestseller", true)
     .order("sales_count", { ascending: false })
@@ -90,6 +95,7 @@ export async function fetchProductsByCategory(slug: string): Promise<{
   const { data: cat, error: catErr } = await supabase
     .from("categories")
     .select("*")
+    .eq("store_id", STORE_ID)
     .eq("slug", slug)
     .maybeSingle();
   if (catErr) throw catErr;
@@ -98,6 +104,7 @@ export async function fetchProductsByCategory(slug: string): Promise<{
   const { data: prods, error: prodErr } = await supabase
     .from("products")
     .select("*")
+    .eq("store_id", STORE_ID)
     .eq("category_id", cat.id)
     .eq("is_active", true);
   if (prodErr) throw prodErr;
@@ -117,6 +124,7 @@ export async function fetchProductsByCategorySlug(
   const { data: cat, error: catErr } = await supabase
     .from("categories")
     .select("id")
+    .eq("store_id", STORE_ID)
     .eq("slug", slug)
     .maybeSingle();
   if (catErr) throw catErr;
@@ -125,6 +133,7 @@ export async function fetchProductsByCategorySlug(
   const { data, error } = await supabase
     .from("products")
     .select("*")
+    .eq("store_id", STORE_ID)
     .eq("category_id", cat.id)
     .eq("is_active", true);
   if (error) throw error;
@@ -143,6 +152,7 @@ export async function fetchProductBySlug(slug: string): Promise<{
   const { data: prod, error: prodErr } = await supabase
     .from("products")
     .select("*")
+    .eq("store_id", STORE_ID)
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -150,7 +160,7 @@ export async function fetchProductBySlug(slug: string): Promise<{
   if (!prod) return { product: null, category: null };
 
   const { data: cat, error: catErr } = prod.category_id
-    ? await supabase.from("categories").select("*").eq("id", prod.category_id).maybeSingle()
+    ? await supabase.from("categories").select("*").eq("store_id", STORE_ID).eq("id", prod.category_id).maybeSingle()
     : { data: null, error: null };
   if (catErr) throw catErr;
 
@@ -169,6 +179,7 @@ export async function fetchRelatedProducts(
   const { data, error } = await supabase
     .from("products")
     .select("*")
+    .eq("store_id", STORE_ID)
     .eq("category_id", categoryId)
     .eq("is_active", true)
     .neq("id", excludeId)
@@ -181,6 +192,7 @@ export async function fetchActiveCoupon(code: string): Promise<Coupon | null> {
   const { data, error } = await supabase
     .from("coupons")
     .select("*")
+    .eq("store_id", STORE_ID)
     .eq("code", code)
     .eq("is_active", true)
     .maybeSingle();

@@ -80,6 +80,7 @@ const STATUS_AR: Record<string, { label: string; cls: string }> = {
 };
 
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "@/lib/store-config";
 
 function OrderDetailPage() {
   const { id } = Route.useParams();
@@ -100,6 +101,7 @@ function OrderDetailPage() {
       const { data: dbOrder, error: dbErr } = await supabase
         .from("orders")
         .select("*")
+        .eq("store_id", STORE_ID)
         .or(`id.eq.${id},order_number.eq.${id}`)
         .maybeSingle();
 

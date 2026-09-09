@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { STORE_ID } from "./store-config";
 
 const InputSchema = z.object({
   orderId: z.string().uuid(),
@@ -38,6 +39,7 @@ export const logWhatsappSent = createServerFn({ method: "POST" })
       .from("orders")
       .select("whatsapp_messages_sent")
       .eq("id", data.orderId)
+      .eq("store_id", STORE_ID)
       .single();
 
     if (readErr) throw new Error(readErr.message);
@@ -61,7 +63,8 @@ export const logWhatsappSent = createServerFn({ method: "POST" })
         whatsapp_messages_sent: next as unknown as never,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", data.orderId);
+      .eq("id", data.orderId)
+      .eq("store_id", STORE_ID);
 
     if (updErr) throw new Error(updErr.message);
 

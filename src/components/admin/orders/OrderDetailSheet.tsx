@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Gift, MessageCircle, MoreVertical, Package, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "@/lib/store-config";
 
 import { toast } from "sonner";
 import {
@@ -64,7 +65,11 @@ export function OrderDetailSheet({
         _order_id: orderId,
       });
       if (rpcErr) {
-        const { error: delErr } = await supabase.from("orders").delete().eq("id", orderId);
+        const { error: delErr } = await supabase
+          .from("orders")
+          .delete()
+          .eq("id", orderId)
+          .eq("store_id", STORE_ID);
         if (delErr) throw new Error(delErr.message || rpcErr.message);
       } else if (rpcData && typeof rpcData === "object" && !(rpcData as Record<string, unknown>).success) {
         throw new Error(String((rpcData as Record<string, unknown>).error || "فشل حذف الطلب"));

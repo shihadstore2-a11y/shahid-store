@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "./store-config";
 
 export type StoreSettings = {
   storeName: string;
@@ -69,8 +70,8 @@ export async function signOutEverywhere(): Promise<void> {
 
 export async function fetchSystemCounts() {
   const [products, orders, customers] = await Promise.all([
-    supabase.from("products").select("id", { count: "exact", head: true }).eq("is_active", true),
-    supabase.from("orders").select("id", { count: "exact", head: true }),
+    supabase.from("products").select("id", { count: "exact", head: true }).eq("store_id", STORE_ID).eq("is_active", true),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("store_id", STORE_ID),
     supabase.from("profiles").select("id", { count: "exact", head: true }),
   ]);
   return {
@@ -82,7 +83,7 @@ export async function fetchSystemCounts() {
 
 export const systemCountsQueryOptions = () =>
   queryOptions({
-    queryKey: ["admin", "settings", "system-counts"],
+    queryKey: ["admin", "settings", "system-counts", STORE_ID],
     queryFn: fetchSystemCounts,
     staleTime: 60_000,
   });

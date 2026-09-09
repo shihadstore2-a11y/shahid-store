@@ -47,6 +47,7 @@ import { PhoneInputIntl } from "@/components/forms/PhoneInputIntl";
 import { E164_REGEX, isSaudiE164, toE164, formatE164ForDisplay, detectCountry } from "@/lib/phone-intl";
 import { useWhatsappLink } from "@/lib/whatsapp";
 import { CheckoutAuthGate, type CheckoutAuthMode } from "@/components/checkout/CheckoutAuthGate";
+import { STORE_ID } from "@/lib/store-config";
 import { toast } from "sonner";
 
 
@@ -232,6 +233,7 @@ function CheckoutPage() {
           const { data: dbCoupon, error: dbErr } = await supabase
             .from("coupons")
             .select("code, discount_percent, applies_to_duration_min, valid_until, is_active")
+            .eq("store_id", STORE_ID)
             .ilike("code", code)
             .eq("is_active", true)
             .maybeSingle();
@@ -540,6 +542,7 @@ function CheckoutPage() {
 
     const payload = {
       id: orderId,
+      store_id: STORE_ID,
       order_number: orderNumber,
       user_id: finalUserId,
       customer_name: data.customer_name,

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ADMIN_VISIBLE_STATUSES, ORDER_STATUS_LABELS } from "@/lib/admin-orders";
 import { exportToCSV } from "./csv-export";
+import { STORE_ID } from "./store-config";
 
 export type ReportRange = "today" | "7d" | "30d" | "90d" | "custom";
 
@@ -99,6 +100,7 @@ async function fetchOrdersInRange<T>(
   const { data, error } = await supabase
     .from("orders")
     .select(fields)
+    .eq("store_id", STORE_ID)
     .eq("is_test", false)
     .gte("created_at", from.toISOString())
     .lte("created_at", to.toISOString())
@@ -257,6 +259,7 @@ export async function exportOrdersCSV(filters: ReportFilters): Promise<void> {
     .select(
       "order_number, customer_name, customer_phone, customer_email, city, subtotal, discount, vat, total, coupon_code, payment_method, status, created_at",
     )
+    .eq("store_id", STORE_ID)
     .eq("is_test", false)
     .in("status", ADMIN_VISIBLE_STATUSES)
     .gte("created_at", from.toISOString())
@@ -328,28 +331,28 @@ export async function exportDailyRevenueCSV(filters: ReportFilters): Promise<voi
 
 export const reportStatsQueryOptions = (filters: ReportFilters) =>
   queryOptions({
-    queryKey: ["admin", "reports", "stats", filters],
+    queryKey: ["admin", "reports", "stats", STORE_ID, filters],
     queryFn: () => fetchReportStats(filters),
     staleTime: 60_000,
   });
 
 export const dailyRevenueQueryOptions = (filters: ReportFilters) =>
   queryOptions({
-    queryKey: ["admin", "reports", "daily-revenue", filters],
+    queryKey: ["admin", "reports", "daily-revenue", STORE_ID, filters],
     queryFn: () => fetchDailyRevenue(filters),
     staleTime: 60_000,
   });
 
 export const topProductsQueryOptions = (filters: ReportFilters) =>
   queryOptions({
-    queryKey: ["admin", "reports", "top-products", filters],
+    queryKey: ["admin", "reports", "top-products", STORE_ID, filters],
     queryFn: () => fetchTopProducts(filters),
     staleTime: 60_000,
   });
 
 export const statusDistributionQueryOptions = (filters: ReportFilters) =>
   queryOptions({
-    queryKey: ["admin", "reports", "status-distribution", filters],
+    queryKey: ["admin", "reports", "status-distribution", STORE_ID, filters],
     queryFn: () => fetchStatusDistribution(filters),
     staleTime: 60_000,
   });

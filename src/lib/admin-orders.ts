@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "./store-config";
 
 /**
  * ⚠️ TAXONOMY (موثّق 30 May 2026 — جذر خطأ تطابق سابق):
@@ -157,7 +158,10 @@ export async function fetchAdminOrders(filters: OrderFilters): Promise<OrdersPag
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  let q = supabase.from("orders").select("*", { count: "exact" });
+  let q = supabase
+    .from("orders")
+    .select("*", { count: "exact" })
+    .eq("store_id", STORE_ID);
 
   // تصفية الحالة: إن تم تحديد حالة معينة نفلتر بها، وإلا نعرض فقط الحالات المصرح بعرضها (paid, fulfilled, refunded, cancelled)
   if (filters.status && filters.status !== "all") {
@@ -199,6 +203,7 @@ export async function fetchAdminOrderDetail(orderId: string): Promise<AdminOrder
     .from("orders")
     .select("*")
     .eq("id", orderId)
+    .eq("store_id", STORE_ID)
     .single();
   if (error) throw error;
   return {
@@ -227,16 +232,19 @@ export async function fetchAdminOrdersStats(): Promise<AdminOrdersStats> {
     supabase
       .from("orders")
       .select("total")
+      .eq("store_id", STORE_ID)
       .gte("created_at", monthStart)
       .in("status", ["paid", "fulfilled"]),
     supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
+      .eq("store_id", STORE_ID)
       .eq("status", "fulfilled"),
     // paid بانتظار التسليم: fulfilled_at IS NULL (المعيار الموثوق للتسليم).
     supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
+      .eq("store_id", STORE_ID)
       .eq("status", "paid")
       .is("fulfilled_at", null),
   ]);
@@ -264,6 +272,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     .from("orders")
     .update({ status, updated_at: new Date().toISOString() })
     .eq("id", orderId)
+    .eq("store_id", STORE_ID)
     .select()
     .single();
   if (error) throw error;
@@ -272,21 +281,21 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 
 export const adminOrdersListQueryOptions = (filters: OrderFilters) =>
   queryOptions({
-    queryKey: ["admin", "orders", "list", filters],
+    queryKey: ["admin", "orders", "list", STORE_ID, filters],
     queryFn: () => fetchAdminOrders(filters),
     staleTime: 30_000,
   });
 
 export const adminOrderDetailQueryOptions = (orderId: string) =>
   queryOptions({
-    queryKey: ["admin", "orders", "detail", orderId],
+    queryKey: ["admin", "orders", "detail", STORE_ID, orderId],
     queryFn: () => fetchAdminOrderDetail(orderId),
     enabled: !!orderId,
   });
 
 export const adminOrdersStatsQueryOptions = () =>
   queryOptions({
-    queryKey: ["admin", "orders", "stats"],
+    queryKey: ["admin", "orders", "stats", STORE_ID],
     queryFn: fetchAdminOrdersStats,
     staleTime: 60_000,
   });

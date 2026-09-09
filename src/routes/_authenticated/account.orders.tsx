@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatSAR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useWhatsappNumber, whatsappLink } from "@/lib/whatsapp";
+import { STORE_ID } from "@/lib/store-config";
 import {
   getRecoveryState,
   type OrderRecoveryState,
@@ -96,6 +97,7 @@ function OrdersPage() {
       let q = supabase
         .from("orders")
         .select("id, order_number, total, status, created_at, fulfilled_at")
+        .eq("store_id", STORE_ID)
         .in("status", ["paid", "fulfilled", "refunded", "cancelled"]);
 
       if (userEmail && userPhone) {

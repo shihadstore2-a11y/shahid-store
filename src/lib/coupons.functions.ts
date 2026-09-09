@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { STORE_ID } from "./store-config";
 
 const Input = z.object({
   code: z
@@ -51,6 +52,7 @@ export const validateCoupon = createServerFn({ method: "POST" })
     const { data: coupon, error } = await supabaseAdmin
       .from("coupons")
       .select("code, discount_percent, applies_to_duration_min, valid_until, is_active")
+      .eq("store_id", STORE_ID)
       .ilike("code", cleanCode)
       .eq("is_active", true)
       .maybeSingle();
@@ -63,6 +65,7 @@ export const validateCoupon = createServerFn({ method: "POST" })
         const { data: simpleCoupon, error: simpleErr } = await supabaseAdmin
           .from("coupons")
           .select("code, discount_percent")
+          .eq("store_id", STORE_ID)
           .ilike("code", cleanCode)
           .maybeSingle();
 

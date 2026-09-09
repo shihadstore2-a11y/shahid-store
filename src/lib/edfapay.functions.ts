@@ -10,6 +10,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { initiatePayment } from "./edfapay.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { STORE_ID } from "./store-config";
 
 // International E.164 (any country). EdfaPay accepts the phone as metadata.
 // Enablement 28 May 2026 — Saudi-only restriction lifted (EdfaPay supports global cards).
@@ -64,6 +65,7 @@ export const createEdfaPayCheckout = createServerFn({ method: "POST" })
     // 1. ضمان تسجيل الطلب في قاعدة البيانات من السيرفر مباشرة (يتجاوز أي حجب RLS)
     const orderPayload = {
       id: data.orderId,
+      store_id: STORE_ID,
       order_number: data.orderNumber,
       user_id: data.userId || null,
       customer_name: data.customerName.trim(),
@@ -187,7 +189,8 @@ export const verifyAndConfirmPayment = createServerFn({ method: "POST" })
           status: finalStatus === "fulfilled" ? "fulfilled" : "paid",
           updated_at: new Date().toISOString(),
         })
-        .eq("id", orderId);
+        .eq("id", orderId)
+        .eq("store_id", STORE_ID);
 
       await supabaseAdmin
         .from("payment_transactions")
@@ -202,6 +205,7 @@ export const verifyAndConfirmPayment = createServerFn({ method: "POST" })
       .from("orders")
       .select("id, order_number, total, status")
       .eq("id", orderId)
+      .eq("store_id", STORE_ID)
       .maybeSingle();
 
     return {

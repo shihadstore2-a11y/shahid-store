@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Eye, EyeOff, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "@/lib/store-config";
 import {
   Dialog,
   DialogContent,
@@ -94,6 +95,7 @@ export function FulfillModal({
           updated_at: nowIso,
         })
         .eq("id", vars.orderId)
+        .eq("store_id", STORE_ID)
         .select("id, status, subscription_username, subscription_password, fulfilled_at")
         .maybeSingle();
 

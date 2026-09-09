@@ -12,6 +12,7 @@ import { durationLabel } from "@/lib/order";
 import { useWhatsappLink } from "@/lib/whatsapp";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { STORE_ID } from "@/lib/store-config";
 
 // لا نُعيد المحاولة على notFound (404) أو ORDER_LOCKED — هدر بلا فائدة.
 function shouldRetry(failureCount: number, error: unknown): boolean {
@@ -118,6 +119,7 @@ function SuccessPage() {
         .from("orders")
         .select("*")
         .eq("id", id)
+        .eq("store_id", STORE_ID)
         .maybeSingle();
 
       if (tableData) {

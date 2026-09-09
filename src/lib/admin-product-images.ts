@@ -124,7 +124,8 @@ export async function updateProductImageUrls(
   const { error } = await supabase
     .from("products")
     .update({ image_urls: urls })
-    .eq("id", productId);
+    .eq("id", productId)
+    .eq("store_id", STORE_ID);
   if (error) throw error;
 }
 
@@ -165,6 +166,7 @@ export async function fetchStoreMediaLibrary(): Promise<StoreMediaItem[]> {
   const { data: prods } = await supabase
     .from("products")
     .select("name_ar, image_urls")
+    .eq("store_id", STORE_ID)
     .order("created_at", { ascending: false });
 
   for (const row of prods ?? []) {

@@ -55,10 +55,15 @@ export async function fetchAdminProducts(
   filters: ProductFilters,
 ): Promise<{ rows: AdminProductRow[]; categories: AdminCategory[] }> {
   const [productsRes, categoriesRes] = await Promise.all([
-    supabase.from("products").select(SELECT_COLS).order("created_at", { ascending: false }),
+    supabase
+      .from("products")
+      .select(SELECT_COLS)
+      .eq("store_id", STORE_ID)
+      .order("created_at", { ascending: false }),
     supabase
       .from("categories")
       .select("id, slug, name_ar, sort_order")
+      .eq("store_id", STORE_ID)
       .order("sort_order", { ascending: true }),
   ]);
   if (productsRes.error) throw productsRes.error;
@@ -142,6 +147,7 @@ export async function updateAdminProduct(id: string, updates: AdminProductUpdate
     .from("products")
     .update(updates)
     .eq("id", id)
+    .eq("store_id", STORE_ID)
     .select(SELECT_COLS)
     .single();
   if (error) throw error;
@@ -238,14 +244,18 @@ export async function deleteAdminProduct(id: string) {
   }
 
   // حذف مباشر كخيار بديل
-  const { error } = await supabase.from("products").delete().eq("id", id);
+  const { error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", id)
+    .eq("store_id", STORE_ID);
   if (error) throw error;
   return true;
 }
 
 export const adminProductsQueryOptions = (filters: ProductFilters) =>
   queryOptions({
-    queryKey: ["admin", "products", filters],
+    queryKey: ["admin", "products", STORE_ID, filters],
     queryFn: () => fetchAdminProducts(filters),
     staleTime: 30_000,
   });

@@ -31,6 +31,7 @@ export async function fetchAdminCoupons(
   const { data, error } = await supabase
     .from("coupons")
     .select("id, code, discount_percent, valid_until, applies_to_duration_min, is_active, created_at")
+    .eq("store_id", STORE_ID)
     .order("created_at", { ascending: false });
   if (error) throw error;
 
@@ -81,6 +82,7 @@ export async function updateCoupon(id: string, updates: CouponUpdate) {
     .from("coupons")
     .update(payload)
     .eq("id", id)
+    .eq("store_id", STORE_ID)
     .select()
     .single();
   if (error) throw error;
@@ -88,13 +90,17 @@ export async function updateCoupon(id: string, updates: CouponUpdate) {
 }
 
 export async function deleteCoupon(id: string) {
-  const { error } = await supabase.from("coupons").delete().eq("id", id);
+  const { error } = await supabase
+    .from("coupons")
+    .delete()
+    .eq("id", id)
+    .eq("store_id", STORE_ID);
   if (error) throw error;
 }
 
 export const adminCouponsQueryOptions = (filters: CouponFilters) =>
   queryOptions({
-    queryKey: ["admin", "coupons", filters],
+    queryKey: ["admin", "coupons", STORE_ID, filters],
     queryFn: () => fetchAdminCoupons(filters),
     staleTime: 30_000,
   });

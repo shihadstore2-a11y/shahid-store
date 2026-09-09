@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DateRange, OrderItemJson } from "@/lib/admin-orders";
+import { STORE_ID } from "./store-config";
 
 export type AbandonedOrderStatus = "pending" | "initiated" | "payment_failed";
 
@@ -68,6 +69,7 @@ export async function fetchAbandonedOrders(
   let q = supabase
     .from("orders")
     .select("*", { count: "exact" })
+    .eq("store_id", STORE_ID)
     .in("status", ABANDONED_STATUSES);
 
   const since = rangeStart(filters.dateRange);
@@ -121,6 +123,7 @@ export async function fetchAbandonedStats(): Promise<AbandonedStats> {
   const { data, error } = await supabase
     .from("orders")
     .select("id, total, created_at, whatsapp_messages_sent")
+    .eq("store_id", STORE_ID)
     .in("status", ABANDONED_STATUSES);
 
   if (error) throw error;
@@ -152,6 +155,7 @@ export async function deleteAbandonedOrder(orderId: string): Promise<void> {
     .from("orders")
     .delete()
     .eq("id", orderId)
+    .eq("store_id", STORE_ID)
     .in("status", ABANDONED_STATUSES);
 
   if (error) throw error;
@@ -166,6 +170,7 @@ export async function deleteAbandonedOrdersBulk(
     .from("orders")
     .delete()
     .in("id", orderIds)
+    .eq("store_id", STORE_ID)
     .in("status", ABANDONED_STATUSES)
     .select("id");
 
@@ -179,6 +184,7 @@ export async function cleanupAbandonedOrders(
   let q = supabase
     .from("orders")
     .delete()
+    .eq("store_id", STORE_ID)
     .in("status", ABANDONED_STATUSES);
 
   if (olderThanHours && olderThanHours > 0) {
@@ -197,7 +203,7 @@ export function adminAbandonedOrdersListQueryOptions(
   filters: AbandonedFilters,
 ) {
   return queryOptions({
-    queryKey: ["admin", "abandoned-orders", "list", filters],
+    queryKey: ["admin", "abandoned-orders", "list", STORE_ID, filters],
     queryFn: () => fetchAbandonedOrders(filters),
     staleTime: 10_000,
   });
@@ -205,7 +211,7 @@ export function adminAbandonedOrdersListQueryOptions(
 
 export function adminAbandonedStatsQueryOptions() {
   return queryOptions({
-    queryKey: ["admin", "abandoned-orders", "stats"],
+    queryKey: ["admin", "abandoned-orders", "stats", STORE_ID],
     queryFn: () => fetchAbandonedStats(),
     staleTime: 30_000,
   });
