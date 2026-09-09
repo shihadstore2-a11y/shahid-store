@@ -1,16 +1,29 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { getCategoryIcon } from "@/components/icons/CategoryIcons";
+import { fetchCategories } from "@/lib/queries";
+import { STORE_ID } from "@/lib/store-config";
 
-const categories = [
+const defaultCategories = [
   { slug: "falcon", label: "فالكون" },
   { slug: "hulk", label: "هولك" },
   { slug: "smarters", label: "سمارترز برو" },
-  { slug: "annual-offers", label: "عروض سنوية", isCategoryRoute: true },
+  { slug: "annual-offers", label: "عروض سنوية" },
 ] as const;
 
 export function CategoriesBar() {
   const { location } = useRouterState();
   const path = location.pathname;
+
+  const { data: dbCategories } = useQuery({
+    queryKey: ["categories-bar", STORE_ID],
+    queryFn: fetchCategories,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const categories = dbCategories && dbCategories.length > 0
+    ? dbCategories.map((c) => ({ slug: c.slug, label: c.name_ar }))
+    : defaultCategories;
 
   return (
     <div className="border-b border-border/60 bg-background/85 backdrop-blur-md">

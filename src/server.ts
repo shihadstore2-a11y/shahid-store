@@ -2,6 +2,8 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { resolveStoreFromRequest } from "./lib/store-resolver";
+import { serverStoreStorage } from "./lib/store-context.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -78,9 +80,31 @@ export default {
         }
       }
 
+      // Resolve active store dynamically from the incoming request domain
+      const resolvedStore = await resolveStoreFromRequest(request);
+
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      
+      // Run the request handler inside the isolated store context
+      const rawResponse = await serverStoreStorage.run(resolvedStore, async () => {
+        return await handler.fetch(request, env, ctx);
+      });
+
+      const response = await normalizeCatastrophicSsrResponse(rawResponse);
+
+      // Attach tenant identification headers to response for transparency & debugging
+      const newHeaders = new Headers(response.headers);
+      newHeaders.set("X-Store-ID", resolvedStore.id);
+      newHeaders.set("X-Store-Slug", resolvedStore.slug);
+      if (resolvedStore.domain) {
+        newHeaders.set("X-Store-Domain", resolvedStore.domain);
+      }
+
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: newHeaders,
+      });
     } catch (error) {
       console.error(error);
       return brandedErrorResponse();

@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, Coupon, Product } from "./types";
-import { STORE_ID } from "./store-config";
+import { STORE_ID, getActiveStoreId } from "./store-config";
 
 /**
  * Single roundtrip: fetch all home-page categories + their active products
@@ -12,6 +12,7 @@ export type HomeCategoriesData = Record<string, Product[]>;
 export async function fetchHomeCategories(
   slugs: readonly string[],
 ): Promise<HomeCategoriesData> {
+  const activeId = getActiveStoreId();
   const { data, error } = await supabase
     .from("categories")
     .select("slug, products(*)")
@@ -23,7 +24,7 @@ export async function fetchHomeCategories(
   for (const slug of slugs) grouped[slug] = [];
   for (const row of (data ?? []) as { slug: string; products: (Product & { store_id?: string })[] | null }[]) {
     const items = (row.products ?? [])
-      .filter((p) => (p as unknown as { is_active: boolean }).is_active && (!p.store_id || p.store_id === STORE_ID))
+      .filter((p) => (p as unknown as { is_active: boolean }).is_active && (!p.store_id || p.store_id === activeId))
       .sort((a, b) => {
         const priceA = a.sale_price != null ? a.sale_price : a.base_price;
         const priceB = b.sale_price != null ? b.sale_price : b.base_price;

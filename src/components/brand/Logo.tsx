@@ -1,3 +1,5 @@
+import { getActiveStore } from "@/lib/store-config";
+
 type LogoProps = {
   variant?: "full" | "mark";
   size?: "sm" | "md" | "lg";
@@ -19,14 +21,15 @@ export function Logo({
   showText = true,
 }: LogoProps) {
   const resolved: "full" | "mark" = variant ?? (showText ? "full" : "mark");
-  const src = "/logo.webp";
+  const store = getActiveStore();
+  const src = store.logo_url || "/logo.webp";
 
   const dims = { width: 220, height: 220 };
 
   return (
     <img
       src={src}
-      alt="شاهد ستور"
+      alt={store.name_ar}
       width={dims.width}
       height={dims.height}
       loading="eager"

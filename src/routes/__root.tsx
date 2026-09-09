@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { SiteLayout } from "@/components/SiteLayout";
 import { Logo } from "@/components/brand/Logo";
 import { AuthProvider } from "@/hooks/useAuth";
+import { getActiveStore } from "@/lib/store-config";
 
 
 function NotFoundComponent() {
@@ -117,81 +118,76 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "شاهد ستور — اشتراكات رقمية بتفعيل سريع" },
-      {
-        name: "description",
-        content:
-          "شاهد ستور — متجر اشتراكات رقمية: فالكون، هولك، سمارترز برو. تفعيل سريع، دفع آمن، دعم متواصل.",
-      },
-      { name: "author", content: "شاهد ستور" },
-      { property: "og:title", content: "شاهد ستور — اشتراكات رقمية بتفعيل سريع" },
-      {
-        property: "og:description",
-        content:
-          "متجر الاشتراكات الرقمية الموثوق في السعودية. تفعيل سريع، دفع آمن، دعم متواصل.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:locale", content: "ar_SA" },
-      { property: "og:image", content: "/logo.webp" },
-      { property: "og:image:width", content: "512" },
-      { property: "og:image:height", content: "512" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "شاهد ستور — اشتراكات رقمية بتفعيل سريع" },
-      {
-        name: "twitter:description",
-        content: "متجر الاشتراكات الرقمية في السعودية.",
-      },
-      { name: "twitter:image", content: "/logo.webp" },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/webp", href: "/logo.webp" },
-      { rel: "icon", type: "image/webp", sizes: "192x192", href: "/logo.webp" },
-      { rel: "icon", type: "image/webp", sizes: "512x512", href: "/logo.webp" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/logo.webp" },
-      /* Tajawal مُستضاف ذاتياً عبر @fontsource — لا حاجة لـ preconnect أو CSS خارجي */
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: "شاهد ستور",
-          alternateName: "Shahid Store",
-          url: "https://shahidstore.net",
-          logo: "https://shahidstore.net/logo.webp",
-          description:
-            "متجر اشتراكات رقمية موثوق في السعودية: فالكون، هولك، سمارترز برو. تفعيل سريع، دفع آمن، دعم متواصل.",
-          contactPoint: {
-            "@type": "ContactPoint",
-            contactType: "customer support",
-            availableLanguage: ["ar", "en"],
-            areaServed: "SA",
-          },
-        }),
-      },
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "شاهد ستور",
-          url: "https://shahidstore.net",
-          inLanguage: "ar",
-          potentialAction: {
-            "@type": "SearchAction",
-            target: "https://shahidstore.net/products?search={search_term_string}",
-            "query-input": "required name=search_term_string",
-          },
-        }),
-      },
-    ],
-  }),
+  head: () => {
+    const store = getActiveStore();
+    const storeTitle = `${store.name_ar} — اشتراكات رقمية بتفعيل سريع`;
+    const storeDesc = `${store.name_ar} — متجر اشتراكات رقمية موثوق. تفعيل سريع، دفع آمن، ودعم متواصل.`;
+    const storeLogo = store.logo_url || "/logo.webp";
+    const storeUrl = store.domain ? `https://${store.domain}` : "https://shahidstore.net";
+
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { title: storeTitle },
+        { name: "description", content: storeDesc },
+        { name: "author", content: store.name_ar },
+        { property: "og:title", content: storeTitle },
+        { property: "og:description", content: storeDesc },
+        { property: "og:type", content: "website" },
+        { property: "og:locale", content: "ar_SA" },
+        { property: "og:image", content: storeLogo },
+        { property: "og:image:width", content: "512" },
+        { property: "og:image:height", content: "512" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: storeTitle },
+        { name: "twitter:description", content: storeDesc },
+        { name: "twitter:image", content: storeLogo },
+      ],
+      links: [
+        { rel: "stylesheet", href: appCss },
+        { rel: "icon", type: "image/webp", href: storeLogo },
+        { rel: "icon", type: "image/webp", sizes: "192x192", href: storeLogo },
+        { rel: "icon", type: "image/webp", sizes: "512x512", href: storeLogo },
+        { rel: "apple-touch-icon", sizes: "180x180", href: storeLogo },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: store.name_ar,
+            alternateName: store.name_en || store.name_ar,
+            url: storeUrl,
+            logo: storeLogo.startsWith("http") ? storeLogo : `${storeUrl}${storeLogo}`,
+            description: storeDesc,
+            contactPoint: {
+              "@type": "ContactPoint",
+              contactType: "customer support",
+              availableLanguage: ["ar", "en"],
+              areaServed: "SA",
+            },
+          }),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: store.name_ar,
+            url: storeUrl,
+            inLanguage: "ar",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: `${storeUrl}/products?search={search_term_string}`,
+              "query-input": "required name=search_term_string",
+            },
+          }),
+        },
+      ],
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -207,10 +203,17 @@ const defaultQueryClient = new QueryClient({
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  const activeStore = getActiveStore();
+
   return (
     <html lang="ar" dir="rtl">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__STORE_CONTEXT__ = ${JSON.stringify(activeStore)};`,
+          }}
+        />
       </head>
       <body>
         <QueryClientProvider client={defaultQueryClient}>

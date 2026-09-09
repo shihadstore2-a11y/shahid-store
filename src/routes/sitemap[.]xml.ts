@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { STORE_ID } from "@/lib/store-config";
-
-const BASE_URL = "https://shahidstore.net";
+import { STORE_ID, getActiveStore } from "@/lib/store-config";
 
 interface SitemapEntry {
   path: string;
@@ -104,10 +102,13 @@ export const Route = createFileRoute("/sitemap.xml")({
           console.error("[sitemap] articles failed:", err);
         }
 
+        const store = getActiveStore();
+        const baseUrl = store.domain ? `https://${store.domain}` : "https://shahidstore.net";
+
         const urls = entries.map((e) =>
           [
             `  <url>`,
-            `    <loc>${xmlEscape(`${BASE_URL}${e.path}`)}</loc>`,
+            `    <loc>${xmlEscape(`${baseUrl}${e.path}`)}</loc>`,
             e.lastmod ? `    <lastmod>${e.lastmod}</lastmod>` : null,
             e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
             e.priority ? `    <priority>${e.priority}</priority>` : null,
