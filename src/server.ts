@@ -71,38 +71,9 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      // Map Cloudflare Worker env bindings & secrets to process.env and global scope
+      // Map Cloudflare Worker env bindings & secrets to process.env
       if (env && typeof env === "object") {
-        const envObj = env as Record<string, unknown>;
-        (globalThis as any).__CF_ENV__ = envObj;
-
-        const knownKeys = [
-          "SUPABASE_SERVICE_ROLE_KEY",
-          "EDFAPAY_API_KEY",
-          "SUPABASE_URL",
-          "SUPABASE_PUBLISHABLE_KEY",
-          "VITE_SUPABASE_URL",
-          "VITE_SUPABASE_PUBLISHABLE_KEY",
-          "STORE_ID",
-          "VITE_STORE_ID",
-          "EDFAPAY_BASE_URL",
-          "EDFAPAY_MODE",
-          "EDFAPAY_AUTH_MODE",
-        ];
-        for (const key of knownKeys) {
-          const val = envObj[key];
-          if (typeof val === "string" && val.trim()) {
-            process.env[key] = val.trim();
-          }
-        }
-
-        for (const k in envObj) {
-          const v = envObj[k];
-          if (typeof v === "string") {
-            process.env[k] = v;
-          }
-        }
-        for (const [k, v] of Object.entries(envObj)) {
+        for (const [k, v] of Object.entries(env as Record<string, unknown>)) {
           if (typeof v === "string") {
             process.env[k] = v;
           }
