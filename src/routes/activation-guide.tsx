@@ -27,13 +27,13 @@ const TABS: {
   icon: React.ReactNode;
   seoLabel: string;
 }[] = [
-  { id: "android", label: "أندرويد / شاومي", shortLabel: "أندرويد", icon: <Smartphone className="h-4 w-4" />, seoLabel: "الأندرويد وشاومي" },
-  { id: "ios", label: "آيفون / آيباد", shortLabel: "آيفون", icon: <Apple className="h-4 w-4" />, seoLabel: "آيفون وآيباد" },
-  { id: "samsung-tv", label: "Samsung TV", shortLabel: "سامسونج", icon: <Tv className="h-4 w-4" />, seoLabel: "شاشات سامسونج" },
-  { id: "lg-tv", label: "LG TV", shortLabel: "LG", icon: <Cast className="h-4 w-4" />, seoLabel: "شاشات LG" },
-  { id: "windows", label: "ويندوز", shortLabel: "ويندوز", icon: <Monitor className="h-4 w-4" />, seoLabel: "الكمبيوتر بنظام ويندوز" },
-  { id: "mac", label: "ماك", shortLabel: "ماك", icon: <Laptop2 className="h-4 w-4" />, seoLabel: "أجهزة ماك" },
-];
+    { id: "android", label: "أندرويد / شاومي", shortLabel: "أندرويد", icon: <Smartphone className="h-4 w-4" />, seoLabel: "الأندرويد وشاومي" },
+    { id: "ios", label: "آيفون / آيباد", shortLabel: "آيفون", icon: <Apple className="h-4 w-4" />, seoLabel: "آيفون وآيباد" },
+    { id: "samsung-tv", label: "Samsung TV", shortLabel: "سامسونج", icon: <Tv className="h-4 w-4" />, seoLabel: "شاشات سامسونج" },
+    { id: "lg-tv", label: "LG TV", shortLabel: "LG", icon: <Cast className="h-4 w-4" />, seoLabel: "شاشات LG" },
+    { id: "windows", label: "ويندوز", shortLabel: "ويندوز", icon: <Monitor className="h-4 w-4" />, seoLabel: "الكمبيوتر بنظام ويندوز" },
+    { id: "mac", label: "ماك", shortLabel: "ماك", icon: <Laptop2 className="h-4 w-4" />, seoLabel: "أجهزة ماك" },
+  ];
 
 type StepView = { title?: string; description: string; image?: string | null };
 
@@ -102,10 +102,10 @@ export const Route = createFileRoute("/activation-guide")({
         content:
           "دليل تفعيل اشتراك شاهد ستور خطوة بخطوة بالصور لكل جهاز: أندرويد، آيفون، سامسونج، LG، ويندوز، وماك.",
       },
-      { property: "og:url", content: "https://shahidstore.net/activation-guide" },
+      { property: "og:url", content: "https://ksa-tv.com/activation-guide" },
     ],
     links: [
-      { rel: "canonical", href: "https://shahidstore.net/activation-guide" },
+      { rel: "canonical", href: "https://ksa-tv.com/activation-guide" },
     ],
   }),
   component: ActivationGuide,
@@ -230,11 +230,10 @@ function ActivationGuide() {
                 <button
                   key={t.id}
                   onClick={() => handleTabChange(t.id)}
-                  className={`flex shrink-0 items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition ${
-                    active
+                  className={`flex shrink-0 items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition ${active
                       ? "border-accent bg-accent text-accent-foreground shadow-[0_0_0_3px_color-mix(in_oklab,var(--accent)_25%,transparent)]"
                       : "border-border bg-card text-foreground hover:border-accent/50"
-                  }`}
+                    }`}
                   aria-pressed={active}
                 >
                   {t.icon}

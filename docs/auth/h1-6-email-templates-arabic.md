@@ -79,7 +79,7 @@ Lovable Cloud Backend → **Authentication → Email Templates**
       <p style="margin-top: 32px; font-size: 13px; color: #999;">إذا لم تطلب إنشاء هذا الحساب، يمكنك تجاهل هذه الرسالة بأمان.</p>
     </div>
     <div class="footer">
-      <p>شاهد ستور | shahidstore.net</p>
+      <p>شاهد ستور | https://ksa-tv.com/</p>
       <p>© 2026 جميع الحقوق محفوظة</p>
     </div>
   </div>
@@ -139,6 +139,6 @@ Lovable Cloud Backend → **Authentication → Email Templates**
 
 ## ملاحظات
 
-- **Phase G (post-launch):** نقل المُرسِل لـ custom domain `notify.shahidstore.net` للحصول على `Shahid Store <no-reply@shahidstore.net>` بدلاً من `@auth.lovable.cloud`.
+- **Phase G (post-launch):** نقل المُرسِل لـ custom domain `notify.https://ksa-tv.com/` للحصول على `Shahid Store <no-reply@ksa-tv.com>` بدلاً من `@auth.lovable.cloud`.
 - **Tajawal font:** قد لا تكون مُحمَّلة في كل email clients. الـ `font-family` يتضمّن `Arial` كـ fallback آمن للعربية.
 - لا تُعدّل auth flags الأخرى (auto_confirm_email, password_min_length, HIBP) — هذه مُغلقة في Phase F.0.

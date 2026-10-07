@@ -85,7 +85,7 @@ SET role = 'super_admin'::public.admin_role,
 
 -- 3.2 إزالة صلاحية إدارة المتجر عن مدير سابق (عند الاستبدال)
 DELETE FROM public.admin_users
-WHERE LOWER(email) = 'thamer@shahidstore.net';
+WHERE LOWER(email) = 'thamer@ksa-tv.com';
 
 
 -- ===================================================================

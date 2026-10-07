@@ -22,10 +22,10 @@ export const Route = createFileRoute("/products")({
         content:
           "تصفح كل باقات فالكون برو، هولك بلاير، وسمارترز برو في شاهد ستور بأسعار تنافسية وتفعيل فوري.",
       },
-      { property: "og:url", content: "https://shahidstore.net/products" },
+      { property: "og:url", content: "https://ksa-tv.com/products" },
     ],
     links: [
-      { rel: "canonical", href: "https://shahidstore.net/products" },
+      { rel: "canonical", href: "https://ksa-tv.com/products" },
     ],
   }),
   component: ProductsPage,

@@ -76,7 +76,7 @@ export function buildOrderMessage(
       if (data.password) lines.push(`🔐 كلمة المرور: ${data.password}`);
       if (data.url) lines.push(`🔗 الرابط: ${data.url}`);
       lines.push("");
-      lines.push("📘 دليل التفعيل: shahidstore.net/activation-guide");
+      lines.push("📘 دليل التفعيل: https://ksa-tv.com/activation-guide");
       lines.push("");
       lines.push("للدعم: راسلنا في أي وقت 💬");
       lines.push(STORE_SIGN);
@@ -137,7 +137,7 @@ export function buildOrderMessage(
       lines.push("");
       lines.push(`أكمل طلبك الآن واستفد من كود الخصم الحصري: *${code}*`);
       lines.push("");
-      lines.push("🔗 الرابط: shahidstore.net");
+      lines.push("🔗 الرابط: https://ksa-tv.com");
       lines.push("");
       lines.push("يسعدنا خدمتك دائماً 🌟");
       lines.push(STORE_SIGN);

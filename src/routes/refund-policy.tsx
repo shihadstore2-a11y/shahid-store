@@ -23,10 +23,10 @@ export const Route = createFileRoute("/refund-policy")({
         property: "og:description",
         content: "اطّلع على حالات الاسترجاع المعتمَدة وآلية معالجة الطلبات.",
       },
-      { property: "og:url", content: "https://shahidstore.net/refund-policy" },
+      { property: "og:url", content: "https://ksa-tv.com/refund-policy" },
     ],
     links: [
-      { rel: "canonical", href: "https://shahidstore.net/refund-policy" },
+      { rel: "canonical", href: "https://ksa-tv.com/refund-policy" },
     ],
   }),
   component: RefundPolicyPage,

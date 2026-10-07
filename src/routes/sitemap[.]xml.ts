@@ -103,7 +103,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         }
 
         const store = getActiveStore();
-        const baseUrl = store.domain ? `https://${store.domain}` : "https://shahidstore.net";
+        const baseUrl = store.domain ? `https://${store.domain}` : "https://ksa-tv.com";
 
         const urls = entries.map((e) =>
           [

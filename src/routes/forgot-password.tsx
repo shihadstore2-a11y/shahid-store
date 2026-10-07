@@ -42,10 +42,10 @@ function ForgotPasswordPage() {
   const onSubmit = async (v: Vals) => {
     const email = v.email.trim().toLowerCase();
     const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
-    const centralRelay = "https://shahidstore.net/auth/callback";
-    
+    const centralRelay = "https://ksa-tv.com/auth/callback";
+
     // إذا كان الطلب من نطاق مختلف عن المنصة الرئيسية، يمر عبر بوابة المصادقة المركزية لنقله لمتجره فوراً
-    const redirectUrl = (currentOrigin && !currentOrigin.includes("shahidstore.net"))
+    const redirectUrl = (currentOrigin && !currentOrigin.includes("https://ksa-tv.com/"))
       ? `${centralRelay}?return_to=${encodeURIComponent(`${currentOrigin}/reset-password`)}`
       : `${centralRelay}`;
 

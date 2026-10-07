@@ -25,10 +25,10 @@ export const Route = createFileRoute("/faq")({
         content:
           "إجابات على أكثر الأسئلة شيوعاً عن اشتراكات IPTV، طرق الدفع، التفعيل، والدعم في شاهد ستور.",
       },
-      { property: "og:url", content: "https://shahidstore.net/faq" },
+      { property: "og:url", content: "https://ksa-tv.com/faq" },
     ],
     links: [
-      { rel: "canonical", href: "https://shahidstore.net/faq" },
+      { rel: "canonical", href: "https://ksa-tv.com/faq" },
     ],
     scripts: [
       {
@@ -70,9 +70,8 @@ function FAQPage() {
                 >
                   <span className="font-black">{f.q}</span>
                   <ChevronDown
-                    className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
+                    className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""
+                      }`}
                   />
                 </button>
                 {isOpen && (

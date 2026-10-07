@@ -40,7 +40,7 @@
 
 ## 3. Webhook Flow
 
-- **URL المسجّل في Dashboard**: `https://shahidstore.net/api/public/edfapay-webhook`
+- **URL المسجّل في Dashboard**: `https://ksa-tv.com/api/public/edfapay-webhook`
 - **استراتيجية الأمان**: لا نثق بالـ payload — نستعلم `fetchPaymentStatus(orderId)` server-to-server للتحقق.
 - **Idempotency**: نتجاهل أي webhook بنفس `transactionId` لو سبق تسجيله بحالة `success`.
 - **رد ثابت**: `200 OK` دائماً (حتى عند فشل التحقق) لمنع retries مفرطة من EdfaPay.
@@ -61,7 +61,7 @@
 | `HTTP 401 Unauthorized` | `EDFAPAY_API_KEY` خاطئ أو حساب test/live mismatch | تحقّق من Cloud Secrets + Dashboard EdfaPay |
 | `استجابة بوابة الدفع غير متوقعة` | الـ response لا يحوي `redirectUrl` | راجع `extractRedirectUrl` logs (Top-level keys) |
 | `unknown EDFAPAY_AUTH_MODE` warning | الـ Secret فيه قيمة غير `x-api-key` | حدّث الـ Secret إلى `x-api-key` lowercase |
-| Webhook لا يصل | URL في Dashboard خاطئ، أو دومين غير مُصدَّق | تحقّق من `shahidstore.net/api/public/edfapay-webhook` يرد 200 على GET |
+| Webhook لا يصل | URL في Dashboard خاطئ، أو دومين غير مُصدَّق | تحقّق من `https://ksa-tv.com//api/public/edfapay-webhook` يرد 200 على GET |
 | 3DS OTP لا يصل | البطاقة test غير مفعّلة في Merchant | راسل EdfaPay support |
 
 ## 6. Test Cards Reference

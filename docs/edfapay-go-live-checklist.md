@@ -5,10 +5,10 @@
 ## Phase 1 — Pre-flight Checks (قبل الإيميل)
 
 - [ ] اختبار End-to-End ناجح بـ 1 SAR في Test mode (✅ تم 21 May)
-- [ ] Webhook URL مُسجَّل صحيح في Dashboard: `https://shahidstore.net/api/public/edfapay-webhook`
+- [ ] Webhook URL مُسجَّل صحيح في Dashboard: `https://ksa-tv.com/api/public/edfapay-webhook`
 - [ ] `EDFAPAY_API_KEY` موجود في Cloud Secrets
 - [ ] `EDFAPAY_AUTH_MODE = x-api-key` (lowercase، بدون warnings في logs)
-- [ ] DNS + SSL على `shahidstore.net` يعمل (HTTPS صالح)
+- [ ] DNS + SSL على `https://ksa-tv.com/` يعمل (HTTPS صالح)
 - [ ] صفحة `/payment/success` + `/payment/failed` تعمل
 - [ ] جدول `payment_transactions` يستقبل الـ inserts بنجاح
 - [ ] `orders.status` يتحدّث إلى `paid` بعد دفع ناجح
@@ -29,8 +29,8 @@ with a 1 SAR transaction (3DS flow + OTP + webhook received).
 Please activate Live mode for our merchant account.
 
 Merchant ID: ___
-Domain: https://shahidstore.net
-Webhook URL: https://shahidstore.net/api/public/edfapay-webhook
+Domain: https://ksa-tv.com
+Webhook URL: https://ksa-tv.com/api/public/edfapay-webhook
 
 We confirm:
 - All required parameters are sent (no null values)

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/blog/$slug")({
     }
     const title = a.meta_title || a.title_ar;
     const desc = a.meta_description || a.excerpt || "";
-    const url = `https://shahidstore.net/blog/${params.slug}`;
+    const url = `https://ksa-tv.com/blog/${params.slug}`;
     return {
       meta: [
         { title: `${title} — شاهد ستور` },
@@ -30,9 +30,9 @@ export const Route = createFileRoute("/blog/$slug")({
         { property: "og:type", content: "article" },
         ...(a.cover_image_url
           ? [
-              { property: "og:image", content: a.cover_image_url },
-              { property: "twitter:image", content: a.cover_image_url },
-            ]
+            { property: "og:image", content: a.cover_image_url },
+            { property: "twitter:image", content: a.cover_image_url },
+          ]
           : []),
       ],
       links: [{ rel: "canonical", href: url }],
@@ -56,7 +56,7 @@ export const Route = createFileRoute("/blog/$slug")({
               name: "شاهد ستور",
               logo: {
                 "@type": "ImageObject",
-                url: "https://shahidstore.net/logo.webp",
+                url: "https://ksa-tv.com/logo.webp",
               },
             },
             mainEntityOfPage: {

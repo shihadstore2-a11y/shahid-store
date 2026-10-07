@@ -7,4 +7,4 @@ Disallow: /order-success
 Disallow: /payment
 Disallow: /api/
 
-Sitemap: https://shahidstore.net/sitemap.xml
+Sitemap: https://ksa-tv.com//sitemap.xml

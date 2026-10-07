@@ -26,7 +26,7 @@ export const Route = createFileRoute("/product/$slug")({
     return data;
   },
   head: ({ loaderData, params }) => {
-    const url = `https://shahidstore.net/product/${params.slug}`;
+    const url = `https://ksa-tv.com/product/${params.slug}`;
     const p = loaderData?.product;
     if (!p) {
       return {

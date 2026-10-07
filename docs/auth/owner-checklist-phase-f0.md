@@ -33,11 +33,11 @@
 
 | Field | القيمة المطلوبة |
 |-------|----------------|
-| Site URL | `https://shahidstore.net` |
+| Site URL | `https://ksa-tv.com` |
 
 إن مختلف، عدّله ثم Save.
 
-- [ ] تأكيد: Site URL = `https://shahidstore.net`
+- [ ] تأكيد: Site URL = `https://ksa-tv.com`
 
 ---
 
@@ -48,14 +48,14 @@
 تأكّد من وجود **كل** الـ entries التالية. إن مفقود واحد، اضغط **Add URL**:
 
 ```
-https://shahidstore.net/**
-https://www.shahidstore.net/**
+https://ksa-tv.com/**
+https://www.https://ksa-tv.com//**
 https://*.lovable.app/**
 http://localhost:5173/**
 ```
 
-- [ ] `https://shahidstore.net/**` موجود
-- [ ] `https://www.shahidstore.net/**` موجود
+- [ ] `https://ksa-tv.com/**` موجود
+- [ ] `https://www.https://ksa-tv.com//**` موجود
 - [ ] `https://*.lovable.app/**` موجود (للـ preview)
 - [ ] `http://localhost:5173/**` موجود (اختياري للـ dev)
 
@@ -97,7 +97,7 @@ http://localhost:5173/**
   </p>
   <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 24px 0;">
   <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-    فريق شاهد ستور — <a href="https://shahidstore.net" style="color: #D4AF37; text-decoration: none;">shahidstore.net</a>
+    فريق شاهد ستور — <a href="https://ksa-tv.com" style="color: #D4AF37; text-decoration: none;">https://ksa-tv.com/</a>
   </p>
 </div>
 ```
@@ -130,7 +130,7 @@ http://localhost:5173/**
   </p>
   <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 24px 0;">
   <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-    فريق شاهد ستور — <a href="https://shahidstore.net" style="color: #D4AF37; text-decoration: none;">shahidstore.net</a>
+    فريق شاهد ستور — <a href="https://ksa-tv.com" style="color: #D4AF37; text-decoration: none;">https://ksa-tv.com/</a>
   </p>
 </div>
 ```
@@ -163,7 +163,7 @@ http://localhost:5173/**
   </p>
   <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 24px 0;">
   <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-    فريق شاهد ستور — <a href="https://shahidstore.net" style="color: #D4AF37; text-decoration: none;">shahidstore.net</a>
+    فريق شاهد ستور — <a href="https://ksa-tv.com" style="color: #D4AF37; text-decoration: none;">https://ksa-tv.com/</a>
   </p>
 </div>
 ```
@@ -226,7 +226,7 @@ F.0 Owner tasks COMPLETED ✅
 
 | Limitation | الأثر | Mitigation Phase |
 |------------|--------|------------------|
-| Email من `noreply@mail.app.supabase.io` (ليس shahidstore.net) | احتمال spam folder | Phase G — Email Domain setup |
+| Email من `noreply@mail.app.supabase.io` (ليس https://ksa-tv.com/) | احتمال spam folder | Phase G — Email Domain setup |
 | Rate limit ~4 emails/hour (free tier) | كافٍ لـ Soft Launch 5-10 طلبات | Phase G — Resend/SendGrid |
 | لا SPF/DKIM/DMARC للدومين | Email deliverability محدودة | Phase G |
 

@@ -107,7 +107,7 @@ export function StoreSettingsForm() {
           <Input
             dir="ltr"
             type="email"
-            placeholder="info@shahidstore.net"
+            placeholder="info@ksa-tv.com"
             value={form.officialEmail}
             onChange={(e) => set("officialEmail", e.target.value)}
           />

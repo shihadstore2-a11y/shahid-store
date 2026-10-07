@@ -11,9 +11,9 @@ export const Route = createFileRoute("/blog")({
       { name: "description", content: "نصائح ودروس عن IPTV والاشتراكات الرقمية من شاهد ستور." },
       { property: "og:title", content: "المدوّنة — شاهد ستور" },
       { property: "og:description", content: "نصائح ودروس عن IPTV والاشتراكات الرقمية." },
-      { property: "og:url", content: "https://shahidstore.net/blog" },
+      { property: "og:url", content: "https://ksa-tv.com/blog" },
     ],
-    links: [{ rel: "canonical", href: "https://shahidstore.net/blog" }],
+    links: [{ rel: "canonical", href: "https://ksa-tv.com/blog" }],
   }),
   loader: async ({ context }) => {
     await context.queryClient.prefetchQuery(publicArticlesQueryOptions());

@@ -34,7 +34,7 @@
 -- ============================================================
 -- ADMINS TO KEEP (3) — DO NOT DELETE
 -- ============================================================
--- 29a955d0-0611-41cc-8020-11d85f2e6139  thamer@shahidstore.net   super_admin
+-- 29a955d0-0611-41cc-8020-11d85f2e6139  thamer@ksa-tv.com   super_admin
 -- 0b9b88ef-515c-4555-a48c-14988012afba  thamer585899@gmail.com   super_admin
 -- 999bea15-12cf-441d-b869-2176f22455d0  Wa7eeed20@gmail.com      staff
 

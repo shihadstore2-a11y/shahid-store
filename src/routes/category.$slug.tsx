@@ -15,7 +15,7 @@ const CATEGORY_NAMES_AR: Record<string, string> = {
 
 export const Route = createFileRoute("/category/$slug")({
   head: ({ params }) => {
-    const url = `https://shahidstore.net/category/${params.slug}`;
+    const url = `https://ksa-tv.com/category/${params.slug}`;
     const meta_by_slug: Record<string, { title: string; description: string }> = {
       falcon: {
         title: "اشتراك فالكون برو IPTV — شاهد ستور",

@@ -29,7 +29,7 @@ VALUES (
   'shahid',
   'متجر شاهد الرسمي',
   'Shahid Store Official',
-  'shahidstore.net',
+  'ksa-tv.com',
   true
 )
 ON CONFLICT (id) DO UPDATE SET
@@ -41,7 +41,7 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO public.store_settings (key, value, description) VALUES
   ('store_name', 'شاهد ستور', 'اسم المتجر الرسمي الظاهر للعملاء'),
   ('whatsapp_number', '966500451602', 'رقم الواتساب الرسمي لخدمة العملاء والدعم الفني'),
-  ('contact_email', 'support@shahidstore.net', 'البريد الإلكتروني الرسمي للمتجر'),
+  ('contact_email', 'support@ksa-tv.com', 'البريد الإلكتروني الرسمي للمتجر'),
   ('telegram_channel', '', 'رابط قناة التيليجرام الرسمية'),
   ('store_currency', 'SAR', 'العملة الأساسية المستخدمة في المتجر'),
   ('maintenance_mode', 'false', 'وضع الصيانة للمتجر (true / false)')

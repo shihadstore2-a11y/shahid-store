@@ -227,7 +227,7 @@ export function ProductDescriptionEditor({ product, onClose }: Props) {
               {product.name_ar} — شاهد ستور
             </div>
             <div dir="ltr" className="mt-0.5 truncate text-[11px] text-emerald-600/80">
-              shahidstore.net › product › {product.slug}
+              https://ksa-tv.com/ › product › {product.slug}
             </div>
             <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/80" dir="auto">
               {preview || (

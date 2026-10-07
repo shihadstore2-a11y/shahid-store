@@ -24,7 +24,7 @@ export const Route = createFileRoute("/terms")({
           "شروط استخدام متجر شاهد ستور، ضوابط الاشتراكات الرقمية، الضمان، وحدود المسؤولية.",
       },
       { property: "og:title", content: "الشروط والأحكام — شاهد ستور" },
-      { property: "og:url", content: "https://shahidstore.net/terms" },
+      { property: "og:url", content: "https://ksa-tv.com/terms" },
       {
         property: "og:description",
         content:
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/terms")({
       },
     ],
     links: [
-      { rel: "canonical", href: "https://shahidstore.net/terms" },
+      { rel: "canonical", href: "https://ksa-tv.com/terms" },
     ],
   }),
   component: TermsPage,

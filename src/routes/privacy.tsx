@@ -17,10 +17,10 @@ export const Route = createFileRoute("/privacy")({
         content:
           "نلتزم بسرية بيانات عملائنا وحمايتها وفق أعلى معايير الأمان.",
       },
-      { property: "og:url", content: "https://shahidstore.net/privacy" },
+      { property: "og:url", content: "https://ksa-tv.com/privacy" },
     ],
     links: [
-      { rel: "canonical", href: "https://shahidstore.net/privacy" },
+      { rel: "canonical", href: "https://ksa-tv.com/privacy" },
     ],
   }),
   component: PrivacyPage,

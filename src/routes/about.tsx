@@ -28,10 +28,10 @@ export const Route = createFileRoute("/about")({
         content:
           "منصة سعودية للاشتراكات الرقمية وخدمات البث — جودة، استقرار، وأسعار مناسبة.",
       },
-      { property: "og:url", content: "https://shahidstore.net/about" },
+      { property: "og:url", content: "https://ksa-tv.com/about" },
     ],
     links: [
-      { rel: "canonical", href: "https://shahidstore.net/about" },
+      { rel: "canonical", href: "https://ksa-tv.com/about" },
     ],
   }),
   component: AboutPage,

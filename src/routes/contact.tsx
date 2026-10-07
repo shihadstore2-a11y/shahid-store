@@ -20,10 +20,10 @@ export const Route = createFileRoute("/contact")({
         content:
           "تواصل مع فريق شاهد ستور للحصول على دعم سريع لاشتراكك أو استفسار قبل الشراء.",
       },
-      { property: "og:url", content: "https://shahidstore.net/contact" },
+      { property: "og:url", content: "https://ksa-tv.com/contact" },
     ],
     links: [
-      { rel: "canonical", href: "https://shahidstore.net/contact" },
+      { rel: "canonical", href: "https://ksa-tv.com/contact" },
     ],
   }),
   component: ContactPage,

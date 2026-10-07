@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
         content:
           "متجر الاشتراكات الرقمية الموثوق في السعودية. فالكون، هولك، سمارترز — تفعيل سريع، دفع آمن، دعم متواصل.",
       },
-      { property: "og:url", content: "https://shahidstore.net/" },
+      { property: "og:url", content: "https://ksa-tv.com/" },
     ],
     links: [
       {
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/")({
         imagesizes: "100vw",
         fetchPriority: "high",
       },
-      { rel: "canonical", href: "https://shahidstore.net/" },
+      { rel: "canonical", href: "https://ksa-tv.com/" },
     ],
   }),
   loader: ({ context: { queryClient } }) => {

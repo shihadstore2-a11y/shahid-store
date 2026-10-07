@@ -9,7 +9,7 @@
 ## H.1.6 Email Branding — DEFERRED to Phase G (25 May 2026)
 
 ### Status
-- ✅ Domain verified (`shahidstore.net`)
+- ✅ Domain verified (`https://ksa-tv.com/`)
 - ✅ pgmq infrastructure idle (4 tables + 4 RPCs + 2 queues)
 - ✅ Email queue dispatcher route idle (`src/routes/lovable/email/queue/process.ts`)
 - ❌ `pg_cron` disabled (**Safeguard 5 preserved**)
@@ -27,7 +27,7 @@
 ### Phase G Plan (Post-Launch)
 1. Apply Senior decision Path A: scaffold `auth-email-hook` + 6 React Email templates + activate cron
 2. Validate priority against real customer feedback (do users actually complain about English emails?)
-3. Activate full custom domain branding (`Shahid Store <no-reply@notify.shahidstore.net>`)
+3. Activate full custom domain branding (`Shahid Store <no-reply@notify.https://ksa-tv.com/>`)
 4. Target brand quality ≥ 98%
 
 ### Why Deferred
