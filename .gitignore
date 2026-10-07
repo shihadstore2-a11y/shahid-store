@@ -35,3 +35,8 @@ dist-ssr
 .lovable/
 
 package-lock.json
+
+# Private & Sensitive Files
+CLOUDFLARE_VARS_PRIVATE.txt
+backup/
+scripts/

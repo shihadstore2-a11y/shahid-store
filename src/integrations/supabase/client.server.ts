@@ -5,11 +5,11 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const ACTIVE_SUPABASE_URL = "https://zvowztkpigjauvyavapl.supabase.co";
+const ACTIVE_SUPABASE_URL = "https://umozikpkfmjkcglizysd.supabase.co";
 
 function getCleanUrl(): string {
   const envUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  if (envUrl && envUrl.trim() && !envUrl.includes("gnmkfnwmvjcfomwnnlgh") && !envUrl.includes("ibcobmfg")) {
+  if (envUrl && envUrl.trim() && !envUrl.includes("gnmkfnwmvjcfomwnnlgh") && !envUrl.includes("zvowztkpigjauvyavapl")) {
     return envUrl.trim();
   }
   return ACTIVE_SUPABASE_URL;
@@ -19,9 +19,7 @@ function getCleanKey(): string {
   const envKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (envKey && envKey.trim()) {
-    if (!envKey.includes("ibcobmfg") && !envKey.includes("gnmkfnwmvjcfomwnnlgh")) {
-      return envKey.trim();
-    }
+    return envKey.trim();
   }
   throw new Error("SUPABASE_SERVICE_ROLE_KEY environment variable is required for server admin operations.");
 }

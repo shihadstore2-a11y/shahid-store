@@ -2,19 +2,19 @@ shahid-store
 --------------------------
 SUPABASE_URL
 text
-https://zvowztkpigjauvyavapl.supabase.co
+https://umozikpkfmjkcglizysd.supabase.co
 ---
 VITE_SUPABASE_URL
 ---
-https://zvowztkpigjauvyavapl.supabase.co
+https://umozikpkfmjkcglizysd.supabase.co
 
 SUPABASE_PUBLISHABLE_KEY
 text
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2b3d6dGtwaWdqYXV2eWF2YXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2MDk3NjgsImV4cCI6MjEwMzE4NTc2OH0.YMMzkt9zfsvEMTRLG1Ex78ms2c5NGjE3QoutSYV6C-Y
+sb_publishable_zV1Bzk0vQwm6wSa1YyWzBg_G4Z0ivGb
 
 VITE_SUPABASE_PUBLISHABLE_KEY
 text
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2b3d6dGtwaWdqYXV2eWF2YXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2MDk3NjgsImV4cCI6MjEwMzE4NTc2OH0.YMMzkt9zfsvEMTRLG1Ex78ms2c5NGjE3QoutSYV6C-Y
+sb_publishable_zV1Bzk0vQwm6wSa1YyWzBg_G4Z0ivGb
 ---
 EDFAPAY_BASE_URL
 https://app-api.edfapay.com
