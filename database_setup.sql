@@ -196,9 +196,14 @@ CREATE TABLE IF NOT EXISTS public.admin_users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'admin',
+  full_name TEXT NOT NULL DEFAULT '',
+  phone TEXT,
+  role TEXT NOT NULL DEFAULT 'staff',
+  permission_overrides JSONB NOT NULL DEFAULT '{}'::jsonb,
   is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  last_login_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- 3.14 Admin Audit Logs
