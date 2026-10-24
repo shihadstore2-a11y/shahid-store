@@ -40,6 +40,11 @@ export function ErrorFallback({ error, reset }: Props) {
         <p className="mt-3 text-sm text-muted-foreground md:text-base">
           واجهتنا مشكلة في تحميل هذه الصفحة. يمكنك إعادة المحاولة أو العودة للرئيسية.
         </p>
+        {error?.message && (
+          <div className="mt-4 rounded-xl border border-destructive/20 bg-destructive/10 p-2.5 font-mono text-xs text-destructive break-words">
+            {error.message}
+          </div>
+        )}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <button
             onClick={handleRetry}

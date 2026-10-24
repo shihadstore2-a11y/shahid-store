@@ -68,17 +68,54 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   return brandedErrorResponse();
 }
 
+const KNOWN_CLOUDFLARE_SECRETS = [
+  "NGENIUS_API_KEY",
+  "NGENIUS_OUTLET_ID",
+  "NGENIUS_MID",
+  "NGENIUS_UAT_API_KEY",
+  "NGENIUS_UAT_OUTLET_ID",
+  "NGENIUS_UAT_MID",
+  "NGENIUS_WEBHOOK_SECRET",
+  "GENIUS_WEBHOOK_SECRET",
+  "NGENIUS_LIVE_BASE",
+  "EDFAPAY_API_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "CARTAT_API_TOKEN",
+  "CARTAT_ADMIN_PHONES",
+  "CARTAT_ADMIN_PHONE",
+];
+
+function populateWorkerEnv(env: unknown) {
+  if (!env || typeof env !== "object") return;
+  (globalThis as any).__CF_RAW_ENV__ = env;
+  const envObj = env as Record<string, unknown>;
+
+  // 1. المتغيرات القابلة للدوران (Enumerable Vars)
+  for (const [k, v] of Object.entries(envObj)) {
+    if (v !== undefined && v !== null && (typeof v === "string" || typeof v === "number")) {
+      const valStr = String(v).trim();
+      process.env[k] = valStr;
+      (globalThis as any)[k] = valStr;
+    }
+  }
+
+  // 2. أسرار Cloudflare المشفرة (Non-enumerable Secrets)
+  for (const key of KNOWN_CLOUDFLARE_SECRETS) {
+    try {
+      const val = (envObj as any)[key];
+      if (val !== undefined && val !== null && val !== "") {
+        const valStr = String(val).trim();
+        process.env[key] = valStr;
+        (globalThis as any)[key] = valStr;
+      }
+    } catch {}
+  }
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      // Map Cloudflare Worker env bindings & secrets to process.env
-      if (env && typeof env === "object") {
-        for (const [k, v] of Object.entries(env as Record<string, unknown>)) {
-          if (typeof v === "string") {
-            process.env[k] = v;
-          }
-        }
-      }
+      populateWorkerEnv(env);
 
       // Resolve active store dynamically from the incoming request domain
       const resolvedStore = await resolveStoreFromRequest(request);

@@ -43,6 +43,7 @@ import { getProductImage } from "@/lib/productVisuals";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { createEdfaPayCheckout } from "@/lib/edfapay.functions";
+import { createNGeniusCheckout } from "@/lib/ngenius.functions";
 import { PhoneInputIntl } from "@/components/forms/PhoneInputIntl";
 import { E164_REGEX, isSaudiE164, toE164, formatE164ForDisplay, detectCountry } from "@/lib/phone-intl";
 import { useWhatsappLink } from "@/lib/whatsapp";
@@ -161,6 +162,7 @@ function CheckoutPage() {
   const [qty, setQty] = useState<number>(Math.min(5, Math.max(1, qtyParam)));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const createCheckoutFn = useServerFn(createEdfaPayCheckout);
+  const createNGeniusCheckoutFn = useServerFn(createNGeniusCheckout);
   const validateCouponFn = useServerFn(validateCoupon);
 
   // Option A — auth gate state (28 May 2026)
@@ -620,11 +622,11 @@ function CheckoutPage() {
       }
     }
 
-    // مسار الدفع البطاقي — EdfaPay (إنشاء الطلب وحفظه في السيرفر فوراً)
+    // مسار الدفع الإلكتروني — Network International (N-Genius KSA)
     if (data.payment_method === "card") {
       try {
         const customerEmail = data.customer_email;
-        const res = await createCheckoutFn({
+        const res = await createNGeniusCheckoutFn({
           data: {
             orderId,
             orderNumber,
@@ -655,19 +657,19 @@ function CheckoutPage() {
         });
 
         if (!res.ok) {
-          const msg = res.error || "تعذّر فتح صفحة الدفع. يرجى المحاولة لاحقاً.";
+          const msg = res.error || "تعذّر فتح صفحة الدفع عبر Network International. يرجى المحاولة لاحقاً.";
           setErrorMessage(msg);
           toast.error(msg);
           return;
         }
 
-        // توجيه المتصفح إلى صفحة الدفع المستضافة في EdfaPay
+        // توجيه المتصفح إلى صفحة الدفع المستضافة في N-Genius
         if (typeof window !== "undefined") {
           window.location.href = res.redirectUrl;
         }
         return;
       } catch (err: any) {
-        console.error("EdfaPay checkout failed", err);
+        console.error("N-Genius checkout failed", err);
         const errMsg = err?.message || "تعذّر الاتصال ببوابة الدفع. يرجى المحاولة لاحقاً.";
         setErrorMessage(errMsg);
         toast.error("خطأ في بوابة الدفع: " + errMsg);

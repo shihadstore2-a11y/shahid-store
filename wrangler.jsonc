@@ -1,14 +1,17 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "shahid-store",
+  "account_id": "1bc52f09f9f9a6be3bbeaa8a791fdeee",
   "compatibility_date": "2025-09-24",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
   "main": "dist/server/server.js",
   "assets": {
     "directory": "dist/client",
     "binding": "ASSETS"
   },
   "vars": {
+    "STORE_URL": "https://shahidstore.net",
+    "NGENIUS_LIVE_BASE": "https://api-gateway.ksa.ngenius-payments.com",
     "EDFAPAY_AUTH_MODE": "x-api-key",
     "EDFAPAY_BASE_URL": "https://app-api.edfapay.com",
     "EDFAPAY_MODE": "live",
