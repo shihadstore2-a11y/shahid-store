@@ -9,16 +9,16 @@ import { TELEGRAM_URL, whatsappLink, useWhatsappNumber } from "@/lib/whatsapp";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "تواصل مع شاهد ستور" },
+      { title: "تواصل مع ديوان البث" },
       {
         name: "description",
-        content: "تواصل مع فريق شاهد ستور عبر النموذج أو قناة تلجرام للحصول على دعم سريع.",
+        content: "تواصل مع فريق ديوان البث عبر النموذج أو قناة تلجرام للحصول على دعم سريع.",
       },
-      { property: "og:title", content: "تواصل مع شاهد ستور" },
+      { property: "og:title", content: "تواصل مع ديوان البث" },
       {
         property: "og:description",
         content:
-          "تواصل مع فريق شاهد ستور للحصول على دعم سريع لاشتراكك أو استفسار قبل الشراء.",
+          "تواصل مع فريق ديوان البث للحصول على دعم سريع لاشتراكك أو استفسار قبل الشراء.",
       },
       { property: "og:url", content: "https://ksa-tv.com/contact" },
     ],

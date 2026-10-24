@@ -13,7 +13,7 @@ export function HeroCinematic() {
       className="relative isolate w-full overflow-hidden bg-background"
     >
       <h1 id="hero-title" className="sr-only">
-        شاهد ستور — اشتراكات IPTV رسمية بجودة 4K وتفعيل سريع
+        ديوان البث — اشتراكات IPTV رسمية بجودة 4K وتفعيل سريع
       </h1>
 
       <a
@@ -29,7 +29,7 @@ export function HeroCinematic() {
           {/* الصورة الافتراضية */}
           <img
             src="/hero-pc.webp"
-            alt="شاهد ستور — اشتراكات رسمية بجودة 4K وتفعيل سريع"
+            alt="ديوان البث — اشتراكات رسمية بجودة 4K وتفعيل سريع"
             className="block h-auto w-full select-none"
             loading="eager"
             decoding="async"

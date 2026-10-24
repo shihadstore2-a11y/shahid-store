@@ -12,13 +12,13 @@ import { SiteLayout } from "@/components/SiteLayout";
 export const Route = createFileRoute("/refund-policy")({
   head: () => ({
     meta: [
-      { title: "سياسة الإلغاء والاسترجاع — شاهد ستور" },
+      { title: "سياسة الإلغاء والاسترجاع — ديوان البث" },
       {
         name: "description",
         content:
-          "تفاصيل سياسة الاسترجاع والإلغاء في متجر شاهد ستور، والحالات المسموح فيها باسترداد المبلغ.",
+          "تفاصيل سياسة الاسترجاع والإلغاء في متجر ديوان البث، والحالات المسموح فيها باسترداد المبلغ.",
       },
-      { property: "og:title", content: "سياسة الإلغاء والاسترجاع — شاهد ستور" },
+      { property: "og:title", content: "سياسة الإلغاء والاسترجاع — ديوان البث" },
       {
         property: "og:description",
         content: "اطّلع على حالات الاسترجاع المعتمَدة وآلية معالجة الطلبات.",
@@ -143,7 +143,7 @@ function RefundPolicyPage() {
         </div>
 
         <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          © جميع الحقوق محفوظة 2026 — مؤسسة شاهد ستور
+          © جميع الحقوق محفوظة 2026 — مؤسسة ديوان البث
         </div>
       </section>
     </SiteLayout>

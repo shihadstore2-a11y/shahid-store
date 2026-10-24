@@ -7,9 +7,9 @@ import { publicArticlesQueryOptions, type Article } from "@/lib/admin-articles";
 export const Route = createFileRoute("/blog")({
   head: () => ({
     meta: [
-      { title: "المدوّنة — شاهد ستور" },
-      { name: "description", content: "نصائح ودروس عن IPTV والاشتراكات الرقمية من شاهد ستور." },
-      { property: "og:title", content: "المدوّنة — شاهد ستور" },
+      { title: "المدوّنة — ديوان البث" },
+      { name: "description", content: "نصائح ودروس عن IPTV والاشتراكات الرقمية من ديوان البث." },
+      { property: "og:title", content: "المدوّنة — ديوان البث" },
       { property: "og:description", content: "نصائح ودروس عن IPTV والاشتراكات الرقمية." },
       { property: "og:url", content: "https://ksa-tv.com/blog" },
     ],

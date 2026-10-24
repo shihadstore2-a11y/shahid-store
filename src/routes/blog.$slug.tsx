@@ -15,14 +15,14 @@ export const Route = createFileRoute("/blog/$slug")({
   head: ({ params, loaderData }) => {
     const a = loaderData?.article as Article | undefined;
     if (!a) {
-      return { meta: [{ title: "مقالة — شاهد ستور" }] };
+      return { meta: [{ title: "مقالة — ديوان البث" }] };
     }
     const title = a.meta_title || a.title_ar;
     const desc = a.meta_description || a.excerpt || "";
     const url = `https://ksa-tv.com/blog/${params.slug}`;
     return {
       meta: [
-        { title: `${title} — شاهد ستور` },
+        { title: `${title} — ديوان البث` },
         { name: "description", content: desc },
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
@@ -49,11 +49,11 @@ export const Route = createFileRoute("/blog/$slug")({
             dateModified: a.updated_at || a.published_at || undefined,
             author: {
               "@type": "Organization",
-              name: a.author || "شاهد ستور",
+              name: a.author || "ديوان البث",
             },
             publisher: {
               "@type": "Organization",
-              name: "شاهد ستور",
+              name: "ديوان البث",
               logo: {
                 "@type": "ImageObject",
                 url: "https://ksa-tv.com/logo.webp",

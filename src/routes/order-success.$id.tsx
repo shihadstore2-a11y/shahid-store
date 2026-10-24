@@ -33,7 +33,7 @@ function getErrorMessage(error: unknown): string {
 export const Route = createFileRoute("/order-success/$id")({
   head: () => ({
     meta: [
-      { title: "تم استلام طلبك — شاهد ستور" },
+      { title: "تم استلام طلبك — ديوان البث" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -272,9 +272,8 @@ function SuccessPage() {
       <section className="mx-auto max-w-xl space-y-4 px-4 py-12 sm:py-16">
         <div className="rounded-3xl border border-border bg-card p-6 text-center shadow-[var(--shadow-card)] sm:p-8">
           <div
-            className={`mx-auto flex h-16 w-16 items-center justify-center rounded-2xl ${
-              isFulfilled ? "bg-emerald-500/15 text-emerald-300" : "bg-success/10 text-success"
-            }`}
+            className={`mx-auto flex h-16 w-16 items-center justify-center rounded-2xl ${isFulfilled ? "bg-emerald-500/15 text-emerald-300" : "bg-success/10 text-success"
+              }`}
           >
             <CheckCircle2 className="h-9 w-9" />
           </div>
@@ -419,9 +418,8 @@ function Row({
     <div className="flex items-center justify-between py-1 text-sm">
       <span className="text-muted-foreground">{label}</span>
       <span
-        className={`${mono ? "font-mono" : ""} ${
-          bold ? "text-base font-black text-primary" : "font-bold text-foreground"
-        }`}
+        className={`${mono ? "font-mono" : ""} ${bold ? "text-base font-black text-primary" : "font-bold text-foreground"
+          }`}
       >
         {value}
       </span>

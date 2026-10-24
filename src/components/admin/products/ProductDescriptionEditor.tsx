@@ -224,7 +224,7 @@ export function ProductDescriptionEditor({ product, onClose }: Props) {
           </div>
           <div className="rounded-xl border border-border bg-muted/40 px-4 py-3">
             <div className="truncate text-[15px] font-bold text-accent">
-              {product.name_ar} — شاهد ستور
+              {product.name_ar} — ديوان البث
             </div>
             <div dir="ltr" className="mt-0.5 truncate text-[11px] text-emerald-600/80">
               https://ksa-tv.com/ › product › {product.slug}

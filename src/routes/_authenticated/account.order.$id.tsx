@@ -10,7 +10,7 @@ import { formatSAR } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/account/order/$id")({
   head: () => ({
     meta: [
-      { title: "تفاصيل الطلب — حسابي | شاهد ستور" },
+      { title: "تفاصيل الطلب — حسابي | ديوان البث" },
       { name: "robots", content: "noindex" },
     ],
   }),

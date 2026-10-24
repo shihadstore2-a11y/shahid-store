@@ -42,7 +42,7 @@ Lovable Cloud Backend → **Authentication → Email Templates**
 **Subject:**
 
 ```
-تأكيد إنشاء حسابك في شاهد ستور
+تأكيد إنشاء حسابك في ديوان البث
 ```
 
 **HTML Body:**
@@ -67,10 +67,10 @@ Lovable Cloud Backend → **Authentication → Email Templates**
 </head>
 <body>
   <div class="container">
-    <div class="header"><h1>🛡️ شاهد ستور</h1></div>
+    <div class="header"><h1>🛡️ ديوان البث</h1></div>
     <div class="content">
-      <h2>مرحباً بك في شاهد ستور</h2>
-      <p>شكراً لإنشاء حسابك معنا. لتفعيل حسابك والاستفادة من جميع خدمات شاهد ستور، يرجى تأكيد بريدك الإلكتروني بالضغط على الزر أدناه:</p>
+      <h2>مرحباً بك في ديوان البث</h2>
+      <p>شكراً لإنشاء حسابك معنا. لتفعيل حسابك والاستفادة من جميع خدمات ديوان البث، يرجى تأكيد بريدك الإلكتروني بالضغط على الزر أدناه:</p>
       <div style="text-align: center;">
         <a href="{{ .ConfirmationURL }}" class="button">تأكيد البريد الإلكتروني</a>
       </div>
@@ -79,7 +79,7 @@ Lovable Cloud Backend → **Authentication → Email Templates**
       <p style="margin-top: 32px; font-size: 13px; color: #999;">إذا لم تطلب إنشاء هذا الحساب، يمكنك تجاهل هذه الرسالة بأمان.</p>
     </div>
     <div class="footer">
-      <p>شاهد ستور | https://ksa-tv.com/</p>
+      <p>ديوان البث | https://ksa-tv.com/</p>
       <p>© 2026 جميع الحقوق محفوظة</p>
     </div>
   </div>
@@ -94,12 +94,12 @@ Lovable Cloud Backend → **Authentication → Email Templates**
 **Subject:**
 
 ```
-رابط الدخول إلى حسابك في شاهد ستور
+رابط الدخول إلى حسابك في ديوان البث
 ```
 
 **HTML Body:** نفس Template 1 مع التعديلات التالية:
 
-- `<h2>مرحباً بك في شاهد ستور</h2>` → `<h2>رابط الدخول السريع</h2>`
+- `<h2>مرحباً بك في ديوان البث</h2>` → `<h2>رابط الدخول السريع</h2>`
 - الفقرة الأولى → `<p>اضغط الزر التالي لتسجيل الدخول إلى حسابك مباشرة:</p>`
 - نص الزر → `تسجيل الدخول`
 - الفقرة الأخيرة → `<p style="margin-top: 32px; font-size: 13px; color: #999;">صلاحية هذا الرابط ساعة واحدة فقط. إذا لم تطلبه، تجاهل الرسالة.</p>`
@@ -111,12 +111,12 @@ Lovable Cloud Backend → **Authentication → Email Templates**
 **Subject:**
 
 ```
-إعادة تعيين كلمة المرور — شاهد ستور
+إعادة تعيين كلمة المرور — ديوان البث
 ```
 
 **HTML Body:** نفس Template 1 مع التعديلات التالية:
 
-- `<h2>مرحباً بك في شاهد ستور</h2>` → `<h2>إعادة تعيين كلمة المرور</h2>`
+- `<h2>مرحباً بك في ديوان البث</h2>` → `<h2>إعادة تعيين كلمة المرور</h2>`
 - الفقرة الأولى → `<p>تم طلب إعادة تعيين كلمة مرور حسابك. اضغط الزر التالي لتعيين كلمة مرور جديدة:</p>`
 - نص الزر → `إعادة تعيين كلمة المرور`
 - الفقرة الأخيرة → `<p style="margin-top: 32px; font-size: 13px; color: #999;">إذا لم تطلب هذا، تجاهل الرسالة وحسابك بأمان.</p>`
@@ -129,7 +129,7 @@ Lovable Cloud Backend → **Authentication → Email Templates**
 2. افتح inbox على https://www.mailinator.com/v4/public/inboxes.jsp?to=test-h16
 3. تحقّق من:
    - ✅ Sender Name = **Shahid Store** (لا "shahd")
-   - ✅ Subject = **تأكيد إنشاء حسابك في شاهد ستور**
+   - ✅ Subject = **تأكيد إنشاء حسابك في ديوان البث**
    - ✅ Body = RTL عربي بالكامل
    - ✅ ألوان ذهبية (#D4AF37) + خلفية داكنة
    - ✅ زر "تأكيد البريد الإلكتروني" يعمل ويوجّه لـ `/account`

@@ -39,7 +39,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- 2️⃣ إدخال إعدادات المتجر العامة (Store Settings)
 INSERT INTO public.store_settings (key, value, description) VALUES
-  ('store_name', 'شاهد ستور', 'اسم المتجر الرسمي الظاهر للعملاء'),
+  ('store_name', 'ديوان البث', 'اسم المتجر الرسمي الظاهر للعملاء'),
   ('whatsapp_number', '966500451602', 'رقم الواتساب الرسمي لخدمة العملاء والدعم الفني'),
   ('contact_email', 'support@ksa-tv.com', 'البريد الإلكتروني الرسمي للمتجر'),
   ('telegram_channel', '', 'رابط قناة التيليجرام الرسمية'),

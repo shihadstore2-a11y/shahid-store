@@ -20,7 +20,7 @@ export const Route = createFileRoute("/login")({
   },
   head: () => ({
     meta: [
-      { title: "تسجيل الدخول — شاهد ستور" },
+      { title: "تسجيل الدخول — ديوان البث" },
       { name: "robots", content: "noindex" },
     ],
   }),

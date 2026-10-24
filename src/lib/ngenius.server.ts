@@ -1,6 +1,6 @@
 /**
  * وحدة تكامل بوابة الدفع Network International (منصة N-Genius KSA) — Server-only.
- * متجر شاهد ستور (Shahid-Store)
+ * متجر ديوان البث (Shahid-Store)
  *
  * التوثيق الرسمي:
  *  - Auth: POST https://api-gateway.ksa.ngenius-payments.com/identity/auth/access-token
@@ -99,7 +99,7 @@ export function getCloudflareRawEnv(): Record<string, unknown> | null {
       const cfEnv = (req as any)?.runtime?.cloudflare?.env || (req as any)?.env;
       if (cfEnv && typeof cfEnv === "object") return cfEnv;
     }
-  } catch {}
+  } catch { }
 
   if (g.__CF_RAW_ENV__ && typeof g.__CF_RAW_ENV__ === "object") return g.__CF_RAW_ENV__;
   if (g.__CF_ENV__ && typeof g.__CF_ENV__ === "object") return g.__CF_ENV__;
@@ -124,7 +124,7 @@ export function syncCloudflareSecrets(): void {
           (globalThis as any)[key] = valStr;
         }
       }
-    } catch {}
+    } catch { }
   }
 }
 
@@ -140,11 +140,11 @@ export function getEnvValue(candidateNames: string[]): string {
       try {
         const val = (rawEnv as any)[name];
         if (val !== undefined && val !== null && val !== "") return String(val).trim();
-      } catch {}
+      } catch { }
       try {
         const valUpper = (rawEnv as any)[name.toUpperCase()];
         if (valUpper !== undefined && valUpper !== null && valUpper !== "") return String(valUpper).trim();
-      } catch {}
+      } catch { }
     }
     if (typeof process !== "undefined" && process.env) {
       if (process.env[name]) return String(process.env[name]).trim();
@@ -200,9 +200,9 @@ export async function isNGeniusTestMode(): Promise<boolean> {
       try {
         const parsed = JSON.parse(data.value);
         return Boolean(parsed.ngenius_test_mode || parsed.test_mode);
-      } catch {}
+      } catch { }
     }
-  } catch {}
+  } catch { }
 
   const envMode = getEnvValue(["NGENIUS_TEST_MODE", "PAYMENT_MODE"]);
   return envMode === "true" || envMode === "test" || envMode === "sandbox";
@@ -541,7 +541,7 @@ export async function fulfillSuccessfulOrder(orderId: string, providerName: stri
       const items = Array.isArray(currentOrder.items) ? currentOrder.items : [];
       const firstItem = items[0] as any;
       const productName =
-        firstItem?.name_ar || firstItem?.product_name || firstItem?.name || "اشتراك شاهد ستور";
+        firstItem?.name_ar || firstItem?.product_name || firstItem?.name || "اشتراك ديوان البث";
 
       // أ) إرسال تأكيد الطلب للعميل عبر الواتساب
       try {

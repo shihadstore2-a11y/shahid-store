@@ -6,7 +6,7 @@
       {
         "id": "7a3c8e14-6b92-4f8e-9d21-4c5e7b8a9f01",
         "slug": "shahid-store",
-        "name_ar": "شاهد ستور",
+        "name_ar": "ديوان البث",
         "name_en": "Shahid Store",
         "domain": "shahid-store.digitaneo.workers.dev",
         "logo_url": null,
@@ -628,7 +628,7 @@
     "store_settings": [
       {
         "key": "store_name",
-        "value": "شاهد ستور",
+        "value": "ديوان البث",
         "description": "اسم المتجر الرسمي",
         "updated_at": "2026-09-02T20:52:52.818937+00:00",
         "created_at": "2026-09-02T20:52:52.818937+00:00",

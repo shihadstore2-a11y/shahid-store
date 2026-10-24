@@ -1,7 +1,7 @@
 import { Bird, Crown, Mountain, Trophy, Tv, Zap, type LucideIcon } from "lucide-react";
 
 // ===== Product images (per-slug) =====
-// صور موحَّدة بالشعار الأصلي لكل منصّة (Falcon/Hulk/Smarters) على خلفية شاهد ستور السوداء + توهّج ذهبي.
+// صور موحَّدة بالشعار الأصلي لكل منصّة (Falcon/Hulk/Smarters) على خلفية ديوان البث السوداء + توهّج ذهبي.
 import falconBase from "@/assets/products/falcon-card.webp";
 import bundleFalconHulk from "@/assets/products/bundle-falcon-hulk-1y.webp";
 import hulkBase from "@/assets/products/hulk-card.webp";

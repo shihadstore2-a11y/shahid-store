@@ -10,7 +10,7 @@
     "binding": "ASSETS"
   },
   "vars": {
-    "STORE_URL": "https://shahidstore.net",
+    "STORE_URL": "https://ksa-tv.com",
     "NGENIUS_LIVE_BASE": "https://api-gateway.ksa.ngenius-payments.com",
     "EDFAPAY_AUTH_MODE": "x-api-key",
     "EDFAPAY_BASE_URL": "https://app-api.edfapay.com",

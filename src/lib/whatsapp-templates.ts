@@ -33,7 +33,7 @@ export type WhatsappTemplateData = {
   discount_percent?: number;
 };
 
-const STORE_SIGN = "فريق شاهد ستور 🌟";
+const STORE_SIGN = "فريق ديوان البث 🌟";
 
 function fmtSAR(n?: number): string {
   if (typeof n !== "number" || !isFinite(n)) return "";
@@ -60,7 +60,7 @@ export function buildOrderMessage(
       if (typeof data.total === "number") lines.push(`💰 المبلغ: ${fmtSAR(data.total)}`);
       lines.push("");
       lines.push(`سنبدأ بتجهيز اشتراكك خلال ${eta}.`);
-      lines.push("شكراً لثقتك بـ شاهد ستور 🌟");
+      lines.push("شكراً لثقتك بـ ديوان البث 🌟");
       return lines.join("\n");
     }
 
@@ -130,7 +130,7 @@ export function buildOrderMessage(
       const lines = [
         `السلام عليكم ${name} 👋`,
         "",
-        "سلتك بانتظارك في شاهد ستور! 🎁",
+        "سلتك بانتظارك في ديوان البث! 🎁",
         "",
       ];
       if (data.product_name) lines.push(`🛒 المنتج: ${data.product_name}`);

@@ -17,13 +17,13 @@ const FAQ = [
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "الأسئلة الشائعة — شاهد ستور" },
-      { name: "description", content: "إجابات على أكثر الأسئلة شيوعاً حول الاشتراكات والدفع والتفعيل في شاهد ستور." },
-      { property: "og:title", content: "الأسئلة الشائعة — شاهد ستور" },
+      { title: "الأسئلة الشائعة — ديوان البث" },
+      { name: "description", content: "إجابات على أكثر الأسئلة شيوعاً حول الاشتراكات والدفع والتفعيل في ديوان البث." },
+      { property: "og:title", content: "الأسئلة الشائعة — ديوان البث" },
       {
         property: "og:description",
         content:
-          "إجابات على أكثر الأسئلة شيوعاً عن اشتراكات IPTV، طرق الدفع، التفعيل، والدعم في شاهد ستور.",
+          "إجابات على أكثر الأسئلة شيوعاً عن اشتراكات IPTV، طرق الدفع، التفعيل، والدعم في ديوان البث.",
       },
       { property: "og:url", content: "https://ksa-tv.com/faq" },
     ],

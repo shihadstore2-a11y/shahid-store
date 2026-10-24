@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
     meta: [
-      { title: "استعادة كلمة المرور — شاهد ستور" },
+      { title: "استعادة كلمة المرور — ديوان البث" },
       { name: "robots", content: "noindex" },
     ],
   }),

@@ -13,7 +13,7 @@ const items = [
 export function ValueBridge() {
   return (
     <section
-      aria-label="مزايا شاهد ستور"
+      aria-label="مزايا ديوان البث"
       className="border-y border-accent/15 bg-card/50 py-5 backdrop-blur-sm md:py-7"
     >
       <div className="container mx-auto max-w-5xl px-4">

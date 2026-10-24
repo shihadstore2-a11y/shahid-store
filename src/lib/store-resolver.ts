@@ -14,7 +14,7 @@ export type StoreInfo = {
 export const DEFAULT_SHAHID_STORE: StoreInfo = {
   id: "7a3c8e14-6b92-4f8e-9d21-4c5e7b8a9f01",
   slug: "shahid-store",
-  name_ar: "شاهد ستور",
+  name_ar: "ديوان البث",
   name_en: "Shahid Store",
   domain: "shahid-store.digitaneo.workers.dev",
   logo_url: "/logo.webp",
@@ -75,7 +75,7 @@ export async function resolveStoreByDomain(
   if (queryParamStore && queryParamStore.trim()) {
     const candidate = queryParamStore.trim();
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate);
-    
+
     try {
       let query = supabase.from("stores").select("id, slug, name_ar, name_en, domain, logo_url, is_active, settings");
       if (isUuid) {

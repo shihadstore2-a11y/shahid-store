@@ -5,13 +5,13 @@ import { SiteLayout } from "@/components/SiteLayout";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "سياسة الخصوصية — شاهد ستور" },
+      { title: "سياسة الخصوصية — ديوان البث" },
       {
         name: "description",
         content:
-          "كيف يجمع شاهد ستور بيانات العملاء ويحميها وفق أعلى معايير الأمان والسرية.",
+          "كيف يجمع ديوان البث بيانات العملاء ويحميها وفق أعلى معايير الأمان والسرية.",
       },
-      { property: "og:title", content: "سياسة الخصوصية — شاهد ستور" },
+      { property: "og:title", content: "سياسة الخصوصية — ديوان البث" },
       {
         property: "og:description",
         content:
@@ -38,7 +38,7 @@ function PrivacyPage() {
             خصوصيتك أمانة لدينا
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            مرحباً بك في شاهد ستور، نسعى دائماً لتقديم تجربة اشتراكات رقمية
+            مرحباً بك في ديوان البث، نسعى دائماً لتقديم تجربة اشتراكات رقمية
             آمنة وموثوقة لعملائنا داخل المملكة العربية السعودية وخارجها. ويُعدّ
             إتمام عملية الشراء أو طلب النسخة التجريبية موافقة كاملة وملزمة على
             جميع الشروط والسياسات الموضّحة.
@@ -90,14 +90,14 @@ function PrivacyPage() {
         >
           <h2 className="text-lg font-black sm:text-xl">تنويه هام</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            شراء أي منتج من متجر شاهد ستور يعني إقرار العميل بأنه اطّلع على
+            شراء أي منتج من متجر ديوان البث يعني إقرار العميل بأنه اطّلع على
             جميع الشروط والأحكام وفهم كافة السياسات المذكورة ووافق عليها بشكل
             كامل وملزم دون أي تحفّظ.
           </p>
         </div>
 
         <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          © جميع الحقوق محفوظة 2026 — مؤسسة شاهد ستور
+          © جميع الحقوق محفوظة 2026 — مؤسسة ديوان البث
         </div>
       </section>
     </SiteLayout>

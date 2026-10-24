@@ -28,7 +28,7 @@ export const Route = createFileRoute("/register")({
   },
   head: () => ({
     meta: [
-      { title: "إنشاء حساب — شاهد ستور" },
+      { title: "إنشاء حساب — ديوان البث" },
       { name: "robots", content: "noindex" },
     ],
   }),

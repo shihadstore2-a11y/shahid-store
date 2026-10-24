@@ -39,7 +39,7 @@ type StepView = { title?: string; description: string; image?: string | null };
 
 const FALLBACK_STEPS: Record<Tab, StepView[]> = {
   ios: [
-    { title: "استلم بيانات اشتراكك", description: "بعد إتمام طلبك من شاهد ستور، تصلك بيانات التفعيل عبر البريد الإلكتروني والواتساب خلال دقائق." },
+    { title: "استلم بيانات اشتراكك", description: "بعد إتمام طلبك من ديوان البث، تصلك بيانات التفعيل عبر البريد الإلكتروني والواتساب خلال دقائق." },
     { title: "افتح App Store على جهازك", description: "ابحث عن تطبيق المشغّل الذي يصلك ضمن بيانات اشتراكك." },
     { title: "ثبّت تطبيق المشغّل", description: "اضغط Get وانتظر التثبيت ثم افتح التطبيق." },
     { title: "سجّل دخولك بالبيانات", description: "أدخل اسم المستخدم وكلمة المرور ورمز الخادم ثم اضغط تسجيل الدخول." },
@@ -90,17 +90,17 @@ const VALID_TABS = TABS.map((t) => t.id) as readonly string[];
 export const Route = createFileRoute("/activation-guide")({
   head: () => ({
     meta: [
-      { title: "طريقة تفعيل اشتراكك — شاهد ستور" },
+      { title: "طريقة تفعيل اشتراكك — ديوان البث" },
       {
         name: "description",
         content:
-          "دليل تفعيل اشتراك شاهد ستور خطوة بخطوة بالصور — أندرويد، شاومي، آيفون، شاشات سامسونج وLG، ويندوز، وماك. أقل من 5 دقائق.",
+          "دليل تفعيل اشتراك ديوان البث خطوة بخطوة بالصور — أندرويد، شاومي، آيفون، شاشات سامسونج وLG، ويندوز، وماك. أقل من 5 دقائق.",
       },
-      { property: "og:title", content: "طريقة تفعيل اشتراك IPTV — شاهد ستور" },
+      { property: "og:title", content: "طريقة تفعيل اشتراك IPTV — ديوان البث" },
       {
         property: "og:description",
         content:
-          "دليل تفعيل اشتراك شاهد ستور خطوة بخطوة بالصور لكل جهاز: أندرويد، آيفون، سامسونج، LG، ويندوز، وماك.",
+          "دليل تفعيل اشتراك ديوان البث خطوة بخطوة بالصور لكل جهاز: أندرويد، آيفون، سامسونج، LG، ويندوز، وماك.",
       },
       { property: "og:url", content: "https://ksa-tv.com/activation-guide" },
     ],
@@ -147,7 +147,7 @@ function ActivationGuide() {
     return {
       "@context": "https://schema.org",
       "@type": "HowTo",
-      name: `طريقة تفعيل اشتراك شاهد ستور على ${currentTab.seoLabel}`,
+      name: `طريقة تفعيل اشتراك ديوان البث على ${currentTab.seoLabel}`,
       description: `دليل تفعيل خطوة بخطوة على ${currentTab.seoLabel} مع صور توضيحية`,
       totalTime: "PT5M",
       step: stepsForTab.map((s, i) => ({
@@ -231,8 +231,8 @@ function ActivationGuide() {
                   key={t.id}
                   onClick={() => handleTabChange(t.id)}
                   className={`flex shrink-0 items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition ${active
-                      ? "border-accent bg-accent text-accent-foreground shadow-[0_0_0_3px_color-mix(in_oklab,var(--accent)_25%,transparent)]"
-                      : "border-border bg-card text-foreground hover:border-accent/50"
+                    ? "border-accent bg-accent text-accent-foreground shadow-[0_0_0_3px_color-mix(in_oklab,var(--accent)_25%,transparent)]"
+                    : "border-border bg-card text-foreground hover:border-accent/50"
                     }`}
                   aria-pressed={active}
                 >

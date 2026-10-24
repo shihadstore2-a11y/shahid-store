@@ -8,7 +8,7 @@ import { z } from "zod";
 import {
   AlertCircle,
   Check,
-  
+
   ChevronLeft,
   CreditCard,
   Loader2,
@@ -70,7 +70,7 @@ export const Route = createFileRoute("/checkout/$slug")({
     const p = loaderData?.product;
     return {
       meta: [
-        { title: p ? `إتمام الطلب — ${p.name_ar} — شاهد ستور` : "إتمام الطلب — شاهد ستور" },
+        { title: p ? `إتمام الطلب — ${p.name_ar} — ديوان البث` : "إتمام الطلب — ديوان البث" },
         { name: "robots", content: "noindex" },
       ],
     };
@@ -959,11 +959,10 @@ function CheckoutPage() {
               <button
                 type="button"
                 onClick={() => setValue("payment_method", "card")}
-                className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${
-                  paymentMethod === "card"
+                className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${paymentMethod === "card"
                     ? "border-accent bg-accent/5 shadow-[0_0_0_3px_rgba(212,175,55,0.08)]"
                     : "border-border bg-card hover:border-accent/40"
-                }`}
+                  }`}
               >
 
                 <div className="flex items-start gap-3">
@@ -1205,11 +1204,10 @@ function PayOption({
       type="button"
       onClick={() => !disabled && onSelect(value)}
       disabled={disabled}
-      className={`flex items-start gap-3 rounded-xl border-2 p-3 text-right transition ${
-        sel
+      className={`flex items-start gap-3 rounded-xl border-2 p-3 text-right transition ${sel
           ? "border-accent bg-accent/5"
           : "border-border bg-card hover:border-accent/40"
-      } ${disabled ? "opacity-60" : ""}`}
+        } ${disabled ? "opacity-60" : ""}`}
     >
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-accent">
         {icon}

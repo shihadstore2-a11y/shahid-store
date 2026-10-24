@@ -1,4 +1,4 @@
-// Role-Based Access Control matrix لكل أدوار الإدارة في شاهد ستور
+// Role-Based Access Control matrix لكل أدوار الإدارة في ديوان البث
 // + طبقة الصلاحيات الإضافية لكل حساب (permission_overrides) — إضافية فقط (OR)، لا تسحب أبداً.
 import type { AdminRole } from "@/hooks/useAdminUser";
 

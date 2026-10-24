@@ -17,7 +17,7 @@ export const Route = createFileRoute("/payment/success")({
   validateSearch: (s) => SearchSchema.parse(s),
   head: () => ({
     meta: [
-      { title: "تم الدفع بنجاح — شاهد ستور" },
+      { title: "تم الدفع بنجاح — ديوان البث" },
       { name: "robots", content: "noindex" },
     ],
   }),

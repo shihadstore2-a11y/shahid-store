@@ -16,13 +16,13 @@ import { SiteLayout } from "@/components/SiteLayout";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "من نحن — شاهد ستور | Shahid Store" },
+      { title: "من نحن — ديوان البث | Shahid Store" },
       {
         name: "description",
         content:
-          "شاهد ستور منصة سعودية متخصصة في الاشتراكات الرقمية وخدمات البث والترفيه الإلكتروني، تعمل تحت الاسم التجاري VIP DIGITAL.",
+          "ديوان البث منصة سعودية متخصصة في الاشتراكات الرقمية وخدمات البث والترفيه الإلكتروني، تعمل تحت الاسم التجاري VIP DIGITAL.",
       },
-      { property: "og:title", content: "من نحن — شاهد ستور" },
+      { property: "og:title", content: "من نحن — ديوان البث" },
       {
         property: "og:description",
         content:
@@ -47,7 +47,7 @@ function AboutPage() {
             <Sparkles className="h-3 w-3" /> من نحن
           </span>
           <h1 className="mt-4 text-3xl font-black sm:text-5xl">
-            شاهد ستور <span className="text-accent">|</span> Shahid Store
+            ديوان البث <span className="text-accent">|</span> Shahid Store
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             منصة سعودية متخصصة في توفير الاشتراكات الرقمية وخدمات البث والترفيه الإلكتروني، تعمل داخل المملكة العربية السعودية وفق نشاط تجاري رسمي، وتهدف إلى تقديم تجربة رقمية موثوقة تجمع بين الجودة، الاستقرار، والأسعار المناسبة.
@@ -65,7 +65,7 @@ function AboutPage() {
         {/* ماذا نقدم */}
         <Block icon={<Tv />} title="ماذا نقدّم؟">
           <p className="leading-relaxed text-muted-foreground">
-            في شاهد ستور نوفّر مجموعة واسعة من الاشتراكات الرقمية التي تمنح
+            في ديوان البث نوفّر مجموعة واسعة من الاشتراكات الرقمية التي تمنح
             المستخدم تجربة مشاهدة متكاملة تشمل:
           </p>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -98,7 +98,7 @@ function AboutPage() {
         </div>
 
         {/* خدمات */}
-        <Block icon={<Layers />} title="خدمات شاهد ستور">
+        <Block icon={<Layers />} title="خدمات ديوان البث">
           <p className="leading-relaxed text-muted-foreground">
             تشمل خدماتنا مجموعة متنوّعة من الاشتراكات الرقمية، مثل:
           </p>
@@ -154,10 +154,10 @@ function AboutPage() {
           }}
         >
           <h2 className="text-2xl font-black sm:text-3xl">
-            شاهد ستور… تجربة رقمية بثقة
+            ديوان البث… تجربة رقمية بثقة
           </h2>
           <p className="mx-auto mt-3 max-w-2xl leading-relaxed text-muted-foreground">
-            في شاهد ستور نطمح لأن نكون خيارك الأول في عالم الاشتراكات الرقمية،
+            في ديوان البث نطمح لأن نكون خيارك الأول في عالم الاشتراكات الرقمية،
             من خلال تقديم خدمات تجمع بين الجودة، المرونة، والدعم المستمر.
           </p>
           <div className="mt-6">
@@ -173,7 +173,7 @@ function AboutPage() {
 
         {/* الحقوق */}
         <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          © جميع الحقوق محفوظة 2026 — Shahid Store | شاهد ستور
+          © جميع الحقوق محفوظة 2026 — Shahid Store | ديوان البث
         </div>
       </section>
     </SiteLayout>

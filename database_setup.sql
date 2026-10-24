@@ -314,7 +314,7 @@ INSERT INTO public.stores (id, slug, name_ar, name_en, domain, logo_url, is_acti
 VALUES (
   '7a3c8e14-6b92-4f8e-9d21-4c5e7b8a9f01',
   'shahid-store',
-  'شاهد ستور',
+  'ديوان البث',
   'Shahid Store',
   'shahid-store.digitaneo.workers.dev',
   'https://umozikpkfmjkcglizysd.supabase.co/storage/v1/object/public/products/logo.webp',

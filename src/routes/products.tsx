@@ -11,16 +11,16 @@ import { fetchCategories, fetchProducts } from "@/lib/queries";
 export const Route = createFileRoute("/products")({
   head: () => ({
     meta: [
-      { title: "كل الباقات — شاهد ستور" },
+      { title: "كل الباقات — ديوان البث" },
       {
         name: "description",
-        content: "تصفح كل باقات الاشتراكات الرقمية المتاحة في شاهد ستور.",
+        content: "تصفح كل باقات الاشتراكات الرقمية المتاحة في ديوان البث.",
       },
-      { property: "og:title", content: "كل باقات اشتراكات IPTV — شاهد ستور" },
+      { property: "og:title", content: "كل باقات اشتراكات IPTV — ديوان البث" },
       {
         property: "og:description",
         content:
-          "تصفح كل باقات فالكون برو، هولك بلاير، وسمارترز برو في شاهد ستور بأسعار تنافسية وتفعيل فوري.",
+          "تصفح كل باقات فالكون برو، هولك بلاير، وسمارترز برو في ديوان البث بأسعار تنافسية وتفعيل فوري.",
       },
       { property: "og:url", content: "https://ksa-tv.com/products" },
     ],

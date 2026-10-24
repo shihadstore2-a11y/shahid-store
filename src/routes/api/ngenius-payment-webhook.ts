@@ -1,8 +1,8 @@
 /**
- * مسار N-Genius Webhook المباشر لمتجر شاهد ستور (Shahid-Store)
+ * مسار N-Genius Webhook المباشر لمتجر ديوان البث
  *
  * الرابط المسجل في بوابة N-Genius:
- * https://shahidstore.net/api/ngenius-payment-webhook
+ * https://ksa-tv.com/api/ngenius-payment-webhook
  */
 
 import { createFileRoute } from "@tanstack/react-router";

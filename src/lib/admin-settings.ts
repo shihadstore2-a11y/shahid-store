@@ -10,7 +10,7 @@ export type StoreSettings = {
 };
 
 const DEFAULT_STORE: StoreSettings = {
-  storeName: "شاهد ستور",
+  storeName: "ديوان البث",
   whatsappNumber: "966500451602",
   officialEmail: "",
   telegramChannel: "",

@@ -17,7 +17,7 @@ export const Route = createFileRoute("/payment/failed")({
   validateSearch: (s) => SearchSchema.parse(s),
   head: () => ({
     meta: [
-      { title: "تعذّر إتمام الدفع — شاهد ستور" },
+      { title: "تعذّر إتمام الدفع — ديوان البث" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -48,13 +48,13 @@ function PaymentFailedPage() {
   // رسالة واتساب جاهزة للعميل عند طلب المساعدة بعد فشل الدفع
   const waMessage = order
     ? [
-        "السلام عليكم 👋",
-        "واجهت مشكلة في إتمام الدفع وأحتاج مساعدتكم.",
-        "",
-        `📋 رقم الطلب: ${order.orderNumber}`,
-        `👤 الاسم: ${order.customerName}`,
-        `💰 المبلغ: ${formatSAR(order.total)}`,
-      ].join("\n")
+      "السلام عليكم 👋",
+      "واجهت مشكلة في إتمام الدفع وأحتاج مساعدتكم.",
+      "",
+      `📋 رقم الطلب: ${order.orderNumber}`,
+      `👤 الاسم: ${order.customerName}`,
+      `💰 المبلغ: ${formatSAR(order.total)}`,
+    ].join("\n")
     : "السلام عليكم، واجهت مشكلة في إتمام الدفع وأحتاج مساعدتكم.";
 
   const waHref = useWhatsappLink(waMessage);

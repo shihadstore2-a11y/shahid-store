@@ -112,7 +112,7 @@ export function Footer() {
       </div>
 
       <div className="border-t border-border py-5 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} شاهد ستور — جميع الحقوق محفوظة
+        © {new Date().getFullYear()} ديوان البث — جميع الحقوق محفوظة
       </div>
     </footer>
   );

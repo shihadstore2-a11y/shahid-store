@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS public.store_settings (
 );
 
 INSERT INTO public.store_settings (key, value, description) VALUES
-  ('store_name', 'شاهد ستور', 'اسم المتجر الرسمي'),
+  ('store_name', 'ديوان البث', 'اسم المتجر الرسمي'),
   ('whatsapp_number', '966500451602', 'رقم الواتساب الرسمي لخدمة العملاء'),
   ('contact_email', 'support@ksa-tv.com', 'البريد الرسمي للمتجر'),
   ('telegram_channel', '', 'قناة التيليجرام'),

@@ -87,7 +87,7 @@ export function ArticleFormDialog({ article, open: ctlOpen, onOpenChange, withTr
         content_md: parsed.content_md,
         category: parsed.category || null,
         cover_image_url: parsed.cover_image_url || null,
-        author: parsed.author || "فريق شاهد ستور",
+        author: parsed.author || "فريق ديوان البث",
         meta_title: parsed.meta_title || null,
         meta_description: parsed.meta_description || null,
         is_published: parsed.is_published,
@@ -205,7 +205,7 @@ export function ArticleFormDialog({ article, open: ctlOpen, onOpenChange, withTr
             <Input
               value={form.author}
               onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
-              placeholder="فريق شاهد ستور"
+              placeholder="فريق ديوان البث"
               maxLength={80}
             />
           </div>

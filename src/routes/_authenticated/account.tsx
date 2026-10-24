@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 export const Route = createFileRoute("/_authenticated/account")({
   head: () => ({
     meta: [
-      { title: "حسابي — شاهد ستور" },
+      { title: "حسابي — ديوان البث" },
       { name: "robots", content: "noindex" },
     ],
   }),

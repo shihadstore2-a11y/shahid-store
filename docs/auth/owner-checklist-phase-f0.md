@@ -76,15 +76,15 @@ http://localhost:5173/**
 
 **Subject:**
 ```
-تأكيد بريدك الإلكتروني — شاهد ستور
+تأكيد بريدك الإلكتروني — ديوان البث
 ```
 
 **Message body (HTML):**
 ```html
 <div dir="rtl" style="font-family: 'Tajawal', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff; color: #1f2937;">
-  <h2 style="color: #D4AF37; margin: 0 0 16px;">أهلاً بك في شاهد ستور</h2>
+  <h2 style="color: #D4AF37; margin: 0 0 16px;">أهلاً بك في ديوان البث</h2>
   <p style="margin: 0 0 12px;">السلام عليكم،</p>
-  <p style="margin: 0 0 12px;">شكراً لتسجيلك في شاهد ستور — متجرك للاشتراكات الرقمية.</p>
+  <p style="margin: 0 0 12px;">شكراً لتسجيلك في ديوان البث — متجرك للاشتراكات الرقمية.</p>
   <p style="margin: 0 0 12px;">اضغط الزر أدناه لتأكيد بريدك الإلكتروني:</p>
   <p style="text-align: center; margin: 32px 0;">
     <a href="{{ .ConfirmationURL }}"
@@ -97,7 +97,7 @@ http://localhost:5173/**
   </p>
   <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 24px 0;">
   <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-    فريق شاهد ستور — <a href="https://ksa-tv.com" style="color: #D4AF37; text-decoration: none;">https://ksa-tv.com/</a>
+    فريق ديوان البث — <a href="https://ksa-tv.com" style="color: #D4AF37; text-decoration: none;">https://ksa-tv.com/</a>
   </p>
 </div>
 ```
@@ -110,7 +110,7 @@ http://localhost:5173/**
 
 **Subject:**
 ```
-رابط الدخول — شاهد ستور
+رابط الدخول — ديوان البث
 ```
 
 **Message body (HTML):**
@@ -118,7 +118,7 @@ http://localhost:5173/**
 <div dir="rtl" style="font-family: 'Tajawal', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #ffffff; color: #1f2937;">
   <h2 style="color: #D4AF37; margin: 0 0 16px;">رابط دخولك جاهز</h2>
   <p style="margin: 0 0 12px;">السلام عليكم،</p>
-  <p style="margin: 0 0 12px;">اضغط الزر أدناه للدخول إلى حسابك في شاهد ستور:</p>
+  <p style="margin: 0 0 12px;">اضغط الزر أدناه للدخول إلى حسابك في ديوان البث:</p>
   <p style="text-align: center; margin: 32px 0;">
     <a href="{{ .ConfirmationURL }}"
        style="background: #D4AF37; color: #1a1a1a; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 700; display: inline-block;">
@@ -130,7 +130,7 @@ http://localhost:5173/**
   </p>
   <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 24px 0;">
   <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-    فريق شاهد ستور — <a href="https://ksa-tv.com" style="color: #D4AF37; text-decoration: none;">https://ksa-tv.com/</a>
+    فريق ديوان البث — <a href="https://ksa-tv.com" style="color: #D4AF37; text-decoration: none;">https://ksa-tv.com/</a>
   </p>
 </div>
 ```
@@ -143,7 +143,7 @@ http://localhost:5173/**
 
 **Subject:**
 ```
-إعادة تعيين كلمة السر — شاهد ستور
+إعادة تعيين كلمة السر — ديوان البث
 ```
 
 **Message body (HTML):**
@@ -163,7 +163,7 @@ http://localhost:5173/**
   </p>
   <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 24px 0;">
   <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-    فريق شاهد ستور — <a href="https://ksa-tv.com" style="color: #D4AF37; text-decoration: none;">https://ksa-tv.com/</a>
+    فريق ديوان البث — <a href="https://ksa-tv.com" style="color: #D4AF37; text-decoration: none;">https://ksa-tv.com/</a>
   </p>
 </div>
 ```
@@ -215,7 +215,7 @@ F.0 Owner tasks COMPLETED ✅
 
 | Scenario | المتوقَّع |
 |----------|-----------|
-| New user signup | Email عربي يصل بـ "أهلاً بك في شاهد ستور" |
+| New user signup | Email عربي يصل بـ "أهلاً بك في ديوان البث" |
 | Magic Link request | Email عربي يصل بـ "رابط دخولك جاهز" |
 | Reset password | Email عربي يصل بـ "إعادة تعيين كلمة السر" |
 | Google OAuth | redirect نظيف إلى `/account` بعد القبول |

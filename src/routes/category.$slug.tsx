@@ -18,30 +18,30 @@ export const Route = createFileRoute("/category/$slug")({
     const url = `https://ksa-tv.com/category/${params.slug}`;
     const meta_by_slug: Record<string, { title: string; description: string }> = {
       falcon: {
-        title: "اشتراك فالكون برو IPTV — شاهد ستور",
+        title: "اشتراك فالكون برو IPTV — ديوان البث",
         description:
           "اشترك في فالكون برو IPTV مع آلاف القنوات والأفلام بجودة 4K، تفعيل سريع، ودعم لكل الأجهزة في السعودية ودول الخليج.",
       },
       hulk: {
-        title: "اشتراك هولك بلاير IPTV — شاهد ستور",
+        title: "اشتراك هولك بلاير IPTV — ديوان البث",
         description:
-          "هولك بلاير IPTV بتغطية رياضية وترفيهية شاملة، أكثر من 8000 قناة، جودة ممتازة، وتفعيل سريع من شاهد ستور.",
+          "هولك بلاير IPTV بتغطية رياضية وترفيهية شاملة، أكثر من 8000 قناة، جودة ممتازة، وتفعيل سريع من ديوان البث.",
       },
       smarters: {
-        title: "اشتراك سمارترز برو IPTV — شاهد ستور",
+        title: "اشتراك سمارترز برو IPTV — ديوان البث",
         description:
           "سمارترز برو IPTV — تجربة مشاهدة ذكية بثبات عالي وجودة ممتازة مع دعم كامل لكل الأجهزة وتفعيل بدون تعقيد.",
       },
       "annual-offers": {
-        title: "عروض الاشتراكات السنوية — شاهد ستور",
+        title: "عروض الاشتراكات السنوية — ديوان البث",
         description:
-          "أفضل عروض الاشتراكات السنوية لـ IPTV من شاهد ستور — وفّر أكثر مع باقات السنة الكاملة.",
+          "أفضل عروض الاشتراكات السنوية لـ IPTV من ديوان البث — وفّر أكثر مع باقات السنة الكاملة.",
       },
     };
     const name = CATEGORY_NAMES_AR[params.slug] ?? params.slug;
     const fallback = {
-      title: `${name} — شاهد ستور`,
-      description: `تصفح باقات ${name} في شاهد ستور بأسعار مناسبة وتفعيل سريع.`,
+      title: `${name} — ديوان البث`,
+      description: `تصفح باقات ${name} في ديوان البث بأسعار مناسبة وتفعيل سريع.`,
     };
     const m = meta_by_slug[params.slug] ?? fallback;
     return {

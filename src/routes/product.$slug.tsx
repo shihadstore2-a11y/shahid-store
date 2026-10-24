@@ -31,7 +31,7 @@ export const Route = createFileRoute("/product/$slug")({
     if (!p) {
       return {
         meta: [
-          { title: "المنتج غير موجود — شاهد ستور" },
+          { title: "المنتج غير موجود — ديوان البث" },
           { property: "og:url", content: url },
         ],
         links: [{ rel: "canonical", href: url }],
@@ -40,10 +40,10 @@ export const Route = createFileRoute("/product/$slug")({
     const price = p.sale_price ?? p.base_price;
     const desc =
       p.description?.slice(0, 155) ??
-      `اشترك في ${p.name_ar} بسعر مناسب وتفعيل سريع عبر شاهد ستور.`;
+      `اشترك في ${p.name_ar} بسعر مناسب وتفعيل سريع عبر ديوان البث.`;
     return {
       meta: [
-        { title: `${p.name_ar} — شاهد ستور` },
+        { title: `${p.name_ar} — ديوان البث` },
         { name: "description", content: desc },
         { property: "og:title", content: `${p.name_ar} — ${formatSAR(price)}` },
         { property: "og:description", content: desc },
@@ -62,7 +62,7 @@ export const Route = createFileRoute("/product/$slug")({
             name: p.name_ar,
             description: p.description ?? "",
             sku: p.id,
-            brand: { "@type": "Brand", name: "شاهد ستور" },
+            brand: { "@type": "Brand", name: "ديوان البث" },
             ...(p.image_urls?.[0] ? { image: p.image_urls[0] } : {}),
             aggregateRating: {
               "@type": "AggregateRating",

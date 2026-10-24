@@ -38,7 +38,7 @@ CREATE TRIGGER store_settings_touch
   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
 INSERT INTO public.store_settings (key, value, description) VALUES
-  ('store_name', 'شاهد ستور', 'اسم المتجر يظهر في الـ Header'),
+  ('store_name', 'ديوان البث', 'اسم المتجر يظهر في الـ Header'),
   ('whatsapp_number', '966507305518', 'رقم الواتساب الرسمي'),
   ('contact_email', NULL, 'إيميل التواصل الرسمي'),
   ('telegram_channel', NULL, 'رابط قناة تيليجرام'),

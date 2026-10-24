@@ -24,8 +24,8 @@ type FoundOrder = {
 export const Route = createFileRoute("/track-order")({
   head: () => ({
     meta: [
-      { title: "تتبع الطلب — شاهد ستور" },
-      { name: "description", content: "تتبّع حالة طلبك في شاهد ستور برقم الطلب." },
+      { title: "تتبع الطلب — ديوان البث" },
+      { name: "description", content: "تتبّع حالة طلبك في ديوان البث برقم الطلب." },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

@@ -45,6 +45,8 @@ package-lock.json
 *.pem
 *.key
 CLOUDFLARE_VARS_PRIVATE.txt
+CLOUDFLARE_VARIABLES.md
+CLOUDFLARE_VARS_PRIVATE.md
 *secrets*
 *credentials*
 backup/

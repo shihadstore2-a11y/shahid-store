@@ -148,7 +148,7 @@ const csvEscape = (v: string | number | null | undefined): string => {
 
 export function csvFromKpiDashboard(kpi: KpiDashboard, period: string): string {
   const lines: string[] = [];
-  lines.push("التقرير المالي — شاهد ستور");
+  lines.push("التقرير المالي — ديوان البث");
   lines.push(`الفترة,${csvEscape(period)}`);
   lines.push(`من,${csvEscape(kpi.period.from)}`);
   lines.push(`إلى,${csvEscape(kpi.period.to)}`);

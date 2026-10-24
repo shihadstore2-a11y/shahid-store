@@ -9,7 +9,7 @@ export const Route = createFileRoute("/auth/callback")({
   }),
   head: () => ({
     meta: [
-      { title: "جاري التحقق والمتابعة... — شاهد ستور" },
+      { title: "جاري التحقق والمتابعة... — ديوان البث" },
       { name: "robots", content: "noindex" },
     ],
   }),

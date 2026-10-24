@@ -57,14 +57,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full">
       <div
-        className={`transition-all duration-300 ${
-          scrolled
+        className={`transition-all duration-300 ${scrolled
             ? "border-b border-border bg-background/85 backdrop-blur-xl shadow-[0_4px_24px_-12px_oklch(0.03_0.015_268/0.6)]"
             : "border-b border-transparent bg-background/30 backdrop-blur-md"
-        }`}
+          }`}
       >
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 md:h-16">
-          <Link to="/" aria-label="شاهد ستور" className="flex shrink-0 items-center">
+          <Link to="/" aria-label="ديوان البث" className="flex shrink-0 items-center">
             <Logo size="md" />
           </Link>
 
@@ -75,16 +74,14 @@ export function Header() {
                 <Link
                   key={item.label}
                   to={item.to}
-                  className={`group relative rounded-md px-3 py-2 text-sm font-bold transition-colors ${
-                    active ? "text-accent" : "text-foreground hover:text-accent"
-                  }`}
+                  className={`group relative rounded-md px-3 py-2 text-sm font-bold transition-colors ${active ? "text-accent" : "text-foreground hover:text-accent"
+                    }`}
                 >
                   {item.label}
                   <span
                     aria-hidden
-                    className={`absolute inset-x-3 bottom-1 h-[2px] origin-right rounded-full bg-gradient-to-l from-accent to-accent/40 transition-transform duration-300 ${
-                      active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
-                    }`}
+                    className={`absolute inset-x-3 bottom-1 h-[2px] origin-right rounded-full bg-gradient-to-l from-accent to-accent/40 transition-transform duration-300 ${active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                      }`}
                   />
                 </Link>
               );

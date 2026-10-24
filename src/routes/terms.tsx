@@ -17,18 +17,18 @@ import { SiteLayout } from "@/components/SiteLayout";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "الشروط والأحكام — شاهد ستور" },
+      { title: "الشروط والأحكام — ديوان البث" },
       {
         name: "description",
         content:
-          "شروط استخدام متجر شاهد ستور، ضوابط الاشتراكات الرقمية، الضمان، وحدود المسؤولية.",
+          "شروط استخدام متجر ديوان البث، ضوابط الاشتراكات الرقمية، الضمان، وحدود المسؤولية.",
       },
-      { property: "og:title", content: "الشروط والأحكام — شاهد ستور" },
+      { property: "og:title", content: "الشروط والأحكام — ديوان البث" },
       { property: "og:url", content: "https://ksa-tv.com/terms" },
       {
         property: "og:description",
         content:
-          "اطّلع على شروط استخدام متجر شاهد ستور وحقوق العميل بالتفصيل.",
+          "اطّلع على شروط استخدام متجر ديوان البث وحقوق العميل بالتفصيل.",
       },
     ],
     links: [
@@ -47,10 +47,10 @@ function TermsPage() {
             <ScrollText className="h-3 w-3" /> الشروط والأحكام
           </span>
           <h1 className="mt-4 text-3xl font-black sm:text-4xl">
-            شروط استخدام متجر شاهد ستور
+            شروط استخدام متجر ديوان البث
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            مرحباً بك في شاهد ستور، نسعى دائماً لتقديم تجربة اشتراكات رقمية
+            مرحباً بك في ديوان البث، نسعى دائماً لتقديم تجربة اشتراكات رقمية
             آمنة وموثوقة لعملائنا داخل المملكة العربية السعودية وخارجها. ويُعدّ
             إتمام عملية الشراء أو طلب النسخة التجريبية موافقة كاملة وملزمة على
             جميع الشروط والأحكام والسياسات الموضحة أدناه.
@@ -146,7 +146,7 @@ function TermsPage() {
           <div className="mt-4 space-y-4">
             <Block icon={<PlayCircle />} title="طبيعة الخدمة">
               <p className="leading-relaxed text-muted-foreground">
-                تعمل مؤسسة شاهد ستور كموزّع لخدمات البث والسيرفرات الرقمية،
+                تعمل مؤسسة ديوان البث كموزّع لخدمات البث والسيرفرات الرقمية،
                 ولسنا المالك المباشر لمحتوى السيرفرات. لذلك لا يتحمّل المتجر
                 مسؤولية:
               </p>
@@ -200,7 +200,7 @@ function TermsPage() {
         >
           <h2 className="text-lg font-black sm:text-xl">تنويه هام</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            شراء أي منتج من متجر شاهد ستور يعني إقرار العميل بأنه:
+            شراء أي منتج من متجر ديوان البث يعني إقرار العميل بأنه:
           </p>
           <ul className="mx-auto mt-4 inline-flex max-w-md flex-col gap-2 text-start">
             <Bullet>اطّلع على جميع الشروط والأحكام</Bullet>
@@ -210,7 +210,7 @@ function TermsPage() {
         </div>
 
         <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          © جميع الحقوق محفوظة 2026 — مؤسسة شاهد ستور
+          © جميع الحقوق محفوظة 2026 — مؤسسة ديوان البث
         </div>
       </section>
     </SiteLayout>

@@ -1,7 +1,7 @@
 import { useWhatsappLink } from "@/lib/whatsapp";
 
 export function WhatsAppFloat({ liftAboveSticky = false }: { liftAboveSticky?: boolean }) {
-  const href = useWhatsappLink("مرحباً، أرغب بالاستفسار عن باقات شاهد ستور");
+  const href = useWhatsappLink("مرحباً، أرغب بالاستفسار عن باقات ديوان البث");
   return (
     <a
       href={href}

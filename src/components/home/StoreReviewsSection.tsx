@@ -112,7 +112,7 @@ export function StoreReviewsSection({ variant = "homepage" }: { variant?: Varian
           </div>
           <h2 className="mb-1 text-2xl font-black md:text-3xl">ماذا قال عملاؤنا</h2>
           <p className="text-sm text-muted-foreground">
-            تجارب حقيقية من مشتركين في شاهد ستور
+            تجارب حقيقية من مشتركين في ديوان البث
           </p>
         </div>
 

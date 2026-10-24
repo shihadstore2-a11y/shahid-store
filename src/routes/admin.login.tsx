@@ -22,7 +22,7 @@ export const Route = createFileRoute("/admin/login")({
   },
   head: () => ({
     meta: [
-      { title: "دخول الإدارة — شاهد ستور" },
+      { title: "دخول الإدارة — ديوان البث" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

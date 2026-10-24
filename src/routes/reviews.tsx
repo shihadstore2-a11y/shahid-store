@@ -5,16 +5,16 @@ import { StoreReviewsSection } from "@/components/home/StoreReviewsSection";
 export const Route = createFileRoute("/reviews")({
   head: () => ({
     meta: [
-      { title: "تقييمات العملاء — شاهد ستور" },
+      { title: "تقييمات العملاء — ديوان البث" },
       {
         name: "description",
         content:
-          "تجارب عملاء شاهد ستور الموثَّقة مع اشتراكات فالكون وهولك وسمارترز برو — جودة بث عالية وتفعيل سريع.",
+          "تجارب عملاء ديوان البث الموثَّقة مع اشتراكات فالكون وهولك وسمارترز برو — جودة بث عالية وتفعيل سريع.",
       },
-      { property: "og:title", content: "تقييمات العملاء — شاهد ستور" },
+      { property: "og:title", content: "تقييمات العملاء — ديوان البث" },
       {
         property: "og:description",
-        content: "آراء حقيقية من عملاء شاهد ستور حول جودة الاشتراكات والدعم.",
+        content: "آراء حقيقية من عملاء ديوان البث حول جودة الاشتراكات والدعم.",
       },
     ],
   }),
@@ -30,7 +30,7 @@ function ReviewsPage() {
             تقييمات موثَّقة
           </span>
           <h1 className="text-2xl font-black sm:text-3xl md:text-4xl">
-            تجارب عملاء شاهد ستور
+            تجارب عملاء ديوان البث
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
             آراء حقيقية من عملاء جرّبوا اشتراكاتنا — جودة بث عالية، تفعيل سريع،
