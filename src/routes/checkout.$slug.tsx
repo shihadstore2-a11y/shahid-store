@@ -1123,18 +1123,16 @@ function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setValue("payment_method", "ngenius", { shouldValidate: true, shouldDirty: true })}
-                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${
-                      paymentMethod === "ngenius"
-                        ? "border-accent bg-accent/10 shadow-[0_0_0_3px_rgba(212,175,55,0.15)] ring-1 ring-accent"
-                        : "border-border bg-card hover:border-accent/40"
-                    }`}
+                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${paymentMethod === "ngenius"
+                      ? "border-accent bg-accent/10 shadow-[0_0_0_3px_rgba(212,175,55,0.15)] ring-1 ring-accent"
+                      : "border-border bg-card hover:border-accent/40"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
-                        paymentMethod === "ngenius"
-                          ? "border-accent bg-accent text-black"
-                          : "border-muted-foreground/40 bg-transparent"
-                      }`}>
+                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${paymentMethod === "ngenius"
+                        ? "border-accent bg-accent text-black"
+                        : "border-muted-foreground/40 bg-transparent"
+                        }`}>
                         {paymentMethod === "ngenius" && <div className="h-2 w-2 rounded-full bg-background" />}
                       </div>
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 text-purple-400 ring-1 ring-purple-500/30">
@@ -1142,7 +1140,7 @@ function CheckoutPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-black">الدفع ببطاقة البنكية ومدى (N-Genius)</span>
+                          <span className="text-sm font-black">الدفع بالبطاقة البنكية</span>
                           {pmConfig.ngenius?.testMode && (
                             <span className="rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 text-[10px] font-black">
                               وضع التجربة (Sandbox)
@@ -1172,18 +1170,16 @@ function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setValue("payment_method", "card", { shouldValidate: true, shouldDirty: true })}
-                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${
-                      paymentMethod === "card"
-                        ? "border-accent bg-accent/10 shadow-[0_0_0_3px_rgba(212,175,55,0.15)] ring-1 ring-accent"
-                        : "border-border bg-card hover:border-accent/40"
-                    }`}
+                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${paymentMethod === "card"
+                      ? "border-accent bg-accent/10 shadow-[0_0_0_3px_rgba(212,175,55,0.15)] ring-1 ring-accent"
+                      : "border-border bg-card hover:border-accent/40"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
-                        paymentMethod === "card"
-                          ? "border-accent bg-accent text-black"
-                          : "border-muted-foreground/40 bg-transparent"
-                      }`}>
+                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${paymentMethod === "card"
+                        ? "border-accent bg-accent text-black"
+                        : "border-muted-foreground/40 bg-transparent"
+                        }`}>
                         {paymentMethod === "card" && <div className="h-2 w-2 rounded-full bg-background" />}
                       </div>
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-500/5 text-blue-400 ring-1 ring-blue-500/30">
@@ -1191,13 +1187,13 @@ function CheckoutPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-black">بطاقة بنكية أو محفظة رقمية (EdfaPay)</span>
-                          <span className="rounded-full bg-muted/40 px-2 py-0.5 text-[10px] font-black text-muted-foreground">
-                            بوابة EdfaPay
+                          <span className="text-sm font-black">بطاقة بنكية أو محفظة رقمية</span>
+                          <span className="rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-black text-success">
+                            مدى / فيزا / ماستركارد
                           </span>
                         </div>
                         <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                          ادفع بأمان عبر بوابة EdfaPay المعتمدة — تحقّق 3D Secure
+                          ادفع بأمان عبر البطاقات والمحافظ المعتمدة — تحقّق 3D Secure
                         </div>
                       </div>
                     </div>
@@ -1216,18 +1212,16 @@ function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setValue("payment_method", "whatsapp", { shouldValidate: true, shouldDirty: true })}
-                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${
-                      paymentMethod === "whatsapp"
-                        ? "border-emerald-500 bg-emerald-500/10 shadow-[0_0_0_3px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500"
-                        : "border-border bg-card hover:border-emerald-500/40"
-                    }`}
+                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${paymentMethod === "whatsapp"
+                      ? "border-emerald-500 bg-emerald-500/10 shadow-[0_0_0_3px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500"
+                      : "border-border bg-card hover:border-emerald-500/40"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
-                        paymentMethod === "whatsapp"
-                          ? "border-emerald-500 bg-emerald-500 text-black"
-                          : "border-muted-foreground/40 bg-transparent"
-                      }`}>
+                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${paymentMethod === "whatsapp"
+                        ? "border-emerald-500 bg-emerald-500 text-black"
+                        : "border-muted-foreground/40 bg-transparent"
+                        }`}>
                         {paymentMethod === "whatsapp" && <div className="h-2 w-2 rounded-full bg-background" />}
                       </div>
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/30">
@@ -1253,18 +1247,16 @@ function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setValue("payment_method", "cash", { shouldValidate: true, shouldDirty: true })}
-                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${
-                      paymentMethod === "cash"
-                        ? "border-amber-500 bg-amber-500/10 shadow-[0_0_0_3px_rgba(245,158,11,0.15)] ring-1 ring-amber-500"
-                        : "border-border bg-card hover:border-amber-500/40"
-                    }`}
+                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${paymentMethod === "cash"
+                      ? "border-amber-500 bg-amber-500/10 shadow-[0_0_0_3px_rgba(245,158,11,0.15)] ring-1 ring-amber-500"
+                      : "border-border bg-card hover:border-amber-500/40"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
-                        paymentMethod === "cash"
-                          ? "border-amber-500 bg-amber-500 text-black"
-                          : "border-muted-foreground/40 bg-transparent"
-                      }`}>
+                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${paymentMethod === "cash"
+                        ? "border-amber-500 bg-amber-500 text-black"
+                        : "border-muted-foreground/40 bg-transparent"
+                        }`}>
                         {paymentMethod === "cash" && <div className="h-2 w-2 rounded-full bg-background" />}
                       </div>
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-500 ring-1 ring-amber-500/30">
@@ -1500,8 +1492,8 @@ function PayOption({
       onClick={() => !disabled && onSelect(value)}
       disabled={disabled}
       className={`flex items-start gap-3 rounded-xl border-2 p-3 text-right transition ${sel
-          ? "border-accent bg-accent/5"
-          : "border-border bg-card hover:border-accent/40"
+        ? "border-accent bg-accent/5"
+        : "border-border bg-card hover:border-accent/40"
         } ${disabled ? "opacity-60" : ""}`}
     >
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-accent">
