@@ -17,6 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { StoreSettingsForm } from "@/components/admin/settings/StoreSettingsForm";
+import { PaymentMethodsForm } from "@/components/admin/settings/PaymentMethodsForm";
 import { AccountInfo } from "@/components/admin/settings/AccountInfo";
 import { ChangePasswordForm } from "@/components/admin/settings/ChangePasswordForm";
 import { SystemInfo } from "@/components/admin/settings/SystemInfo";
@@ -25,7 +26,7 @@ import { signOutEverywhere } from "@/lib/admin-settings";
 export const Route = createFileRoute("/_admin/admin/settings")({
   head: () => ({
     meta: [
-      { title: "الإعدادات — إدارة شاهد" },
+      { title: "الإعدادات — ديوان البث" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -49,19 +50,24 @@ function SettingsPage() {
       <div>
         <h1 className="text-2xl font-black sm:text-3xl">الإعدادات</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          إدارة معلومات المتجر، الحساب، ومعلومات النظام
+          إدارة معلومات المتجر، طرق الدفع، الحساب، ومعلومات النظام
         </p>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-lg grid-cols-4">
           <TabsTrigger value="store">المتجر</TabsTrigger>
+          <TabsTrigger value="payment">طرق الدفع</TabsTrigger>
           <TabsTrigger value="account">الحساب</TabsTrigger>
           <TabsTrigger value="system">النظام</TabsTrigger>
         </TabsList>
 
         <TabsContent value="store" className="mt-4">
           <StoreSettingsForm />
+        </TabsContent>
+
+        <TabsContent value="payment" className="mt-4">
+          <PaymentMethodsForm />
         </TabsContent>
 
         <TabsContent value="account" className="mt-4 space-y-6">

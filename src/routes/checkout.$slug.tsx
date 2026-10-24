@@ -5,10 +5,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
+  Banknote,
   Check,
-
   ChevronLeft,
   CreditCard,
   Loader2,
@@ -29,6 +30,10 @@ import { ErrorFallback } from "@/components/ErrorFallback";
 import { SiteLayout } from "@/components/SiteLayout";
 import { TrustBar } from "@/components/checkout/TrustBar";
 import { PreOrderWarning } from "@/components/checkout/PreOrderWarning";
+import {
+  paymentMethodsConfigQueryOptions,
+  DEFAULT_PAYMENT_METHODS,
+} from "@/lib/admin-settings";
 
 import { fetchProductBySlug } from "@/lib/queries";
 import {
@@ -118,7 +123,7 @@ const baseSchema = z.object({
   // Option A: password validated conditionally in superRefine (28 May 2026)
   password: z.string().max(72, "كلمة المرور طويلة جداً").optional().or(z.literal("")),
   notes: z.string().trim().max(400).optional().or(z.literal("")),
-  payment_method: z.literal("card"),
+  payment_method: z.enum(["ngenius", "card", "whatsapp", "cash"]),
   agree: z.boolean().refine((v) => v === true, { message: "يجب الموافقة على الشروط" }),
 });
 
@@ -164,6 +169,14 @@ function CheckoutPage() {
   const createCheckoutFn = useServerFn(createEdfaPayCheckout);
   const createNGeniusCheckoutFn = useServerFn(createNGeniusCheckout);
   const validateCouponFn = useServerFn(validateCoupon);
+
+  const { data: pmConfig = DEFAULT_PAYMENT_METHODS } = useQuery(paymentMethodsConfigQueryOptions());
+  const hasAnyPaymentMethod = Boolean(
+    pmConfig.ngenius?.enabled ||
+    pmConfig.edfapay?.enabled ||
+    pmConfig.whatsapp?.enabled ||
+    pmConfig.cod?.enabled
+  );
 
   // Option A — auth gate state (28 May 2026)
   const [authMode, setAuthMode] = useState<CheckoutAuthMode>("new");
@@ -333,10 +346,24 @@ function CheckoutPage() {
       customer_email: user?.email ?? "",
       password: "",
       notes: "",
-      payment_method: "card",
+      payment_method: pmConfig.ngenius?.enabled ? "ngenius" : "card",
       agree: false,
     },
   });
+
+  // مزامنة طريقة الدفع تلقائياً حسب الوسائل المفعّلة في إعدادات المتجر
+  useEffect(() => {
+    const cur = watch("payment_method");
+    if (cur === "ngenius" && !pmConfig.ngenius?.enabled) {
+      if (pmConfig.edfapay?.enabled) setValue("payment_method", "card", { shouldValidate: true });
+      else if (pmConfig.whatsapp?.enabled) setValue("payment_method", "whatsapp", { shouldValidate: true });
+      else if (pmConfig.cod?.enabled) setValue("payment_method", "cash", { shouldValidate: true });
+    } else if (cur === "card" && !pmConfig.edfapay?.enabled) {
+      if (pmConfig.ngenius?.enabled) setValue("payment_method", "ngenius", { shouldValidate: true });
+      else if (pmConfig.whatsapp?.enabled) setValue("payment_method", "whatsapp", { shouldValidate: true });
+      else if (pmConfig.cod?.enabled) setValue("payment_method", "cash", { shouldValidate: true });
+    }
+  }, [pmConfig, setValue, watch]);
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [phoneInitial, setPhoneInitial] = useState<string>("");
   // H.2.1: Track name fill source to resolve F.4 vs H.2 precedence (DB > Google metadata > user typing wins)
@@ -622,8 +649,75 @@ function CheckoutPage() {
       }
     }
 
-    // مسار الدفع الإلكتروني — Network International (N-Genius KSA)
-    if (data.payment_method === "card") {
+    if (!hasAnyPaymentMethod) {
+      setErrorMessage("طرق الدفع غير مفعّلة حالياً بالمتجر. يرجى التواصل عبر الواتساب.");
+      toast.error("طرق الدفع غير مفعّلة حالياً بالمتجر");
+      return;
+    }
+
+    if (data.payment_method === "ngenius" && !pmConfig.ngenius?.enabled) {
+      setErrorMessage("الدفع عبر Network International معطّل حالياً.");
+      toast.error("الدفع عبر Network International معطّل حالياً");
+      return;
+    }
+
+    if (data.payment_method === "card" && !pmConfig.edfapay?.enabled) {
+      setErrorMessage("الدفع عبر ادفع باي (EdfaPay) معطّل حالياً.");
+      toast.error("الدفع عبر ادفع باي معطّل حالياً");
+      return;
+    }
+
+    if (data.payment_method === "whatsapp" && !pmConfig.whatsapp?.enabled) {
+      setErrorMessage("الطلب عبر الواتساب معطّل حالياً بالمتجر.");
+      toast.error("الطلب عبر الواتساب معطّل حالياً");
+      return;
+    }
+
+    if (data.payment_method === "cash" && !pmConfig.cod?.enabled) {
+      setErrorMessage("الدفع عند الاستلام معطّل حالياً بالمتجر.");
+      toast.error("الدفع عند الاستلام معطّل حالياً");
+      return;
+    }
+
+    // 1. مسار الطلب المباشر عبر واتساب (WhatsApp)
+    if (data.payment_method === "whatsapp") {
+      const cleanPhone = (pmConfig.whatsapp?.number || "966500451602").replace(/\D/g, "");
+      let msg = `🛍️ *طلب جديد من متجر ديوان البث*\n\n`;
+      msg += `📋 *رقم الطلب:* #${orderNumber}\n`;
+      msg += `👤 *اسم العميل:* ${data.customer_name}\n`;
+      msg += `📱 *رقم الجوال:* ${data.customer_phone}\n`;
+      msg += `📦 *المنتج:* ${product.name_ar}\n`;
+      if (durationMonths) {
+        msg += `⏱️ *المدة:* ${durationMonths >= 12 ? `${Math.round(durationMonths / 12)} سنة` : `${durationMonths} شهر`}\n`;
+      }
+      msg += `🔢 *الكمية:* ${qty}\n`;
+      if (finalCouponCode && finalDiscountPercent > 0) {
+        msg += `🏷️ *كود الخصم:* ${finalCouponCode} (خصم ${finalDiscountPercent}%)\n`;
+      }
+      msg += `💰 *الإجمالي:* ${formatSAR(finalTotals.totalIncl)}\n`;
+      if (data.notes?.trim()) {
+        msg += `📝 *الملاحظات:* ${data.notes.trim()}\n`;
+      }
+      msg += `\nأرجو تأكيد واستلام طلبي، شكراً لكم!`;
+
+      const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+      if (typeof window !== "undefined") {
+        window.open(waUrl, "_blank");
+      }
+      toast.success("تم تسجيل طلبك بنجاح وجارٍ فتح محادثة الواتساب...");
+      navigate({ to: "/order-success/$id", params: { id: orderId } });
+      return;
+    }
+
+    // 2. مسار الدفع عند الاستلام (COD)
+    if (data.payment_method === "cash") {
+      toast.success("تم استلام طلبك بنجاح! سيتم التواصل معك لتأكيد الطلب.");
+      navigate({ to: "/order-success/$id", params: { id: orderId } });
+      return;
+    }
+
+    // 3. مسار الدفع الإلكتروني — Network International (N-Genius KSA)
+    if (data.payment_method === "ngenius") {
       try {
         const customerEmail = data.customer_email;
         const res = await createNGeniusCheckoutFn({
@@ -663,13 +757,66 @@ function CheckoutPage() {
           return;
         }
 
-        // توجيه المتصفح إلى صفحة الدفع المستضافة في N-Genius
         if (typeof window !== "undefined") {
           window.location.href = res.redirectUrl;
         }
         return;
       } catch (err: any) {
         console.error("N-Genius checkout failed", err);
+        const errMsg = err?.message || "تعذّر الاتصال ببوابة الدفع. يرجى المحاولة لاحقاً.";
+        setErrorMessage(errMsg);
+        toast.error("خطأ في بوابة الدفع: " + errMsg);
+        return;
+      }
+    }
+
+    // 4. مسار الدفع الإلكتروني بالبطاقات البنكية (EdfaPay)
+    if (data.payment_method === "card") {
+      try {
+        const customerEmail = data.customer_email;
+        const res = await createCheckoutFn({
+          data: {
+            orderId,
+            orderNumber,
+            userId: finalUserId,
+            amount: finalTotals.totalIncl,
+            subtotal: finalTotals.subtotalExcl,
+            discount: finalTotals.discountIncl,
+            vat: finalTotals.vat,
+            couponCode: finalCouponCode,
+            notes: data.notes || null,
+            items: [
+              {
+                product_id: product.id,
+                product_slug: product.slug,
+                product_name: product.name_ar,
+                duration_months: durationMonths,
+                unit_price: unitPrice,
+                qty,
+              },
+            ],
+            description: `${product.name_ar} × ${qty}${finalCouponCode ? ` [${finalCouponCode}]` : ""}`.slice(0, 100),
+            customerName: data.customer_name,
+            customerPhone: data.customer_phone,
+            customerCountry: detectCountry(data.customer_phone),
+            customerEmail,
+            origin: window.location.origin,
+          },
+        });
+
+        if (!res.ok) {
+          const msg = res.error || "تعذّر إنشاء جلسة الدفع عبر ادفع باي (EdfaPay). يرجى المحاولة لاحقاً.";
+          setErrorMessage(msg);
+          toast.error(msg);
+          return;
+        }
+
+        if (typeof window !== "undefined") {
+          window.location.href = res.redirectUrl;
+        }
+        return;
+      } catch (err: any) {
+        console.error("EdfaPay checkout failed", err);
         const errMsg = err?.message || "تعذّر الاتصال ببوابة الدفع. يرجى المحاولة لاحقاً.";
         setErrorMessage(errMsg);
         toast.error("خطأ في بوابة الدفع: " + errMsg);
@@ -952,47 +1099,195 @@ function CheckoutPage() {
                   <Lock className="h-4 w-4 text-accent" /> طريقة الدفع
                 </h2>
                 <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-black text-success">
-                  <ShieldCheck className="h-3 w-3" /> اتصال آمن
+                  <ShieldCheck className="h-3 w-3" /> اتصال مشفّر وآمن
                 </span>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setValue("payment_method", "card")}
-                className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${paymentMethod === "card"
-                    ? "border-accent bg-accent/5 shadow-[0_0_0_3px_rgba(212,175,55,0.08)]"
-                    : "border-border bg-card hover:border-accent/40"
-                  }`}
-              >
-
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 text-accent ring-1 ring-accent/30">
-                    <CreditCard className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-black">بطاقة بنكية أو محفظة رقمية</span>
-                      <span className="rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-black text-success">
-                        مُوصى
-                      </span>
-                    </div>
-                    <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                      ادفع بأمان عبر بوابة دفع معتمدة — تحقّق 3D Secure
+              <div className="space-y-3">
+                {!hasAnyPaymentMethod && (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <AlertCircle className="h-6 w-6 text-amber-500" />
+                      <p className="text-sm font-black text-foreground">
+                        طرق الدفع الإلكتروني معطّلة حالياً بالمتجر
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        يرجى التواصل مع الدعم الفني عبر الواتساب لإتمام طلبك أو تفعيل إحدى وسائل الدفع من لوحة التحكم.
+                      </p>
                     </div>
                   </div>
-                </div>
+                )}
 
-                {/* شريط الشعارات — مرتّب على كل المقاسات */}
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 border-t border-border/60 pt-3 sm:justify-end sm:gap-2.5">
-                  <PayLogo src="/payment-logos/mada.svg" alt="مدى" />
-                  <PayLogo src="/payment-logos/visa.svg" alt="Visa" />
-                  <PayLogo src="/payment-logos/mastercard.svg" alt="Mastercard" />
-                  <PayLogo src="/payment-logos/apple-pay.svg" alt="Apple Pay" />
-                </div>
-              </button>
+                {/* 0. بطاقة بنكية ومدى — Network International (N-Genius KSA) */}
+                {pmConfig.ngenius?.enabled && (
+                  <button
+                    type="button"
+                    onClick={() => setValue("payment_method", "ngenius", { shouldValidate: true, shouldDirty: true })}
+                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${
+                      paymentMethod === "ngenius"
+                        ? "border-accent bg-accent/10 shadow-[0_0_0_3px_rgba(212,175,55,0.15)] ring-1 ring-accent"
+                        : "border-border bg-card hover:border-accent/40"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
+                        paymentMethod === "ngenius"
+                          ? "border-accent bg-accent text-black"
+                          : "border-muted-foreground/40 bg-transparent"
+                      }`}>
+                        {paymentMethod === "ngenius" && <div className="h-2 w-2 rounded-full bg-background" />}
+                      </div>
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 text-purple-400 ring-1 ring-purple-500/30">
+                        <CreditCard className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-black">الدفع ببطاقة البنكية ومدى (N-Genius)</span>
+                          {pmConfig.ngenius?.testMode && (
+                            <span className="rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 text-[10px] font-black">
+                              وضع التجربة (Sandbox)
+                            </span>
+                          )}
+                          <span className="rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-black text-success">
+                            مدى / فيزا / ماستركارد
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          ادفع بكل أمان وسرعة — تحقّق 3D Secure
+                        </div>
+                      </div>
+                    </div>
 
-              {/* الدفع بالبطاقة متاح عالمياً — تنبيه FX للأرقام الدولية */}
-              {phoneRaw && phoneValid && !isSaudi && (
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2 border-t border-border/60 pt-3 sm:justify-end sm:gap-2.5">
+                      <PayLogo src="/payment-logos/mada.svg" alt="مدى" />
+                      <PayLogo src="/payment-logos/visa.svg" alt="Visa" />
+                      <PayLogo src="/payment-logos/mastercard.svg" alt="Mastercard" />
+                      <PayLogo src="/payment-logos/apple-pay.svg" alt="Apple Pay" />
+                    </div>
+                  </button>
+                )}
+
+                {/* 1. بطاقة بنكية — ادفع باي (EdfaPay) */}
+                {pmConfig.edfapay?.enabled && (
+                  <button
+                    type="button"
+                    onClick={() => setValue("payment_method", "card", { shouldValidate: true, shouldDirty: true })}
+                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${
+                      paymentMethod === "card"
+                        ? "border-accent bg-accent/10 shadow-[0_0_0_3px_rgba(212,175,55,0.15)] ring-1 ring-accent"
+                        : "border-border bg-card hover:border-accent/40"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
+                        paymentMethod === "card"
+                          ? "border-accent bg-accent text-black"
+                          : "border-muted-foreground/40 bg-transparent"
+                      }`}>
+                        {paymentMethod === "card" && <div className="h-2 w-2 rounded-full bg-background" />}
+                      </div>
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-500/5 text-blue-400 ring-1 ring-blue-500/30">
+                        <CreditCard className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-black">بطاقة بنكية أو محفظة رقمية (EdfaPay)</span>
+                          <span className="rounded-full bg-muted/40 px-2 py-0.5 text-[10px] font-black text-muted-foreground">
+                            بوابة EdfaPay
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          ادفع بأمان عبر بوابة EdfaPay المعتمدة — تحقّق 3D Secure
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2 border-t border-border/60 pt-3 sm:justify-end sm:gap-2.5">
+                      <PayLogo src="/payment-logos/mada.svg" alt="مدى" />
+                      <PayLogo src="/payment-logos/visa.svg" alt="Visa" />
+                      <PayLogo src="/payment-logos/mastercard.svg" alt="Mastercard" />
+                      <PayLogo src="/payment-logos/apple-pay.svg" alt="Apple Pay" />
+                    </div>
+                  </button>
+                )}
+
+                {/* 2. الطلب المباشر عبر واتساب */}
+                {pmConfig.whatsapp?.enabled && (
+                  <button
+                    type="button"
+                    onClick={() => setValue("payment_method", "whatsapp", { shouldValidate: true, shouldDirty: true })}
+                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${
+                      paymentMethod === "whatsapp"
+                        ? "border-emerald-500 bg-emerald-500/10 shadow-[0_0_0_3px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500"
+                        : "border-border bg-card hover:border-emerald-500/40"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
+                        paymentMethod === "whatsapp"
+                          ? "border-emerald-500 bg-emerald-500 text-black"
+                          : "border-muted-foreground/40 bg-transparent"
+                      }`}>
+                        {paymentMethod === "whatsapp" && <div className="h-2 w-2 rounded-full bg-background" />}
+                      </div>
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/30">
+                        <MessageSquare className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-black">الطلب وإتمام الدفع عبر واتساب</span>
+                          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-black text-emerald-400">
+                            مباشر وسريع
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {pmConfig.whatsapp?.customNote || "إرسال تفاصيل طلبك مباشرة إلى خدمة العملاء عبر واتساب لتأكيده وإرسال بيانات الاشتراك فوراً"}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                {/* 3. الدفع عند الاستلام */}
+                {pmConfig.cod?.enabled && (
+                  <button
+                    type="button"
+                    onClick={() => setValue("payment_method", "cash", { shouldValidate: true, shouldDirty: true })}
+                    className={`group relative block w-full overflow-hidden rounded-xl border-2 p-4 text-right transition ${
+                      paymentMethod === "cash"
+                        ? "border-amber-500 bg-amber-500/10 shadow-[0_0_0_3px_rgba(245,158,11,0.15)] ring-1 ring-amber-500"
+                        : "border-border bg-card hover:border-amber-500/40"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
+                        paymentMethod === "cash"
+                          ? "border-amber-500 bg-amber-500 text-black"
+                          : "border-muted-foreground/40 bg-transparent"
+                      }`}>
+                        {paymentMethod === "cash" && <div className="h-2 w-2 rounded-full bg-background" />}
+                      </div>
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-500 ring-1 ring-amber-500/30">
+                        <Banknote className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-black">الدفع عند الاستلام</span>
+                          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-black text-amber-400">
+                            بدون أي رسوم إضافية
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {pmConfig.cod?.instructions || "الدفع نقداً عند استلام طلبك وبدون أي رسوم إضافية."}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                )}
+              </div>
+
+              {/* تنبيه FX للأرقام الدولية */}
+              {(paymentMethod === "card" || paymentMethod === "ngenius") && phoneRaw && phoneValid && !isSaudi && (
                 <div className="mt-4 rounded-xl border border-accent/40 bg-accent/5 p-4">
                   <div className="flex items-start gap-3">
                     <CreditCard className="mt-0.5 h-5 w-5 shrink-0 text-accent" />

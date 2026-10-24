@@ -45,7 +45,7 @@ const CreateCheckoutInput = z.object({
 
 
 export const createEdfaPayCheckout = createServerFn({ method: "POST" })
-  .inputValidator((input) => CreateCheckoutInput.parse(input))
+  .validator((input: unknown) => CreateCheckoutInput.parse(input))
   .handler(async ({ data }) => {
     // Capture customer IP from request headers (for EdfaPay fraud engine)
     let customerIp = "0.0.0.0";
