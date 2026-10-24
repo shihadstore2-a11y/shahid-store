@@ -37,6 +37,15 @@ dist-ssr
 package-lock.json
 
 # Private & Sensitive Files
+.env
+.env.*
+.env.local
+.dev.vars
+.dev.vars.*
+*.pem
+*.key
 CLOUDFLARE_VARS_PRIVATE.txt
+*secrets*
+*credentials*
 backup/
 scripts/
