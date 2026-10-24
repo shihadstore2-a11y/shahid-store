@@ -23,7 +23,7 @@ const InputSchema = z.object({
 });
 
 export const fulfillOrder = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => InputSchema.parse(input))
+  .validator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
     // 1. تنفيذ دالة التسليم الشاملة في قاعدة البيانات
     try {

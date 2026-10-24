@@ -1,4 +1,4 @@
-# EdfaPay Integration — Shahid Store
+# EdfaPay Integration — ديوان البث
 
 > آخر تحديث: 21 مايو 2026 — Phase E closed
 

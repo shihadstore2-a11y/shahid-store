@@ -19,7 +19,7 @@ const OrderIdInput = z.object({ orderId: z.string().uuid() });
  * anon لا تسمح SELECT للعموم).
  */
 export const getOrderRecovery = createServerFn({ method: "POST" })
-  .inputValidator((input) => OrderIdInput.parse(input))
+  .validator((input) => OrderIdInput.parse(input))
   .handler(async ({ data }) => {
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
@@ -65,7 +65,7 @@ export const getOrderRecovery = createServerFn({ method: "POST" })
  * (حماية: لا نُلغي طلباً مدفوعاً عن طريق الخطأ).
  */
 export const cancelOrder = createServerFn({ method: "POST" })
-  .inputValidator((input) => OrderIdInput.parse(input))
+  .validator((input) => OrderIdInput.parse(input))
   .handler(async ({ data }) => {
     // 1. Safety: don't cancel a successfully paid order
     const { data: latestPayment } = await supabaseAdmin

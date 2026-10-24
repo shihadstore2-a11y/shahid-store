@@ -1,5 +1,5 @@
 -- ===================================================================
--- 🛒 Shahid Store Dedicated Database Setup (مشروع متجر شاهد المستقل)
+-- 🛒 ديوان البث Dedicated Database Setup (مشروع ديوان البث المستقل)
 -- Target Project: https://umozikpkfmjkcglizysd.supabase.co
 -- Generated automatically: Isolated schema, performance-optimized, pre-seeded
 -- ===================================================================
@@ -315,7 +315,7 @@ VALUES (
   '7a3c8e14-6b92-4f8e-9d21-4c5e7b8a9f01',
   'shahid-store',
   'ديوان البث',
-  'Shahid Store',
+  'ديوان البث',
   'shahid-store.digitaneo.workers.dev',
   'https://umozikpkfmjkcglizysd.supabase.co/storage/v1/object/public/products/logo.webp',
   true

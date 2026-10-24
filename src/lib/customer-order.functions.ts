@@ -120,7 +120,7 @@ function projectAndMask(row: Record<string, unknown>): CustomerOrderView {
 
 // === Guest view — UUID-gated ===
 export const getCustomerOrderView = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => InputSchema.parse(input))
+  .validator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<CustomerOrderResult> => {
     let row: Record<string, unknown> | null = null;
 
@@ -156,7 +156,7 @@ export const getCustomerOrderView = createServerFn({ method: "POST" })
 
 // === Authenticated view — UUID match ===
 export const getMyOrderView = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => InputSchema.parse(input))
+  .validator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<CustomerOrderView> => {
     const { data: row, error } = await supabaseAdmin
       .from("orders")

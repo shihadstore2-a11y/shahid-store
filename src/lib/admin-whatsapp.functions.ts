@@ -19,7 +19,7 @@ const InputSchema = z.object({
 
 export const logWhatsappSent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => InputSchema.parse(input))
+  .validator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
 

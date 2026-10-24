@@ -27,8 +27,8 @@ INSERT INTO public.stores (id, slug, name_ar, name_en, domain, is_active)
 VALUES (
   '7a3c8e14-6b92-4f8e-9d21-4c5e7b8a9f01',
   'shahid',
-  'متجر شاهد الرسمي',
-  'Shahid Store Official',
+  'ديوان البث الرسمي',
+  'ديوان البث Official',
   'ksa-tv.com',
   true
 )

@@ -20,7 +20,7 @@ const CreateAdminInput = z.object({
 });
 
 export const createAdminUserServerFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => CreateAdminInput.parse(input))
+  .validator((input: unknown) => CreateAdminInput.parse(input))
   .handler(async ({ data }) => {
     // 1. التحقق من هوية وصلاحية المشرف الذي يقوم بإنشاء الحساب
     let isAuthorized = false;
@@ -169,7 +169,7 @@ export const createAdminUserServerFn = createServerFn({ method: "POST" })
   });
 
 export const adminResetPasswordServerFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         email: z.string().email(),
@@ -278,7 +278,7 @@ export const adminResetPasswordServerFn = createServerFn({ method: "POST" })
   });
 
 export const deleteAdminUserServerFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         id: z.string(),

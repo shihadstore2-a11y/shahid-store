@@ -17,13 +17,13 @@
 
 | الحقل | القيمة الحالية | القيمة الجديدة |
 |---|---|---|
-| Sender Name | `shahd` | `Shahid Store` |
+| Sender Name | `shahd` | `ديوان البث` |
 | Sender Email | `no-reply@auth.lovable.cloud` | اتركه كما هو (سيتغيّر في Phase G مع custom domain) |
 
-> **لماذا الإنجليزية؟** اسم المُرسِل يظهر في header الـ inbox عبر كل email clients (Gmail, Outlook, Apple Mail, Yahoo). النص الإنجليزي `Shahid Store` مضمون الظهور بدون مشاكل encoding على كل العملاء. أمّا محتوى الرسالة فيكون عربي RTL كامل (Step B).
+> **لماذا الإنجليزية؟** اسم المُرسِل يظهر في header الـ inbox عبر كل email clients (Gmail, Outlook, Apple Mail, Yahoo). النص الإنجليزي `ديوان البث` مضمون الظهور بدون مشاكل encoding على كل العملاء. أمّا محتوى الرسالة فيكون عربي RTL كامل (Step B).
 
 4. احفظ التغييرات (**Save**).
-5. اختبر بإنشاء حساب جديد — يجب أن يظهر المُرسِل: **Shahid Store \<no-reply@auth.lovable.cloud\>**.
+5. اختبر بإنشاء حساب جديد — يجب أن يظهر المُرسِل: **ديوان البث \<no-reply@auth.lovable.cloud\>**.
 
 ---
 
@@ -128,7 +128,7 @@ Lovable Cloud Backend → **Authentication → Email Templates**
 1. أنشئ حساب اختبار جديد (مثلاً `test-h16@mailinator.com`).
 2. افتح inbox على https://www.mailinator.com/v4/public/inboxes.jsp?to=test-h16
 3. تحقّق من:
-   - ✅ Sender Name = **Shahid Store** (لا "shahd")
+   - ✅ Sender Name = **ديوان البث** (لا "shahd")
    - ✅ Subject = **تأكيد إنشاء حسابك في ديوان البث**
    - ✅ Body = RTL عربي بالكامل
    - ✅ ألوان ذهبية (#D4AF37) + خلفية داكنة
@@ -139,6 +139,6 @@ Lovable Cloud Backend → **Authentication → Email Templates**
 
 ## ملاحظات
 
-- **Phase G (post-launch):** نقل المُرسِل لـ custom domain `notify.https://ksa-tv.com/` للحصول على `Shahid Store <no-reply@ksa-tv.com>` بدلاً من `@auth.lovable.cloud`.
+- **Phase G (post-launch):** نقل المُرسِل لـ custom domain `notify.https://ksa-tv.com/` للحصول على `ديوان البث <no-reply@ksa-tv.com>` بدلاً من `@auth.lovable.cloud`.
 - **Tajawal font:** قد لا تكون مُحمَّلة في كل email clients. الـ `font-family` يتضمّن `Arial` كـ fallback آمن للعربية.
 - لا تُعدّل auth flags الأخرى (auto_confirm_email, password_min_length, HIBP) — هذه مُغلقة في Phase F.0.

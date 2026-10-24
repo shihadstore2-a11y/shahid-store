@@ -17,7 +17,7 @@
 ## Phase 2 — Email to EdfaPay
 
 **To**: support@edfapay.com (CC: Ashraf Emad)
-**Subject**: Request to Activate Live Mode — Shahid Store (Merchant ID: ___)
+**Subject**: Request to Activate Live Mode — ديوان البث (Merchant ID: ___)
 
 **Body** (template):
 ```
@@ -38,7 +38,7 @@ We confirm:
 - Production-ready error handling
 
 Thank you,
-Ahmed — Shahid Store
+Ahmed — ديوان البث
 ```
 
 ## Phase 3 — Switch to Live (بعد تأكيد EdfaPay)

@@ -157,7 +157,7 @@ const VerifyPaymentInput = z.object({
 });
 
 export const verifyAndConfirmPayment = createServerFn({ method: "POST" })
-  .inputValidator((input) => VerifyPaymentInput.parse(input))
+  .validator((input) => VerifyPaymentInput.parse(input))
   .handler(async ({ data }) => {
     const { orderId } = data;
 

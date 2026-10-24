@@ -15,7 +15,7 @@ const Input = z.object({
 });
 
 export const validateCoupon = createServerFn({ method: "POST" })
-  .inputValidator((input) => Input.parse(input))
+  .validator((input) => Input.parse(input))
   .handler(async ({ data }) => {
     const cleanCode = data.code.trim();
 

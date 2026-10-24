@@ -15,7 +15,7 @@ export const DEFAULT_SHAHID_STORE: StoreInfo = {
   id: "7a3c8e14-6b92-4f8e-9d21-4c5e7b8a9f01",
   slug: "shahid-store",
   name_ar: "ديوان البث",
-  name_en: "Shahid Store",
+  name_en: "ديوان البث",
   domain: "shahid-store.digitaneo.workers.dev",
   logo_url: "/logo.webp",
   is_active: true,

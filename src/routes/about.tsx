@@ -16,7 +16,7 @@ import { SiteLayout } from "@/components/SiteLayout";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "من نحن — ديوان البث | Shahid Store" },
+      { title: "من نحن — ديوان البث | ديوان البث" },
       {
         name: "description",
         content:
@@ -47,7 +47,7 @@ function AboutPage() {
             <Sparkles className="h-3 w-3" /> من نحن
           </span>
           <h1 className="mt-4 text-3xl font-black sm:text-5xl">
-            ديوان البث <span className="text-accent">|</span> Shahid Store
+            ديوان البث <span className="text-accent">|</span> ديوان البث
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             منصة سعودية متخصصة في توفير الاشتراكات الرقمية وخدمات البث والترفيه الإلكتروني، تعمل داخل المملكة العربية السعودية وفق نشاط تجاري رسمي، وتهدف إلى تقديم تجربة رقمية موثوقة تجمع بين الجودة، الاستقرار، والأسعار المناسبة.
@@ -173,7 +173,7 @@ function AboutPage() {
 
         {/* الحقوق */}
         <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          © جميع الحقوق محفوظة 2026 — Shahid Store | ديوان البث
+          © جميع الحقوق محفوظة 2026 — ديوان البث | ديوان البث
         </div>
       </section>
     </SiteLayout>
