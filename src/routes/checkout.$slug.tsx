@@ -12,6 +12,7 @@ import {
   Check,
   ChevronLeft,
   CreditCard,
+  Flame,
   Loader2,
   Lock,
   Mail,
@@ -43,7 +44,8 @@ import {
   VAT_RATE,
 } from "@/lib/order";
 import { validateCoupon } from "@/lib/coupons.functions";
-import { formatSAR } from "@/lib/format";
+import { formatNumber, formatSAR } from "@/lib/format";
+import { getProductSalesCount } from "@/lib/product-sales";
 import { getProductImage } from "@/lib/productVisuals";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -862,6 +864,10 @@ function CheckoutPage() {
                     <h2 className="line-clamp-2 text-base font-black text-card-foreground md:text-lg">
                       {product.name_ar}
                     </h2>
+                    <div className="mt-1 flex items-center gap-1.5 text-xs font-bold text-accent">
+                      <Flame className="h-3.5 w-3.5 shrink-0 text-accent animate-pulse" />
+                      <span>+{formatNumber(getProductSalesCount(product))} مشتري</span>
+                    </div>
                     {product.duration_months && (
                       <span className="mt-1.5 inline-flex items-center rounded-md border border-accent/30 bg-accent/5 px-2 py-0.5 text-[11px] font-bold text-accent">
                         {durationLabel(product.duration_months, product.slug)}

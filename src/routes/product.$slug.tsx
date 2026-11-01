@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   CheckCircle2,
   ChevronLeft,
+  Flame,
   Headphones,
   ShieldCheck,
   ShoppingBag,
@@ -16,6 +17,7 @@ import { fetchProductBySlug, fetchRelatedProducts } from "@/lib/queries";
 import { formatSAR, formatNumber } from "@/lib/format";
 import { isSeasonActive } from "@/lib/season";
 import { getProductImage, getProductOverlay, isAnnualProduct } from "@/lib/productVisuals";
+import { getProductSalesCount } from "@/lib/product-sales";
 import { StockStatusBadge } from "@/components/products/StockStatusBadge";
 import type { Product, Category } from "@/lib/types";
 
@@ -253,17 +255,27 @@ function ProductDetailPage() {
 
           {/* Info */}
           <div className="flex flex-col">
-            <div className="flex items-center gap-2 text-gold">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className="h-4 w-4"
-                  fill={i < Math.round(p.rating) ? "currentColor" : "none"}
-                  stroke="currentColor"
-                />
-              ))}
-              <span className="text-sm text-muted-foreground">
-                {p.rating} • {formatNumber(p.sales_count)} عملية بيع
+            <div className="flex flex-wrap items-center gap-2.5 text-gold">
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className="h-4 w-4"
+                    fill={i < Math.round(p.rating) ? "currentColor" : "none"}
+                    stroke="currentColor"
+                  />
+                ))}
+              </div>
+              <span className="text-xs md:text-sm font-bold text-muted-foreground">
+                {p.rating}
+              </span>
+              <span className="text-border">•</span>
+              <div className="inline-flex items-center gap-1 rounded-full border border-accent/40 bg-accent/10 px-2.5 py-0.5 text-xs font-black text-accent shadow-sm">
+                <Flame className="h-3.5 w-3.5 shrink-0 text-accent animate-pulse" />
+                <span>+{formatNumber(getProductSalesCount(p))} مشتري</span>
+              </div>
+              <span className="hidden sm:inline text-xs text-muted-foreground">
+                ({formatNumber(getProductSalesCount(p))} عملية شراء)
               </span>
             </div>
 

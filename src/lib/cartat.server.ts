@@ -35,27 +35,9 @@ export function getCartatToken(): string {
  */
 export async function getAdminPhonesAsync(): Promise<string[]> {
   try {
-    // 1. القراءة من إعدادات المتجر في قاعدة البيانات أولاً (يمكن تعديلها من لوحة التحكم)
-    const { data: storeRow } = await supabaseAdmin
-      .from("store_settings")
-      .select("payment_settings, whatsapp_number")
-      .eq("store_id", STORE_ID)
-      .maybeSingle();
-
-    const dbAdminPhones = (storeRow as any)?.payment_settings?.admin_phones;
-    if (dbAdminPhones && typeof dbAdminPhones === "string" && dbAdminPhones.trim()) {
-      const parsed = dbAdminPhones
-        .split(",")
-        .map((p: string) => normalizePhoneNumber(p.trim()))
-        .filter((p: string) => p.length >= 8);
-      if (parsed.length > 0) return parsed;
-    }
-
-    // 2. فحص بنظام key-value القديم كاحتياط
     const { data: kvData } = await supabaseAdmin
       .from("store_settings")
       .select("value")
-      .eq("store_id", STORE_ID)
       .eq("key", "cartat_admin_phones")
       .maybeSingle();
 

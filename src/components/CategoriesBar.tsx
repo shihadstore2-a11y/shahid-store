@@ -21,9 +21,15 @@ export function CategoriesBar() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const categories = dbCategories && dbCategories.length > 0
+  const rawCategories = dbCategories && dbCategories.length > 0
     ? dbCategories.map((c) => ({ slug: c.slug, label: c.name_ar }))
     : defaultCategories;
+
+  const categories = rawCategories.filter(
+    (c) =>
+      !c.slug.toLowerCase().includes("vulture") &&
+      !c.label.toLowerCase().includes("فولتشر")
+  );
 
   return (
     <div className="border-b border-border/60 bg-background/85 backdrop-blur-md">

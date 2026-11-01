@@ -43,11 +43,16 @@ export async function getMoatmtConfig(): Promise<{
     try {
       const { data: storeRow } = await supabaseAdmin
         .from("store_settings")
-        .select("payment_settings")
-        .eq("store_id", STORE_ID)
+        .select("value")
+        .eq("key", "payment_settings")
         .maybeSingle();
 
-      const ps = (storeRow as any)?.payment_settings;
+      let ps: any = null;
+      if (storeRow?.value) {
+        try {
+          ps = JSON.parse(storeRow.value);
+        } catch {}
+      }
       if (ps) {
         if (!apiKey && ps.moatmt_api_key) apiKey = String(ps.moatmt_api_key).trim();
         if (!instanceId && ps.moatmt_instance_id) instanceId = String(ps.moatmt_instance_id).trim();
@@ -66,30 +71,28 @@ export async function getMoatmtConfig(): Promise<{
  */
 export async function getAdminPhonesAsync(): Promise<string[]> {
   try {
-    const { data: storeRow } = await supabaseAdmin
-      .from("store_settings")
-      .select("payment_settings, whatsapp_number")
-      .eq("store_id", STORE_ID)
-      .maybeSingle();
-
-    const dbAdminPhones = (storeRow as any)?.payment_settings?.admin_phones;
-    if (dbAdminPhones && typeof dbAdminPhones === "string" && dbAdminPhones.trim()) {
-      const parsed = dbAdminPhones
-        .split(",")
-        .map((p: string) => normalizePhoneNumber(p.trim()))
-        .filter((p: string) => p.length >= 8);
-      if (parsed.length > 0) return parsed;
-    }
-
     const { data: kvData } = await supabaseAdmin
       .from("store_settings")
       .select("value")
-      .eq("store_id", STORE_ID)
       .eq("key", "moatmt_admin_phones")
       .maybeSingle();
 
     if (kvData?.value && typeof kvData.value === "string") {
       const dbPhones = kvData.value
+        .split(",")
+        .map((p) => normalizePhoneNumber(p.trim()))
+        .filter((p) => p.length >= 8);
+      if (dbPhones.length > 0) return dbPhones;
+    }
+
+    const { data: oldKvData } = await supabaseAdmin
+      .from("store_settings")
+      .select("value")
+      .eq("key", "cartat_admin_phones")
+      .maybeSingle();
+
+    if (oldKvData?.value && typeof oldKvData.value === "string") {
+      const dbPhones = oldKvData.value
         .split(",")
         .map((p) => normalizePhoneNumber(p.trim()))
         .filter((p) => p.length >= 8);
@@ -375,7 +378,6 @@ export async function getAbandonedCartDelayMinutes(): Promise<number> {
     const { data: rows } = await supabaseAdmin
       .from("store_settings")
       .select("key, value")
-      .eq("store_id", STORE_ID)
       .in("key", [
         "moatmt_abandoned_delay_hours",
         "moatmt_abandoned_delay_minutes",
@@ -410,7 +412,6 @@ export async function getAbandonedCustomImageUrl(): Promise<string> {
     const { data } = await supabaseAdmin
       .from("store_settings")
       .select("value")
-      .eq("store_id", STORE_ID)
       .in("key", ["moatmt_abandoned_image_url", "cartat_abandoned_image_url"])
       .maybeSingle();
 
@@ -433,7 +434,6 @@ export async function getAbandonedDiscountConfig(): Promise<{ code: string; perc
     const { data: rows } = await supabaseAdmin
       .from("store_settings")
       .select("key, value")
-      .eq("store_id", STORE_ID)
       .in("key", ["moatmt_discount_code", "moatmt_discount_percent"]);
 
     const map = new Map((rows || []).map((r) => [r.key, r.value]));
@@ -457,7 +457,6 @@ export async function getReviewRequestDelayMinutes(): Promise<number> {
     const { data: rows } = await supabaseAdmin
       .from("store_settings")
       .select("key, value")
-      .eq("store_id", STORE_ID)
       .in("key", [
         "moatmt_review_delay_hours",
         "moatmt_review_delay_minutes",
@@ -490,7 +489,6 @@ export async function getReviewCustomImageUrl(): Promise<string | undefined> {
     const { data } = await supabaseAdmin
       .from("store_settings")
       .select("value")
-      .eq("store_id", STORE_ID)
       .in("key", ["moatmt_review_image_url", "cartat_review_image_url"])
       .maybeSingle();
 

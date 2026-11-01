@@ -195,7 +195,6 @@ export async function isNGeniusTestMode(): Promise<boolean> {
     const { data } = await supabaseAdmin
       .from("store_settings")
       .select("value")
-      .eq("store_id", STORE_ID)
       .eq("key", "payment_settings")
       .maybeSingle();
 

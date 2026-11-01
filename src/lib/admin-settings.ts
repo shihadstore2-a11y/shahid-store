@@ -73,11 +73,7 @@ const KEY_MAP: Record<keyof StoreSettings, string> = {
 };
 
 export async function fetchStoreSettings(): Promise<StoreSettings> {
-  let query = supabase.from("store_settings").select("key, value, store_id");
-  if (STORE_ID) {
-    query = query.eq("store_id", STORE_ID);
-  }
-  const { data, error } = await query;
+  const { data, error } = await supabase.from("store_settings").select("key, value");
   if (error) throw error;
   const map: Record<string, string | null> = {};
   (data ?? []).forEach((r) => {
@@ -125,14 +121,13 @@ export const storeSettingsAdminQueryOptions = () =>
 
 export async function saveStoreSettings(settings: StoreSettings): Promise<void> {
   const rows = (Object.keys(KEY_MAP) as Array<keyof StoreSettings>).map((k) => ({
-    store_id: STORE_ID,
     key: KEY_MAP[k],
     value: settings[k] != null ? String(settings[k]).trim() : "",
     updated_at: new Date().toISOString(),
   }));
   const { error } = await supabase
     .from("store_settings")
-    .upsert(rows, { onConflict: "store_id,key" });
+    .upsert(rows, { onConflict: "key" });
   if (error) throw new Error(error.message);
 }
 
@@ -240,12 +235,11 @@ export const paymentMethodsConfigQueryOptions = paymentMethodsAdminQueryOptions;
 export async function savePaymentMethodsConfig(config: PaymentMethodsConfig): Promise<void> {
   const { error } = await supabase.from("store_settings").upsert(
     {
-      store_id: STORE_ID,
       key: PAYMENT_CONFIG_KEY,
       value: JSON.stringify(config),
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "store_id,key" }
+    { onConflict: "key" }
   );
   if (error) throw new Error(error.message);
 }
@@ -262,8 +256,8 @@ export async function changePassword(newPassword: string): Promise<void> {
 
 export async function fetchSystemCounts() {
   const [products, orders, customers] = await Promise.all([
-    supabase.from("products").select("id", { count: "exact", head: true }).eq("store_id", STORE_ID).eq("is_active", true),
-    supabase.from("orders").select("id", { count: "exact", head: true }).eq("store_id", STORE_ID),
+    supabase.from("products").select("id", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("orders").select("id", { count: "exact", head: true }),
     supabase.from("profiles").select("id", { count: "exact", head: true }),
   ]);
   return {

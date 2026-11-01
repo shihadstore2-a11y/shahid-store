@@ -4,6 +4,7 @@ import type { Product } from "@/lib/types";
 import { formatSAR, formatNumber } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { getProductImage, getProductOverlay } from "@/lib/productVisuals";
+import { getProductSalesCount } from "@/lib/product-sales";
 
 type Props = { product: Product; categorySlug?: string };
 
@@ -106,12 +107,15 @@ export function ProductCard({ product, categorySlug }: Props) {
           </h3>
         </Link>
 
-        {product.sales_count > 0 && (
-          <div className="flex items-center gap-1.5 text-[13px] font-bold text-accent/90 md:text-sm">
-            <Flame className="h-4 w-4 shrink-0" />
-            <span className="tabular-nums">{formatNumber(product.sales_count)} مشتري</span>
-          </div>
-        )}
+        {(() => {
+          const salesCount = getProductSalesCount(product);
+          return (
+            <div className="flex items-center gap-1.5 text-[12px] font-bold text-accent/90 md:text-[13px]">
+              <Flame className="h-3.5 w-3.5 shrink-0 text-accent animate-pulse" />
+              <span className="tabular-nums">+{formatNumber(salesCount)} مشتري</span>
+            </div>
+          );
+        })()}
 
         <div className="flex items-baseline gap-2">
           <span className="whitespace-nowrap text-xl font-black leading-none tabular-nums text-accent md:text-2xl">
