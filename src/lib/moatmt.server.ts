@@ -368,24 +368,139 @@ export async function sendOrderReviewRequest(params: {
    ========================================================================= */
 
 /**
- * جلب وقت الانتظار للسلات المتروكة بالدقائق (افتراضياً 15 دقيقة)
+ * جلب وقت الانتظار للسلات المتروكة بالدقائق (يقرأ عدد الساعات من الإعدادات أولاً)
  */
 export async function getAbandonedCartDelayMinutes(): Promise<number> {
+  try {
+    const { data: rows } = await supabaseAdmin
+      .from("store_settings")
+      .select("key, value")
+      .eq("store_id", STORE_ID)
+      .in("key", [
+        "moatmt_abandoned_delay_hours",
+        "moatmt_abandoned_delay_minutes",
+        "cartat_abandoned_delay_minutes",
+      ]);
+
+    const map = new Map((rows || []).map((r) => [r.key, r.value]));
+
+    // 1. الأولوية لحقل الساعات المحدد من لوحة التحكم
+    const hoursVal = map.get("moatmt_abandoned_delay_hours");
+    if (hoursVal && !isNaN(Number(hoursVal)) && Number(hoursVal) > 0) {
+      return Math.round(Number(hoursVal) * 60);
+    }
+
+    // 2. التحقق من حقل الدقائق كـ Fallback
+    const minVal =
+      map.get("moatmt_abandoned_delay_minutes") || map.get("cartat_abandoned_delay_minutes");
+    if (minVal && !isNaN(Number(minVal)) && Number(minVal) > 0) {
+      return Number(minVal);
+    }
+  } catch (e) {
+    console.warn("[getAbandonedCartDelayMinutes] db read error:", e);
+  }
+  return 60; // افتراضياً ساعة واحدة (60 دقيقة)
+}
+
+/**
+ * جلب رابط الصورة المخصصة لرسالة السلة المتروكة
+ */
+export async function getAbandonedCustomImageUrl(): Promise<string> {
   try {
     const { data } = await supabaseAdmin
       .from("store_settings")
       .select("value")
       .eq("store_id", STORE_ID)
-      .eq("key", "moatmt_abandoned_delay_minutes")
+      .in("key", ["moatmt_abandoned_image_url", "cartat_abandoned_image_url"])
       .maybeSingle();
 
-    if (data?.value && !isNaN(Number(data.value))) {
-      return Number(data.value);
+    if (data?.value && typeof data.value === "string" && data.value.startsWith("http")) {
+      return data.value.trim();
     }
   } catch (e) {
-    console.warn("[getAbandonedCartDelayMinutes] db read error:", e);
+    console.warn("[getAbandonedCustomImageUrl] db read error:", e);
   }
-  return 15;
+  return "https://ksa-tv.com/images/abandoned-orders.png";
+}
+
+/**
+ * جلب كود الخصم ونسبته المخصصة للسلات المتروكة من إعدادات المتجر
+ */
+export async function getAbandonedDiscountConfig(): Promise<{ code: string; percent: number }> {
+  let code = "DIWAN10";
+  let percent = 10;
+  try {
+    const { data: rows } = await supabaseAdmin
+      .from("store_settings")
+      .select("key, value")
+      .eq("store_id", STORE_ID)
+      .in("key", ["moatmt_discount_code", "moatmt_discount_percent"]);
+
+    const map = new Map((rows || []).map((r) => [r.key, r.value]));
+    if (map.get("moatmt_discount_code")) {
+      code = map.get("moatmt_discount_code")!.trim().toUpperCase();
+    }
+    if (map.get("moatmt_discount_percent") && !isNaN(Number(map.get("moatmt_discount_percent")))) {
+      percent = Number(map.get("moatmt_discount_percent"));
+    }
+  } catch (e) {
+    console.warn("[getAbandonedDiscountConfig] db read error:", e);
+  }
+  return { code, percent };
+}
+
+/**
+ * جلب وقت الانتظار لطلب التقييم بالدقائق (يقرأ عدد الساعات من الإعدادات أولاً)
+ */
+export async function getReviewRequestDelayMinutes(): Promise<number> {
+  try {
+    const { data: rows } = await supabaseAdmin
+      .from("store_settings")
+      .select("key, value")
+      .eq("store_id", STORE_ID)
+      .in("key", [
+        "moatmt_review_delay_hours",
+        "moatmt_review_delay_minutes",
+        "cartat_review_delay_minutes",
+      ]);
+
+    const map = new Map((rows || []).map((r) => [r.key, r.value]));
+
+    const hoursVal = map.get("moatmt_review_delay_hours");
+    if (hoursVal && !isNaN(Number(hoursVal)) && Number(hoursVal) > 0) {
+      return Math.round(Number(hoursVal) * 60);
+    }
+
+    const minVal =
+      map.get("moatmt_review_delay_minutes") || map.get("cartat_review_delay_minutes");
+    if (minVal && !isNaN(Number(minVal)) && Number(minVal) > 0) {
+      return Number(minVal);
+    }
+  } catch (e) {
+    console.warn("[getReviewRequestDelayMinutes] db read error:", e);
+  }
+  return 120; // ساعتان افتراضياً
+}
+
+/**
+ * جلب رابط الصورة المخصصة لرسالة طلب التقييم
+ */
+export async function getReviewCustomImageUrl(): Promise<string | undefined> {
+  try {
+    const { data } = await supabaseAdmin
+      .from("store_settings")
+      .select("value")
+      .eq("store_id", STORE_ID)
+      .in("key", ["moatmt_review_image_url", "cartat_review_image_url"])
+      .maybeSingle();
+
+    if (data?.value && typeof data.value === "string" && data.value.startsWith("http")) {
+      return data.value.trim();
+    }
+  } catch (e) {
+    console.warn("[getReviewCustomImageUrl] db read error:", e);
+  }
+  return "https://ksa-tv.com/images/review-banner.png";
 }
 
 /**
@@ -425,6 +540,9 @@ export async function processAbandonedCartsAutomatic(options?: {
 
     let sent = 0;
     let errors = 0;
+
+    const discountCfg = await getAbandonedDiscountConfig();
+    const customImageUrl = await getAbandonedCustomImageUrl();
 
     for (const order of candidates) {
       if (sent >= maxLimit) break;
@@ -519,7 +637,10 @@ export async function processAbandonedCartsAutomatic(options?: {
         productName,
         productSlug,
         total: Number(order.total) || undefined,
+        discountCode: discountCfg.code,
+        discountPercent: discountCfg.percent,
         recoveryUrl: productSlug ? `${DEFAULT_STORE_URL}/checkout/${productSlug}` : `${DEFAULT_STORE_URL}/checkout`,
+        imageUrl: customImageUrl,
       });
 
       if (res.ok) {
@@ -563,7 +684,7 @@ export async function processAutomaticReviewRequests(options?: {
   maxHours?: number;
   limit?: number;
 }): Promise<{ processed: number; sent: number; errors: number }> {
-  const delayMin = options?.delayMinutes ?? 120; // ساعتان بعد التسليم
+  const delayMin = options?.delayMinutes ?? (await getReviewRequestDelayMinutes());
   const maxH = options?.maxHours ?? 168; // خلال 7 أيام من التسليم
   const maxLimit = options?.limit ?? 15;
 
@@ -588,6 +709,7 @@ export async function processAutomaticReviewRequests(options?: {
 
     let sent = 0;
     let errors = 0;
+    const reviewImage = await getReviewCustomImageUrl();
 
     for (const order of candidates) {
       if (sent >= maxLimit) break;

@@ -87,6 +87,36 @@ function AbandonedOrdersPage() {
     });
   };
 
+  const [isAutoRecovering, setIsAutoRecovering] = useState(false);
+
+  const handleTriggerAutoRecovery = async (showToast = true) => {
+    try {
+      setIsAutoRecovering(true);
+      const res = await fetch("/api/cron/whatsapp?key=diwan_whatsapp_cron_secure_key");
+      const json = await res.json();
+      if (json?.ok && json?.abandoned) {
+        if (json.abandoned.sent > 0) {
+          toast.success(
+            `تم إرسال رسائل استعادة السلة تلقائياً إلى ${json.abandoned.sent} عميل بنجاح عبر واتساب 🚀`,
+          );
+          handleRefresh();
+        } else if (showToast) {
+          toast.info(
+            "لا توجد سلات متروكة مؤهلة للإرسال حالياً (لم يمر عدد الساعات المحدد بعد أو أُرسلت لهم مسبقاً)",
+          );
+        }
+      } else {
+        toast.error(json?.error || "حدث خطأ أثناء فحص السلات التلقائية");
+      }
+    } catch (err: any) {
+      if (showToast) {
+        toast.error("حدث خطأ أثناء فحص السلات التلقائية: " + (err?.message || ""));
+      }
+    } finally {
+      setIsAutoRecovering(false);
+    }
+  };
+
   // Selection handlers
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) =>
@@ -222,6 +252,17 @@ function AbandonedOrdersPage() {
               <span>حذف المحدد ({selectedIds.length})</span>
             </Button>
           )}
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleTriggerAutoRecovery(true)}
+            disabled={isAutoRecovering || isMutating}
+            className="gap-1.5 font-bold border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 shadow-sm"
+          >
+            <Sparkles className={`h-4 w-4 text-emerald-400 ${isAutoRecovering ? "animate-spin" : ""}`} />
+            <span>{isAutoRecovering ? "جارٍ الفحص والإرسال..." : "⚡ إرسال تلقائي للسلات المستحقة"}</span>
+          </Button>
 
           <Button
             size="sm"

@@ -7,13 +7,47 @@ export type StoreSettings = {
   whatsappNumber: string;
   officialEmail: string;
   telegramChannel: string;
+
+  // إعدادات بوت واتساب مؤتمت (Moatmt Bot) والسلات المتروكة
+  moatmtAdminPhones?: string;
+  moatmtAbandonedDelayHours?: string; // وقت إرسال رسالة السلة المتروكة بالساعات
+  moatmtAbandonedImageUrl?: string;
+  moatmtDiscountCode?: string;
+  moatmtDiscountPercent?: string;
+  moatmtReviewDelayHours?: string; // وقت إرسال طلب التقييم بالساعات
+  moatmtReviewImageUrl?: string;
+
+  // إعدادات التتبع والبكسلات الإعلانية
+  googleSiteVerification?: string;
+  gtmId?: string;
+  ga4MeasurementId?: string;
+  googleAdsId?: string;
+  googleAdsPurchaseLabel?: string;
+  metaPixelId?: string;
+  snapchatPixelId?: string;
+  tiktokPixelId?: string;
 };
 
 const DEFAULT_STORE: StoreSettings = {
   storeName: "ديوان البث",
   whatsappNumber: "966500451602",
-  officialEmail: "",
+  officialEmail: "info@ksa-tv.com",
   telegramChannel: "",
+  moatmtAdminPhones: "",
+  moatmtAbandonedDelayHours: "1", // 1 ساعة افتراضياً
+  moatmtAbandonedImageUrl: "https://ksa-tv.com/images/abandoned-orders.png",
+  moatmtDiscountCode: "DIWAN10",
+  moatmtDiscountPercent: "10",
+  moatmtReviewDelayHours: "2", // ساعتان بعد التسليم
+  moatmtReviewImageUrl: "https://ksa-tv.com/images/review-banner.png",
+  googleSiteVerification: "",
+  gtmId: "",
+  ga4MeasurementId: "",
+  googleAdsId: "",
+  googleAdsPurchaseLabel: "",
+  metaPixelId: "",
+  snapchatPixelId: "",
+  tiktokPixelId: "",
 };
 
 const KEY_MAP: Record<keyof StoreSettings, string> = {
@@ -21,22 +55,64 @@ const KEY_MAP: Record<keyof StoreSettings, string> = {
   whatsappNumber: "whatsapp_number",
   officialEmail: "contact_email",
   telegramChannel: "telegram_channel",
+  moatmtAdminPhones: "moatmt_admin_phones",
+  moatmtAbandonedDelayHours: "moatmt_abandoned_delay_hours",
+  moatmtAbandonedImageUrl: "moatmt_abandoned_image_url",
+  moatmtDiscountCode: "moatmt_discount_code",
+  moatmtDiscountPercent: "moatmt_discount_percent",
+  moatmtReviewDelayHours: "moatmt_review_delay_hours",
+  moatmtReviewImageUrl: "moatmt_review_image_url",
+  googleSiteVerification: "google_site_verification",
+  gtmId: "gtm_id",
+  ga4MeasurementId: "ga4_measurement_id",
+  googleAdsId: "google_ads_id",
+  googleAdsPurchaseLabel: "google_ads_purchase_label",
+  metaPixelId: "meta_pixel_id",
+  snapchatPixelId: "snapchat_pixel_id",
+  tiktokPixelId: "tiktok_pixel_id",
 };
 
 export async function fetchStoreSettings(): Promise<StoreSettings> {
-  const { data, error } = await supabase
-    .from("store_settings")
-    .select("key, value");
+  let query = supabase.from("store_settings").select("key, value, store_id");
+  if (STORE_ID) {
+    query = query.eq("store_id", STORE_ID);
+  }
+  const { data, error } = await query;
   if (error) throw error;
   const map: Record<string, string | null> = {};
   (data ?? []).forEach((r) => {
     map[r.key] = r.value;
   });
+
+  // حساب الساعات من الدقائق القديمة كـ Fallback إن وُجدت
+  const abandonedHoursFallback = map.moatmt_abandoned_delay_hours ||
+    (map.cartat_abandoned_delay_minutes ? String(Math.round(Number(map.cartat_abandoned_delay_minutes) / 60)) : null) ||
+    DEFAULT_STORE.moatmtAbandonedDelayHours;
+
+  const reviewHoursFallback = map.moatmt_review_delay_hours ||
+    (map.cartat_review_delay_minutes ? String(Math.round(Number(map.cartat_review_delay_minutes) / 60)) : null) ||
+    DEFAULT_STORE.moatmtReviewDelayHours;
+
   return {
     storeName: map.store_name || DEFAULT_STORE.storeName,
     whatsappNumber: map.whatsapp_number || DEFAULT_STORE.whatsappNumber,
-    officialEmail: map.contact_email || "",
-    telegramChannel: map.telegram_channel || "",
+    officialEmail: map.contact_email || DEFAULT_STORE.officialEmail,
+    telegramChannel: map.telegram_channel || DEFAULT_STORE.telegramChannel,
+    moatmtAdminPhones: map.moatmt_admin_phones || map.cartat_admin_phones || DEFAULT_STORE.moatmtAdminPhones,
+    moatmtAbandonedDelayHours: abandonedHoursFallback,
+    moatmtAbandonedImageUrl: map.moatmt_abandoned_image_url || map.cartat_abandoned_image_url || DEFAULT_STORE.moatmtAbandonedImageUrl,
+    moatmtDiscountCode: map.moatmt_discount_code || DEFAULT_STORE.moatmtDiscountCode,
+    moatmtDiscountPercent: map.moatmt_discount_percent || DEFAULT_STORE.moatmtDiscountPercent,
+    moatmtReviewDelayHours: reviewHoursFallback,
+    moatmtReviewImageUrl: map.moatmt_review_image_url || map.cartat_review_image_url || DEFAULT_STORE.moatmtReviewImageUrl,
+    googleSiteVerification: map.google_site_verification || DEFAULT_STORE.googleSiteVerification,
+    gtmId: map.gtm_id || DEFAULT_STORE.gtmId,
+    ga4MeasurementId: map.ga4_measurement_id || DEFAULT_STORE.ga4MeasurementId,
+    googleAdsId: map.google_ads_id || DEFAULT_STORE.googleAdsId,
+    googleAdsPurchaseLabel: map.google_ads_purchase_label || DEFAULT_STORE.googleAdsPurchaseLabel,
+    metaPixelId: map.meta_pixel_id || DEFAULT_STORE.metaPixelId,
+    snapchatPixelId: map.snapchat_pixel_id || DEFAULT_STORE.snapchatPixelId,
+    tiktokPixelId: map.tiktok_pixel_id || DEFAULT_STORE.tiktokPixelId,
   };
 }
 
@@ -49,12 +125,14 @@ export const storeSettingsAdminQueryOptions = () =>
 
 export async function saveStoreSettings(settings: StoreSettings): Promise<void> {
   const rows = (Object.keys(KEY_MAP) as Array<keyof StoreSettings>).map((k) => ({
+    store_id: STORE_ID,
     key: KEY_MAP[k],
-    value: settings[k] || null,
+    value: settings[k] != null ? String(settings[k]).trim() : "",
+    updated_at: new Date().toISOString(),
   }));
   const { error } = await supabase
     .from("store_settings")
-    .upsert(rows, { onConflict: "key" });
+    .upsert(rows, { onConflict: "store_id,key" });
   if (error) throw new Error(error.message);
 }
 
@@ -92,7 +170,7 @@ export const DEFAULT_PAYMENT_METHODS: PaymentMethodsConfig = {
     uatMid: "202250910001",
   },
   edfapay: {
-    enabled: true,
+    enabled: false,
     testMode: false,
   },
   whatsapp: {
@@ -113,6 +191,7 @@ export async function fetchPaymentMethodsConfig(): Promise<PaymentMethodsConfig>
     const { data, error } = await supabase
       .from("store_settings")
       .select("value")
+      .eq("store_id", STORE_ID)
       .eq("key", PAYMENT_CONFIG_KEY)
       .maybeSingle();
 
@@ -149,47 +228,35 @@ export async function fetchPaymentMethodsConfig(): Promise<PaymentMethodsConfig>
   }
 }
 
-export async function savePaymentMethodsConfig(config: PaymentMethodsConfig): Promise<void> {
-  const sanitizedConfig: PaymentMethodsConfig = {
-    ...config,
-    ngenius: {
-      enabled: Boolean(config.ngenius?.enabled),
-      testMode: Boolean(config.ngenius?.testMode),
-      uatApiKey: config.ngenius?.uatApiKey || DEFAULT_PAYMENT_METHODS.ngenius.uatApiKey,
-      uatOutletId: config.ngenius?.uatOutletId || DEFAULT_PAYMENT_METHODS.ngenius.uatOutletId,
-      uatMid: config.ngenius?.uatMid || DEFAULT_PAYMENT_METHODS.ngenius.uatMid,
-    },
-  };
-
-  const { error } = await supabase
-    .from("store_settings")
-    .upsert(
-      {
-        key: PAYMENT_CONFIG_KEY,
-        value: JSON.stringify(sanitizedConfig),
-        description: "إعدادات طرق وبوابات الدفع الإلكتروني",
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "key" }
-    );
-  if (error) throw new Error(error.message);
-}
-
-export const paymentMethodsConfigQueryOptions = () =>
+export const paymentMethodsAdminQueryOptions = () =>
   queryOptions({
-    queryKey: ["admin", "payment-methods-config", STORE_ID],
+    queryKey: ["admin", "payment-methods-config"],
     queryFn: fetchPaymentMethodsConfig,
     staleTime: 30_000,
   });
 
+export const paymentMethodsConfigQueryOptions = paymentMethodsAdminQueryOptions;
 
-export async function changePassword(newPassword: string): Promise<void> {
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
+export async function savePaymentMethodsConfig(config: PaymentMethodsConfig): Promise<void> {
+  const { error } = await supabase.from("store_settings").upsert(
+    {
+      store_id: STORE_ID,
+      key: PAYMENT_CONFIG_KEY,
+      value: JSON.stringify(config),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "store_id,key" }
+  );
   if (error) throw new Error(error.message);
 }
 
 export async function signOutEverywhere(): Promise<void> {
   const { error } = await supabase.auth.signOut({ scope: "global" });
+  if (error) throw error;
+}
+
+export async function changePassword(newPassword: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw new Error(error.message);
 }
 
