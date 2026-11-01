@@ -186,11 +186,15 @@ export async function fetchPaymentMethodsConfig(): Promise<PaymentMethodsConfig>
     const { data, error } = await supabase
       .from("store_settings")
       .select("value")
-      .eq("store_id", STORE_ID)
       .eq("key", PAYMENT_CONFIG_KEY)
       .maybeSingle();
 
-    if (error || !data?.value) {
+    if (error) {
+      console.error("[fetchPaymentMethodsConfig] query error:", error);
+      return DEFAULT_PAYMENT_METHODS;
+    }
+
+    if (!data?.value) {
       return DEFAULT_PAYMENT_METHODS;
     }
 
