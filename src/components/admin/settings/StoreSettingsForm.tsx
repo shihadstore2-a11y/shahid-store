@@ -17,6 +17,8 @@ export function StoreSettingsForm() {
   const { data, isLoading } = useQuery(storeSettingsAdminQueryOptions());
   const [form, setForm] = useState<StoreSettings | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof StoreSettings, string>>>({});
+  const [abandonedUnit, setAbandonedUnit] = useState<"hours" | "minutes">("hours");
+  const [reviewUnit, setReviewUnit] = useState<"hours" | "minutes">("hours");
 
   useEffect(() => {
     if (data && !form) setForm(data);
@@ -75,7 +77,7 @@ export function StoreSettingsForm() {
   })();
 
   return (
-    <form onSubmit={onSubmit} className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-6">
+    <form onSubmit={onSubmit} noValidate className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-6">
       {/* 1. معلومات المتجر الأساسية */}
       <div>
         <div className="mb-1">
@@ -151,33 +153,161 @@ export function StoreSettingsForm() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field
-              label="وقت إرسال رسالة السلة المتروكة للعميل (بالساعات) ⏳"
-              hint="عدد الساعات بعد بدء العميل للطلب وعدم الدفع قبل إرسال الرسالة له (مثلاً 1 ساعة، 2 ساعة، أو 0.5 لنصف ساعة)"
+              label={
+                <div className="flex items-center justify-between gap-2">
+                  <span>وقت إرسال رسالة السلة المتروكة ⏳</span>
+                  <div className="inline-flex items-center rounded-lg border border-border/80 bg-background/80 p-0.5 text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setAbandonedUnit("hours")}
+                      className={`rounded px-2 py-0.5 transition ${
+                        abandonedUnit === "hours"
+                          ? "bg-accent text-accent-foreground shadow-xs font-black"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      بالساعات
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAbandonedUnit("minutes")}
+                      className={`rounded px-2 py-0.5 transition ${
+                        abandonedUnit === "minutes"
+                          ? "bg-accent text-accent-foreground shadow-xs font-black"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      بالدقائق
+                    </button>
+                  </div>
+                </div>
+              }
+              hint="الوقت بعد بدء العميل للطلب وعدم إتمام الدفع قبل إرسال الرسالة التذكيرية"
             >
-              <Input
-                dir="ltr"
-                type="number"
-                step="0.25"
-                min="0.1"
-                placeholder="1"
-                value={form.moatmtAbandonedDelayHours ?? "1"}
-                onChange={(e) => set("moatmtAbandonedDelayHours", e.target.value)}
-              />
+              {abandonedUnit === "hours" ? (
+                <>
+                  <Input
+                    dir="ltr"
+                    type="number"
+                    step="any"
+                    min="0"
+                    placeholder="1"
+                    value={form.moatmtAbandonedDelayHours ?? "1"}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const num = Number(val);
+                      const mins = !isNaN(num) && num > 0 ? String(Math.round(num * 60)) : "";
+                      setForm((p) => (p ? { ...p, moatmtAbandonedDelayHours: val, moatmtAbandonedDelayMinutes: mins } : p));
+                    }}
+                  />
+                  {Number(form.moatmtAbandonedDelayHours) > 0 && (
+                    <p className="mt-1.5 text-[11px] font-bold text-accent">
+                      ⏱️ سيتم الإرسال بعد {Number(form.moatmtAbandonedDelayHours)} {Number(form.moatmtAbandonedDelayHours) === 1 ? "ساعة" : Number(form.moatmtAbandonedDelayHours) === 2 ? "ساعتين" : Number(form.moatmtAbandonedDelayHours) <= 10 ? "ساعات" : "ساعة"} ({Math.round(Number(form.moatmtAbandonedDelayHours) * 60)} دقيقة)
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Input
+                    dir="ltr"
+                    type="number"
+                    step="1"
+                    min="1"
+                    placeholder="60"
+                    value={form.moatmtAbandonedDelayMinutes ?? "60"}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const num = Number(val);
+                      const hrs = !isNaN(num) && num > 0 ? String(Number((num / 60).toFixed(2))) : "";
+                      setForm((p) => (p ? { ...p, moatmtAbandonedDelayMinutes: val, moatmtAbandonedDelayHours: hrs } : p));
+                    }}
+                  />
+                  {Number(form.moatmtAbandonedDelayMinutes) > 0 && (
+                    <p className="mt-1.5 text-[11px] font-bold text-accent">
+                      ⏱️ سيتم الإرسال بعد {Number(form.moatmtAbandonedDelayMinutes)} دقيقة ({(Number(form.moatmtAbandonedDelayMinutes) / 60).toFixed(2).replace(/\.00$/, "")} ساعة)
+                    </p>
+                  )}
+                </>
+              )}
             </Field>
 
             <Field
-              label="وقت إرسال طلب التقييم بعد تسليم الاشتراك (بالساعات) ⭐"
-              hint="عدد الساعات بعد تسليم الطلب للعميل قبل إرسال رابط تقييم المنتج له (افتراضياً 2 ساعة)"
+              label={
+                <div className="flex items-center justify-between gap-2">
+                  <span>وقت إرسال طلب التقييم ⭐</span>
+                  <div className="inline-flex items-center rounded-lg border border-border/80 bg-background/80 p-0.5 text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setReviewUnit("hours")}
+                      className={`rounded px-2 py-0.5 transition ${
+                        reviewUnit === "hours"
+                          ? "bg-accent text-accent-foreground shadow-xs font-black"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      بالساعات
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReviewUnit("minutes")}
+                      className={`rounded px-2 py-0.5 transition ${
+                        reviewUnit === "minutes"
+                          ? "bg-accent text-accent-foreground shadow-xs font-black"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      بالدقائق
+                    </button>
+                  </div>
+                </div>
+              }
+              hint="الوقت بعد تسليم الطلب للعميل قبل إرسال رسالة ورابط تقييم الخدمة له"
             >
-              <Input
-                dir="ltr"
-                type="number"
-                step="0.5"
-                min="0.1"
-                placeholder="2"
-                value={form.moatmtReviewDelayHours ?? "2"}
-                onChange={(e) => set("moatmtReviewDelayHours", e.target.value)}
-              />
+              {reviewUnit === "hours" ? (
+                <>
+                  <Input
+                    dir="ltr"
+                    type="number"
+                    step="any"
+                    min="0"
+                    placeholder="2"
+                    value={form.moatmtReviewDelayHours ?? "2"}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const num = Number(val);
+                      const mins = !isNaN(num) && num > 0 ? String(Math.round(num * 60)) : "";
+                      setForm((p) => (p ? { ...p, moatmtReviewDelayHours: val, moatmtReviewDelayMinutes: mins } : p));
+                    }}
+                  />
+                  {Number(form.moatmtReviewDelayHours) > 0 && (
+                    <p className="mt-1.5 text-[11px] font-bold text-accent">
+                      ⏱️ سيتم الإرسال بعد {Number(form.moatmtReviewDelayHours)} {Number(form.moatmtReviewDelayHours) === 1 ? "ساعة" : Number(form.moatmtReviewDelayHours) === 2 ? "ساعتين" : Number(form.moatmtReviewDelayHours) <= 10 ? "ساعات" : "ساعة"} ({Math.round(Number(form.moatmtReviewDelayHours) * 60)} دقيقة)
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Input
+                    dir="ltr"
+                    type="number"
+                    step="1"
+                    min="1"
+                    placeholder="120"
+                    value={form.moatmtReviewDelayMinutes ?? "120"}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const num = Number(val);
+                      const hrs = !isNaN(num) && num > 0 ? String(Number((num / 60).toFixed(2))) : "";
+                      setForm((p) => (p ? { ...p, moatmtReviewDelayMinutes: val, moatmtReviewDelayHours: hrs } : p));
+                    }}
+                  />
+                  {Number(form.moatmtReviewDelayMinutes) > 0 && (
+                    <p className="mt-1.5 text-[11px] font-bold text-accent">
+                      ⏱️ سيتم الإرسال بعد {Number(form.moatmtReviewDelayMinutes)} دقيقة ({(Number(form.moatmtReviewDelayMinutes) / 60).toFixed(2).replace(/\.00$/, "")} ساعة)
+                    </p>
+                  )}
+                </>
+              )}
             </Field>
           </div>
 

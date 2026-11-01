@@ -11,10 +11,12 @@ export type StoreSettings = {
   // إعدادات بوت واتساب مؤتمت (Moatmt Bot) والسلات المتروكة
   moatmtAdminPhones?: string;
   moatmtAbandonedDelayHours?: string; // وقت إرسال رسالة السلة المتروكة بالساعات
+  moatmtAbandonedDelayMinutes?: string; // وقت إرسال رسالة السلة المتروكة بالدقائق
   moatmtAbandonedImageUrl?: string;
   moatmtDiscountCode?: string;
   moatmtDiscountPercent?: string;
   moatmtReviewDelayHours?: string; // وقت إرسال طلب التقييم بالساعات
+  moatmtReviewDelayMinutes?: string; // وقت إرسال طلب التقييم بالدقائق
   moatmtReviewImageUrl?: string;
 
   // إعدادات التتبع والبكسلات الإعلانية
@@ -35,10 +37,12 @@ const DEFAULT_STORE: StoreSettings = {
   telegramChannel: "",
   moatmtAdminPhones: "",
   moatmtAbandonedDelayHours: "1", // 1 ساعة افتراضياً
+  moatmtAbandonedDelayMinutes: "60", // 60 دقيقة
   moatmtAbandonedImageUrl: "https://ksa-tv.com/images/abandoned-orders.png",
   moatmtDiscountCode: "DIWAN10",
   moatmtDiscountPercent: "10",
   moatmtReviewDelayHours: "2", // ساعتان بعد التسليم
+  moatmtReviewDelayMinutes: "120", // 120 دقيقة
   moatmtReviewImageUrl: "https://ksa-tv.com/images/review-banner.png",
   googleSiteVerification: "",
   gtmId: "",
@@ -57,10 +61,12 @@ const KEY_MAP: Record<keyof StoreSettings, string> = {
   telegramChannel: "telegram_channel",
   moatmtAdminPhones: "moatmt_admin_phones",
   moatmtAbandonedDelayHours: "moatmt_abandoned_delay_hours",
+  moatmtAbandonedDelayMinutes: "moatmt_abandoned_delay_minutes",
   moatmtAbandonedImageUrl: "moatmt_abandoned_image_url",
   moatmtDiscountCode: "moatmt_discount_code",
   moatmtDiscountPercent: "moatmt_discount_percent",
   moatmtReviewDelayHours: "moatmt_review_delay_hours",
+  moatmtReviewDelayMinutes: "moatmt_review_delay_minutes",
   moatmtReviewImageUrl: "moatmt_review_image_url",
   googleSiteVerification: "google_site_verification",
   gtmId: "gtm_id",
@@ -80,14 +86,28 @@ export async function fetchStoreSettings(): Promise<StoreSettings> {
     map[r.key] = r.value;
   });
 
-  // حساب الساعات من الدقائق القديمة كـ Fallback إن وُجدت
-  const abandonedHoursFallback = map.moatmt_abandoned_delay_hours ||
-    (map.cartat_abandoned_delay_minutes ? String(Math.round(Number(map.cartat_abandoned_delay_minutes) / 60)) : null) ||
-    DEFAULT_STORE.moatmtAbandonedDelayHours;
+  // حساب الساعات والدقائق بمرونة
+  let abandonedHours = map.moatmt_abandoned_delay_hours || "";
+  let abandonedMinutes = map.moatmt_abandoned_delay_minutes || map.cartat_abandoned_delay_minutes || "";
 
-  const reviewHoursFallback = map.moatmt_review_delay_hours ||
-    (map.cartat_review_delay_minutes ? String(Math.round(Number(map.cartat_review_delay_minutes) / 60)) : null) ||
-    DEFAULT_STORE.moatmtReviewDelayHours;
+  if (abandonedHours && !abandonedMinutes) {
+    abandonedMinutes = String(Math.round(Number(abandonedHours) * 60));
+  } else if (!abandonedHours && abandonedMinutes) {
+    abandonedHours = String(Number(abandonedMinutes) / 60);
+  }
+  if (!abandonedHours) abandonedHours = DEFAULT_STORE.moatmtAbandonedDelayHours;
+  if (!abandonedMinutes) abandonedMinutes = DEFAULT_STORE.moatmtAbandonedDelayMinutes;
+
+  let reviewHours = map.moatmt_review_delay_hours || "";
+  let reviewMinutes = map.moatmt_review_delay_minutes || map.cartat_review_delay_minutes || "";
+
+  if (reviewHours && !reviewMinutes) {
+    reviewMinutes = String(Math.round(Number(reviewHours) * 60));
+  } else if (!reviewHours && reviewMinutes) {
+    reviewHours = String(Number(reviewMinutes) / 60);
+  }
+  if (!reviewHours) reviewHours = DEFAULT_STORE.moatmtReviewDelayHours;
+  if (!reviewMinutes) reviewMinutes = DEFAULT_STORE.moatmtReviewDelayMinutes;
 
   return {
     storeName: map.store_name || DEFAULT_STORE.storeName,
@@ -95,11 +115,13 @@ export async function fetchStoreSettings(): Promise<StoreSettings> {
     officialEmail: map.contact_email || DEFAULT_STORE.officialEmail,
     telegramChannel: map.telegram_channel || DEFAULT_STORE.telegramChannel,
     moatmtAdminPhones: map.moatmt_admin_phones || map.cartat_admin_phones || DEFAULT_STORE.moatmtAdminPhones,
-    moatmtAbandonedDelayHours: abandonedHoursFallback,
+    moatmtAbandonedDelayHours: abandonedHours,
+    moatmtAbandonedDelayMinutes: abandonedMinutes,
     moatmtAbandonedImageUrl: map.moatmt_abandoned_image_url || map.cartat_abandoned_image_url || DEFAULT_STORE.moatmtAbandonedImageUrl,
     moatmtDiscountCode: map.moatmt_discount_code || DEFAULT_STORE.moatmtDiscountCode,
     moatmtDiscountPercent: map.moatmt_discount_percent || DEFAULT_STORE.moatmtDiscountPercent,
-    moatmtReviewDelayHours: reviewHoursFallback,
+    moatmtReviewDelayHours: reviewHours,
+    moatmtReviewDelayMinutes: reviewMinutes,
     moatmtReviewImageUrl: map.moatmt_review_image_url || map.cartat_review_image_url || DEFAULT_STORE.moatmtReviewImageUrl,
     googleSiteVerification: map.google_site_verification || DEFAULT_STORE.googleSiteVerification,
     gtmId: map.gtm_id || DEFAULT_STORE.gtmId,
@@ -120,11 +142,43 @@ export const storeSettingsAdminQueryOptions = () =>
   });
 
 export async function saveStoreSettings(settings: StoreSettings): Promise<void> {
+  const normSettings = { ...settings };
+
+  // مزامنة الساعات والدقائق تلقائياً لضمان حفظ كلتيهما في قاعدة البيانات
+  if (normSettings.moatmtAbandonedDelayHours && Number(normSettings.moatmtAbandonedDelayHours) > 0) {
+    normSettings.moatmtAbandonedDelayMinutes = String(Math.round(Number(normSettings.moatmtAbandonedDelayHours) * 60));
+  } else if (normSettings.moatmtAbandonedDelayMinutes && Number(normSettings.moatmtAbandonedDelayMinutes) > 0) {
+    normSettings.moatmtAbandonedDelayHours = String(Number(normSettings.moatmtAbandonedDelayMinutes) / 60);
+  }
+
+  if (normSettings.moatmtReviewDelayHours && Number(normSettings.moatmtReviewDelayHours) > 0) {
+    normSettings.moatmtReviewDelayMinutes = String(Math.round(Number(normSettings.moatmtReviewDelayHours) * 60));
+  } else if (normSettings.moatmtReviewDelayMinutes && Number(normSettings.moatmtReviewDelayMinutes) > 0) {
+    normSettings.moatmtReviewDelayHours = String(Number(normSettings.moatmtReviewDelayMinutes) / 60);
+  }
+
   const rows = (Object.keys(KEY_MAP) as Array<keyof StoreSettings>).map((k) => ({
     key: KEY_MAP[k],
-    value: settings[k] != null ? String(settings[k]).trim() : "",
+    value: normSettings[k] != null ? String(normSettings[k]).trim() : "",
     updated_at: new Date().toISOString(),
   }));
+
+  // مزامنة مفاتيح cartat القديمة كـ Fallback إضافي
+  if (normSettings.moatmtAbandonedDelayMinutes) {
+    rows.push({
+      key: "cartat_abandoned_delay_minutes",
+      value: normSettings.moatmtAbandonedDelayMinutes,
+      updated_at: new Date().toISOString(),
+    });
+  }
+  if (normSettings.moatmtReviewDelayMinutes) {
+    rows.push({
+      key: "cartat_review_delay_minutes",
+      value: normSettings.moatmtReviewDelayMinutes,
+      updated_at: new Date().toISOString(),
+    });
+  }
+
   const { error } = await supabase
     .from("store_settings")
     .upsert(rows, { onConflict: "key" });
