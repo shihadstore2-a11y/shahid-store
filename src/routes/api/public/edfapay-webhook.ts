@@ -12,6 +12,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { fetchPaymentStatus } from "@/lib/edfapay.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendOrderConfirmation, notifyStaffNewOrder } from "@/lib/moatmt.server";
 
 type CallbackPayload = {
   // snake_case (legacy)
@@ -274,6 +275,52 @@ export const Route = createFileRoute("/api/public/edfapay-webhook")({
             console.error("[F.3] Linking failed (non-fatal):", e);
           }
           // 🆕 End Phase F.3 linking block
+
+          // 💬 إرسال إشعارات الواتساب عبر مؤتمت (Moatmt) للعميل والموظفين
+          try {
+            const { data: oData } = await supabaseAdmin
+              .from("orders")
+              .select("order_number, customer_name, customer_phone, customer_email, total, items, notes")
+              .eq("id", orderId)
+              .maybeSingle();
+
+            const existingNotes = oData?.notes || "";
+            const alreadyNotified =
+              existingNotes.includes('"template":"confirmation"') ||
+              existingNotes.includes('"template":"paid_confirmation"');
+
+            if (oData && !alreadyNotified) {
+              const items = Array.isArray(oData.items) ? oData.items : [];
+              const firstItem = items[0] as any;
+              const productName = firstItem?.name_ar || firstItem?.product_name || firstItem?.name || "اشتراك ديوان البث";
+
+              await sendOrderConfirmation({
+                orderNumber: oData.order_number,
+                customerName: oData.customer_name,
+                customerPhone: oData.customer_phone,
+                productName,
+                total: Number(oData.total) || undefined,
+              });
+
+              await notifyStaffNewOrder({
+                orderNumber: oData.order_number,
+                customerName: oData.customer_name,
+                customerPhone: oData.customer_phone,
+                customerEmail: oData.customer_email || undefined,
+                total: Number(oData.total) || 0,
+                productName,
+                paymentMethod: "بطاقة بنكية 💳 (EdfaPay)",
+              });
+
+              const logTag = `\n[WHATSAPP_LOG:{"template":"confirmation","sent_at":"${new Date().toISOString()}","source":"edfapay_webhook"}]`;
+              await supabaseAdmin
+                .from("orders")
+                .update({ notes: `${existingNotes}${logTag}`.trim() })
+                .eq("id", orderId);
+            }
+          } catch (waErr) {
+            console.warn("[EdfaPay Webhook] Moatmt WhatsApp notifications skipped:", waErr);
+          }
         } else if (verifiedStatus === "cancelled") {
           await supabaseAdmin
             .from("orders")

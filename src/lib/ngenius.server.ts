@@ -12,7 +12,7 @@
 
 import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendOrderConfirmation, notifyStaffNewOrder } from "./cartat.server";
+import { sendOrderConfirmation, notifyStaffNewOrder } from "./moatmt.server";
 import { STORE_ID } from "./store-config";
 
 const KNOWN_CLOUDFLARE_SECRETS = [
@@ -27,6 +27,9 @@ const KNOWN_CLOUDFLARE_SECRETS = [
   "NGENIUS_LIVE_BASE",
   "EDFAPAY_API_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
+  "MOATMT_API_KEY",
+  "MOATMT_INSTANCE_ID",
+  "MOATMT_BASE_URL",
   "CARTAT_API_TOKEN",
 ];
 

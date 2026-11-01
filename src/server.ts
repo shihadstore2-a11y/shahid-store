@@ -80,6 +80,14 @@ const KNOWN_CLOUDFLARE_SECRETS = [
   "NGENIUS_LIVE_BASE",
   "EDFAPAY_API_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
+  "MOATMT_API_KEY",
+  "MOATMT_ACCESS_TOKEN",
+  "MOATMT_INSTANCE_ID",
+  "MOATMT_BASE_URL",
+  "MOATMT_SEND_URL",
+  "MOATMT_ADMIN_PHONES",
+  "MOATMT_ADMIN_PHONE",
+  "CRON_SECRET",
   "CARTAT_API_TOKEN",
   "CARTAT_ADMIN_PHONES",
   "CARTAT_ADMIN_PHONE",
@@ -119,6 +127,52 @@ export default {
 
       // Resolve active store dynamically from the incoming request domain
       const resolvedStore = await resolveStoreFromRequest(request);
+
+      // نقطة نهاية المجدول التلقائي لرسائل مؤتمت (WhatsApp Cron via cron-job.org)
+      const url = new URL(request.url);
+      if (url.pathname === "/api/cron/whatsapp") {
+        const cronKey = url.searchParams.get("key") || request.headers.get("x-cron-key") || "";
+        const expectedSecret = process.env.CRON_SECRET || "diwan_whatsapp_cron_secure_key";
+        if (!cronKey || cronKey !== expectedSecret) {
+          return new Response(
+            JSON.stringify({ ok: false, error: "Unauthorized: Invalid or missing cron key" }),
+            {
+              status: 401,
+              headers: { "content-type": "application/json; charset=utf-8" },
+            },
+          );
+        }
+
+        return await serverStoreStorage.run(resolvedStore, async () => {
+          const { processAbandonedCartsAutomatic, processAutomaticReviewRequests } = await import(
+            "./lib/moatmt.server"
+          );
+          const [abandonedResult, reviewResult] = await Promise.allSettled([
+            processAbandonedCartsAutomatic(),
+            processAutomaticReviewRequests(),
+          ]);
+
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              timestamp: new Date().toISOString(),
+              store: resolvedStore.slug,
+              abandoned:
+                abandonedResult.status === "fulfilled"
+                  ? abandonedResult.value
+                  : { error: String((abandonedResult as any).reason) },
+              reviews:
+                reviewResult.status === "fulfilled"
+                  ? reviewResult.value
+                  : { error: String((reviewResult as any).reason) },
+            }),
+            {
+              status: 200,
+              headers: { "content-type": "application/json; charset=utf-8" },
+            },
+          );
+        });
+      }
 
       const handler = await getServerEntry();
       

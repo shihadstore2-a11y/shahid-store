@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { STORE_ID } from "./store-config";
+import { sendSubscriptionCredentials } from "./moatmt.server";
 
 const ExtraInfoSchema = z
   .record(z.string().min(1).max(100), z.union([z.string(), z.number(), z.boolean(), z.null()]))
@@ -72,6 +73,42 @@ export const fulfillOrder = createServerFn({ method: "POST" })
 
     if (updErr) {
       console.warn("[fulfillOrder] direct update warning:", updErr.message);
+    }
+
+    // 3. إرسال بيانات الاشتراك والتفعيل عبر واتساب مؤتمت (Moatmt) للعميل
+    try {
+      const { data: orderRow } = await supabaseAdmin
+        .from("orders")
+        .select("order_number, customer_name, customer_phone, items, notes")
+        .eq("id", data.orderId)
+        .maybeSingle();
+
+      if (orderRow?.customer_phone && data.subscription_username) {
+        const items = Array.isArray(orderRow.items) ? orderRow.items : [];
+        const firstItem = items[0] as any;
+        const productName = firstItem?.name_ar || firstItem?.product_name || firstItem?.name || "اشتراكك";
+
+        const res = await sendSubscriptionCredentials({
+          customerName: orderRow.customer_name,
+          customerPhone: orderRow.customer_phone,
+          orderNumber: orderRow.order_number,
+          productName,
+          username: data.subscription_username,
+          password: data.subscription_password,
+          url: data.subscription_url,
+        });
+
+        if (res.ok) {
+          const logTag = `\n[WHATSAPP_LOG:{"template":"credentials","sent_at":"${nowIso}","moatmt_msg_id":"${res.id || ""}"}]`;
+          const currentNotes = (orderRow.notes || "").trim();
+          await supabaseAdmin
+            .from("orders")
+            .update({ notes: `${currentNotes}${logTag}`.trim() })
+            .eq("id", data.orderId);
+        }
+      }
+    } catch (waErr) {
+      console.warn("[fulfillOrder] Moatmt delivery notice failed (non-fatal):", waErr);
     }
 
     return {
