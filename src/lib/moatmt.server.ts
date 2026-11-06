@@ -35,7 +35,7 @@ export async function getMoatmtConfig(): Promise<{
 }> {
   let apiKey = (process.env.MOATMT_API_KEY || process.env.MOATMT_ACCESS_TOKEN || "").trim();
   let instanceId = (process.env.MOATMT_INSTANCE_ID || "").trim();
-  let baseUrl = (process.env.MOATMT_BASE_URL || "https://api.moatmt.ai").trim().replace(/\/+$/, "");
+  let baseUrl = (process.env.MOATMT_BASE_URL || "https://moatmt.ai").trim().replace(/\/+$/, "");
   let sendUrl = (process.env.MOATMT_SEND_URL || "").trim();
 
   // فحص قاعدة البيانات إذا لم تكن المتغيرات معينة في البيئة
@@ -106,11 +106,12 @@ export async function getAdminPhonesAsync(): Promise<string[]> {
   }
 
   const envVal =
+    process.env.ADMIN_NOTIFY_PHONES ||
+    process.env.ADMIN_NOTIFY_PHONE ||
     process.env.MOATMT_ADMIN_PHONES ||
     process.env.MOATMT_ADMIN_PHONE ||
     process.env.CARTAT_ADMIN_PHONES ||
-    "";
-  if (!envVal.trim()) return [];
+    "966500451602"; // الرقم الافتراضي لإدارة متجر ديوان البث
 
   return envVal
     .split(",")
@@ -141,8 +142,9 @@ export async function sendMoatmtMessage(
     return { ok: false, error: "Invalid phone number" };
   }
 
-  // بناء حمولة الرسالة المتوافقة مع بوابات الواتساب ومؤتمت
+  // بناء حمولة الرسالة المتوافقة مع بوابات الواتساب ومؤتمت (Moatmt API)
   const payload: Record<string, unknown> = {
+    access_token: config.apiKey,
     recipient: normalizedPhone,
     number: normalizedPhone,
     phone: normalizedPhone,
@@ -171,16 +173,21 @@ export async function sendMoatmtMessage(
     headers["x-instance-id"] = config.instanceId;
   }
 
-  // تحديد الرابط المناسب (دعم الرابط المخصص أو الافتراضي)
+  // تحديد الرابط المناسب (دعم الرابط المخصص أو الرابط الرسمي لمؤتمت https://moatmt.ai/api/send)
+  const tokenParam = encodeURIComponent(config.apiKey);
   const targetEndpoints = config.sendUrl
     ? [config.sendUrl]
     : mediaUrl
       ? [
+          `${config.baseUrl}/api/send?access_token=${tokenParam}`,
+          `${config.baseUrl}/api/send`,
           `${config.baseUrl}/message/media`,
           `${config.baseUrl}/v1/messages/send`,
           `${config.baseUrl}/send`,
         ]
       : [
+          `${config.baseUrl}/api/send?access_token=${tokenParam}`,
+          `${config.baseUrl}/api/send`,
           `${config.baseUrl}/message/text`,
           `${config.baseUrl}/v1/messages/send`,
           `${config.baseUrl}/send`,

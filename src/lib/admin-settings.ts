@@ -35,7 +35,7 @@ const DEFAULT_STORE: StoreSettings = {
   whatsappNumber: "966500451602",
   officialEmail: "info@ksa-tv.com",
   telegramChannel: "",
-  moatmtAdminPhones: "",
+  moatmtAdminPhones: "966500451602",
   moatmtAbandonedDelayHours: "1", // 1 ساعة افتراضياً
   moatmtAbandonedDelayMinutes: "60", // 60 دقيقة
   moatmtAbandonedImageUrl: "https://ksa-tv.com/images/abandoned-orders.png",
