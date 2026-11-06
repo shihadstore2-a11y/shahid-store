@@ -30,7 +30,6 @@ const KNOWN_CLOUDFLARE_SECRETS = [
   "MOATMT_API_KEY",
   "MOATMT_INSTANCE_ID",
   "MOATMT_BASE_URL",
-  "CARTAT_API_TOKEN",
 ];
 
 export interface NGeniusConfig {
@@ -532,7 +531,7 @@ export async function fulfillSuccessfulOrder(orderId: string, providerName: stri
     console.warn("[Order Fulfillment] Linking user skipped:", linkEx);
   }
 
-  // 3. إرسال إشعارات الواتساب عبر Cartat (للعميل وللموظفين) إذا تم ضبط البيانات
+  // 3. إرسال إشعارات الواتساب عبر منصة مؤتمت (Moatmt) للعميل وللموظفين
   try {
     const existingNotes = currentOrder.notes || "";
     const alreadyNotified =
@@ -584,6 +583,6 @@ export async function fulfillSuccessfulOrder(orderId: string, providerName: stri
         .eq("id", orderId);
     }
   } catch (waErr) {
-    console.error("[Order Fulfillment] Cartat WhatsApp Hook Exception:", waErr);
+    console.error("[Order Fulfillment] Moatmt WhatsApp Hook Exception:", waErr);
   }
 }

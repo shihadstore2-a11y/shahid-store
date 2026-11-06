@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +14,7 @@ import { useWhatsappLink } from "@/lib/whatsapp";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { STORE_ID } from "@/lib/store-config";
+import { trackPurchase, useTrackingConfig } from "@/lib/tracking";
 
 // لا نُعيد المحاولة على notFound (404) أو ORDER_LOCKED — هدر بلا فائدة.
 function shouldRetry(failureCount: number, error: unknown): boolean {
@@ -164,6 +166,35 @@ function SuccessPage() {
   const order = result?.locked === false ? result.order : null;
   const isFulfilled = order?.status === "fulfilled";
   const isPaid = order?.status === "paid";
+
+  const { data: trackingConfig } = useTrackingConfig();
+
+  useEffect(() => {
+    if (!order) return;
+    const isSuccess = isPaid || isFulfilled;
+    if (!isSuccess) return;
+
+    const items = (Array.isArray(order.items) ? order.items : []).map((item: any) => ({
+      id: item.product_id || item.id || String(order.id),
+      name: item.name_ar || item.name || "اشتراك ديوان البث",
+      price: Number(item.price || order.total || 0),
+      quantity: Number(item.quantity || 1),
+      currency: "SAR",
+    }));
+
+    trackPurchase(
+      {
+        orderNumber: order.order_number,
+        orderId: order.id,
+        total: Number(order.total || 0),
+        currency: "SAR",
+        items,
+        customerEmail: (order as any).customer_email,
+        customerPhone: (order as any).customer_phone,
+      },
+      trackingConfig,
+    );
+  }, [order?.order_number, isPaid, isFulfilled, trackingConfig]);
 
   const waMessage = order
     ? isFulfilled

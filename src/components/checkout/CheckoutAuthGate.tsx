@@ -90,83 +90,85 @@ export function CheckoutAuthGate({
         </div>
       </div>
 
-      {/* حقل كلمة المرور — يظهر فقط بعد إدخال بريد صالح */}
-      {emailValid ? (
-        <div>
-          <label className="mb-1 flex items-center gap-1.5 text-xs font-bold text-foreground">
+      {/* حقل كلمة المرور — يظهر دائماً وبشكل واضح ومطلوب لتسجيل الدخول مستقبلاً */}
+      <div>
+        <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-foreground">
+          <span className="flex items-center gap-1.5">
             <Lock className="h-3.5 w-3.5 text-accent" />
-            كلمة المرور <span className="text-destructive">*</span>
-          </label>
-          <div className="relative">
-            <input
-              name="password"
-              type={show ? "text" : "password"}
-              dir="ltr"
-              autoComplete={isReturning ? "current-password" : "new-password"}
-              value={password}
-              onChange={(e) => onPasswordChange(e.target.value)}
-              className={cn(
-                "block h-12 w-full rounded-lg border bg-background py-2.5 pe-10 ps-3 text-right text-base outline-none focus:ring-2 focus:ring-ring",
-                passwordError ? "border-destructive/60" : "border-input",
-              )}
-              placeholder={isReturning ? "كلمة المرور" : "8 أحرف على الأقل"}
-            />
-            <button
-              type="button"
-              onClick={() => setShow((s) => !s)}
-              aria-label={show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-              aria-pressed={show}
-              tabIndex={-1}
-              className="absolute inset-y-0 end-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-            >
-              {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-          {passwordError ? (
-            <p className="mt-1 text-xs font-bold text-destructive">{passwordError}</p>
-          ) : (
-            !isReturning && (
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                8 أحرف على الأقل — اختر كلمة قوية وغير مستخدمة من قبل
-              </p>
-            )
-          )}
+            {isReturning ? "كلمة المرور *" : "تعيين كلمة مرور الحساب *"}
+          </span>
+          <span className="text-[11px] font-normal text-muted-foreground">
+            (6 أحرف على الأقل)
+          </span>
+        </label>
+        <div className="relative">
+          <input
+            id="checkout-password-input"
+            name="password"
+            type={show ? "text" : "password"}
+            dir="ltr"
+            autoComplete={isReturning ? "current-password" : "new-password"}
+            value={password}
+            onChange={(e) => onPasswordChange(e.target.value)}
+            className={cn(
+              "block h-12 w-full rounded-lg border bg-background py-2.5 pe-10 ps-3 text-right text-base outline-none transition-colors focus:ring-2 focus:ring-ring",
+              passwordError ? "border-destructive/60" : "border-input",
+            )}
+            placeholder={
+              isReturning
+                ? "أدخل كلمة مرور حسابك"
+                : "اكتب كلمة مرور لتسجيل الدخول بها مستقبلاً"
+            }
+          />
+          <button
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            aria-label={show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+            aria-pressed={show}
+            tabIndex={-1}
+            className="absolute inset-y-0 end-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+          >
+            {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+        {passwordError ? (
+          <p className="mt-1.5 text-xs font-bold text-destructive">{passwordError}</p>
+        ) : (
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            🔒 احفظ كلمة المرور هذه لتتمكن من تسجيل الدخول إلى حسابك في أي وقت ومتابعة اشتراكاتك وبيانات التفعيل.
+          </p>
+        )}
 
-          {/* روابط التبديل */}
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-            {isReturning ? (
-              <>
-                <Link
-                  to="/forgot-password"
-                  className="inline-flex items-center gap-1 font-bold text-accent hover:underline"
-                >
-                  <KeyRound className="h-3 w-3" />
-                  نسيت كلمة المرور؟
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => onModeChange("new")}
-                  className="font-bold text-muted-foreground hover:text-foreground"
-                >
-                  مستخدم جديد؟ أنشئ حساباً
-                </button>
-              </>
-            ) : (
+        {/* روابط التبديل */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-3 text-xs">
+          {isReturning ? (
+            <>
+              <Link
+                to="/forgot-password"
+                className="inline-flex items-center gap-1 font-bold text-accent hover:underline"
+              >
+                <KeyRound className="h-3 w-3" />
+                نسيت كلمة المرور؟
+              </Link>
               <button
                 type="button"
-                onClick={() => onModeChange("returning")}
-                className="font-bold text-muted-foreground hover:text-foreground"
+                onClick={() => onModeChange("new")}
+                className="font-bold text-accent hover:underline"
               >
-                لديك حساب؟ سجّل دخولك
+                عميل جديد؟ أنشئ حساباً بكلمة مرور جديدة
               </button>
-            )}
-          </div>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onModeChange("returning")}
+              className="font-bold text-accent hover:underline"
+            >
+              لديك حساب بالفعل؟ سجّل دخولك
+            </button>
+          )}
         </div>
-      ) : (
-        <p className="rounded-lg border border-dashed border-border bg-background/40 p-3 text-center text-xs text-muted-foreground">
-          أدخل بريدك الإلكتروني أعلاه لإكمال إنشاء الحساب
-        </p>
-      )}
+      </div>
     </div>
   );
 }

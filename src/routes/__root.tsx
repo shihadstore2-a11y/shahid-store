@@ -15,6 +15,8 @@ import { SiteLayout } from "@/components/SiteLayout";
 import { Logo } from "@/components/brand/Logo";
 import { AuthProvider } from "@/hooks/useAuth";
 import { getActiveStore } from "@/lib/store-config";
+import { TrackingScripts } from "@/lib/tracking/TrackingScripts";
+import { fetchTrackingConfig } from "@/lib/tracking/useTrackingConfig";
 
 
 function NotFoundComponent() {
@@ -118,32 +120,49 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => {
+  loader: async () => {
+    try {
+      const trackingConfig = await fetchTrackingConfig();
+      return { trackingConfig };
+    } catch {
+      return { trackingConfig: null };
+    }
+  },
+  head: ({ loaderData }) => {
     const store = getActiveStore();
     const storeTitle = `${store.name_ar} — اشتراكات رقمية بتفعيل سريع`;
     const storeDesc = `${store.name_ar} — متجر اشتراكات رقمية موثوق. تفعيل سريع، دفع آمن، ودعم متواصل.`;
     const storeLogo = store.logo_url || "/logo.webp";
     const storeUrl = store.domain ? `https://${store.domain}` : "https://ksa-tv.com";
 
+    const metaList: any[] = [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: storeTitle },
+      { name: "description", content: storeDesc },
+      { name: "author", content: store.name_ar },
+      { property: "og:title", content: storeTitle },
+      { property: "og:description", content: storeDesc },
+      { property: "og:type", content: "website" },
+      { property: "og:locale", content: "ar_SA" },
+      { property: "og:image", content: storeLogo },
+      { property: "og:image:width", content: "512" },
+      { property: "og:image:height", content: "512" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: storeTitle },
+      { name: "twitter:description", content: storeDesc },
+      { name: "twitter:image", content: storeLogo },
+    ];
+
+    if (loaderData?.trackingConfig?.googleSiteVerification) {
+      metaList.push({
+        name: "google-site-verification",
+        content: loaderData.trackingConfig.googleSiteVerification,
+      });
+    }
+
     return {
-      meta: [
-        { charSet: "utf-8" },
-        { name: "viewport", content: "width=device-width, initial-scale=1" },
-        { title: storeTitle },
-        { name: "description", content: storeDesc },
-        { name: "author", content: store.name_ar },
-        { property: "og:title", content: storeTitle },
-        { property: "og:description", content: storeDesc },
-        { property: "og:type", content: "website" },
-        { property: "og:locale", content: "ar_SA" },
-        { property: "og:image", content: storeLogo },
-        { property: "og:image:width", content: "512" },
-        { property: "og:image:height", content: "512" },
-        { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: storeTitle },
-        { name: "twitter:description", content: storeDesc },
-        { name: "twitter:image", content: storeLogo },
-      ],
+      meta: metaList,
       links: [
         { rel: "stylesheet", href: appCss },
         { rel: "icon", type: "image/webp", href: storeLogo },
@@ -229,5 +248,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  const data = Route.useLoaderData();
+  return (
+    <>
+      <TrackingScripts initialConfig={data?.trackingConfig} />
+      <Outlet />
+    </>
+  );
 }

@@ -28,6 +28,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { ErrorFallback } from "@/components/ErrorFallback";
+import { trackInitiateCheckout } from "@/lib/tracking";
 import { SiteLayout } from "@/components/SiteLayout";
 import { TrustBar } from "@/components/checkout/TrustBar";
 import { PreOrderWarning } from "@/components/checkout/PreOrderWarning";
@@ -131,26 +132,28 @@ const baseSchema = z.object({
 
 type AuthGateState = { isLoggedIn: boolean; mode: CheckoutAuthMode };
 
-// Schema factory — reads live auth state via ref so the resolver stays stable
-// while password requirements adapt to login status + new/returning mode.
+// Schema factory — كلمة المرور مطلوبة للعميل غير المسجل ليتم إنشاء حسابه بكلمة مروره ليتمكن من الدخول مستقبلاً
 function makeCheckoutSchema(authRef: { current: AuthGateState }) {
   return baseSchema.superRefine((data, ctx) => {
     const { isLoggedIn, mode } = authRef.current;
-    if (isLoggedIn) return; // logged-in users never need a password here
-    const pw = data.password ?? "";
-    if (mode === "returning") {
-      if (pw.length < 1) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["password"],
-          message: "أدخل كلمة المرور",
-        });
-      }
-    } else if (pw.length < 8) {
+    if (isLoggedIn) return; // المستخدم المسجل دخوله لا يحتاج كلمة مرور
+    const pw = (data.password ?? "").trim();
+    if (!pw) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["password"],
-        message: "كلمة المرور 8 أحرف على الأقل",
+        message:
+          mode === "returning"
+            ? "يرجى إدخال كلمة المرور لتسجيل الدخول"
+            : "يرجى تعيين كلمة مرور لحسابك (6 أحرف على الأقل)",
+      });
+      return;
+    }
+    if (pw.length < 6) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["password"],
+        message: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
       });
     }
   });
@@ -203,6 +206,20 @@ function CheckoutPage() {
     [unitPrice, qty, appliedCoupon],
   );
   const cardImage = getProductImage(product.slug, category?.slug, product.image_urls);
+
+  useEffect(() => {
+    trackInitiateCheckout(
+      {
+        id: product.id,
+        name: product.name_ar,
+        price: unitPrice,
+        category: category?.name_ar || undefined,
+        quantity: qty,
+        currency: "SAR",
+      },
+      totals.total,
+    );
+  }, [product.id, unitPrice, qty, totals.total, category?.name_ar]);
 
   const handleApplyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
@@ -946,15 +963,19 @@ function CheckoutPage() {
                 <div className="block">
                   <span className="mb-1 flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <Phone className="h-3.5 w-3.5 text-accent" />
-                    رقم الجوال <span className="text-destructive">*</span>
+                    رقم الجوال <span className="text-destructive font-bold text-[11px]">(مطلوب)</span>
                   </span>
                   <PhoneInputIntl
+                    defaultCountry={clientCountry}
                     value={phoneInitial || phoneRaw}
-                    onChange={(e164) => {
+                    onChange={(e164, meta) => {
                       setValue("customer_phone", e164, {
                         shouldValidate: true,
                         shouldDirty: true,
                       });
+                      if (meta?.country) {
+                        setClientCountry(meta.country);
+                      }
                     }}
                     onBlur={() => setPhoneTouched(true)}
                     invalid={!!errors.customer_phone && (phoneTouched || touchedFields.customer_phone)}
@@ -975,7 +996,8 @@ function CheckoutPage() {
                 {/* Email */}
                 <div>
                   <Field
-                    label="البريد الإلكتروني *"
+                    label="البريد الإلكتروني"
+                    required
                     icon={<Mail className="h-3.5 w-3.5 text-accent" />}
                     error={errors.customer_email?.message}
                     valid={emailValid}
@@ -1446,7 +1468,7 @@ function Field({
       <span className="mb-1 flex items-center gap-1.5 text-xs font-bold text-foreground">
         {icon}
         <span>
-          {label} {required && <span className="text-destructive">*</span>}
+          {label} {required && <span className="text-destructive font-bold text-[11px]">(مطلوب)</span>}
         </span>
       </span>
       <span className="relative block">

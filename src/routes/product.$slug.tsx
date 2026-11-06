@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { trackViewContent } from "@/lib/tracking";
 import {
   CheckCircle2,
   ChevronLeft,
@@ -19,6 +21,8 @@ import { isSeasonActive } from "@/lib/season";
 import { getProductImage, getProductOverlay, isAnnualProduct } from "@/lib/productVisuals";
 import { getProductSalesCount } from "@/lib/product-sales";
 import { StockStatusBadge } from "@/components/products/StockStatusBadge";
+import { ProductDescription } from "@/components/products/ProductDescription";
+import { ProductReviewsSection } from "@/components/products/ProductReviewsSection";
 import type { Product, Category } from "@/lib/types";
 
 export const Route = createFileRoute("/product/$slug")({
@@ -155,6 +159,16 @@ function ProductDetailPage() {
   const months = inferDurationMonths(p);
   const perMonth = months > 1 ? Math.round(currentPrice / months) : null;
 
+  useEffect(() => {
+    trackViewContent({
+      id: p.id,
+      name: p.name_ar,
+      price: currentPrice,
+      category: category?.name_ar || undefined,
+      currency: "SAR",
+    });
+  }, [p.id, p.name_ar, currentPrice, category?.name_ar]);
+
   return (
     <SiteLayout>
       {/* Breadcrumb */}
@@ -283,9 +297,9 @@ function ProductDetailPage() {
               {p.name_ar}
             </h1>
             {p.description && (
-              <p className="mt-3 max-w-prose text-base leading-relaxed text-muted-foreground">
-                {p.description}
-              </p>
+              <div className="mt-4 max-w-prose">
+                <ProductDescription text={p.description} />
+              </div>
             )}
 
             {/* Price */}
@@ -382,6 +396,13 @@ function ProductDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Product Reviews Horizontal Section */}
+      <ProductReviewsSection
+        productId={p.id}
+        productName={p.name_ar}
+        productSlug={p.slug}
+      />
 
       {/* Related */}
       {related.data && related.data.length > 0 && (

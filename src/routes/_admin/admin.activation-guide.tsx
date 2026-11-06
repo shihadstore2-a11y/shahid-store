@@ -25,7 +25,7 @@ import {
 export const Route = createFileRoute("/_admin/admin/activation-guide")({
   head: () => ({
     meta: [
-      { title: "دليل التفعيل — إدارة شاهد" },
+      { title: "دليل التفعيل — إدارة ديوان البث" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_admin/admin/activation-guide")({
 });
 
 function ActivationAdminPage() {
-  const [device, setDevice] = useState<DeviceId>("ios");
+  const [device, setDevice] = useState<DeviceId>("android");
   const { data: all = [], isLoading } = useQuery(allActivationStepsQueryOptions());
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ActivationStep | null>(null);
