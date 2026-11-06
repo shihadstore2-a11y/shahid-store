@@ -55,7 +55,9 @@ import { Route as AdminAdminSettingsRouteImport } from './routes/_admin/admin.se
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
 import { Route as AuthenticatedAccountOrdersRouteImport } from './routes/_authenticated/account.orders'
+import { Route as ApiPublicCartatCronRouteImport } from './routes/api/public/cartat-cron'
 import { Route as ApiPublicEdfapayWebhookRouteImport } from './routes/api/public/edfapay-webhook'
+import { Route as ApiPublicMoatmtCronRouteImport } from './routes/api/public/moatmt-cron'
 import { Route as AdminAdminAccountingCostsRouteImport } from './routes/_admin/admin.accounting.costs'
 import { Route as AdminAdminAccountingExpensesRouteImport } from './routes/_admin/admin.accounting.expenses'
 import { Route as AdminAdminAccountingPeriodsRouteImport } from './routes/_admin/admin.accounting.periods'
@@ -296,9 +298,19 @@ const AuthenticatedAccountOrdersRoute =
     path: '/orders',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
+const ApiPublicCartatCronRoute = ApiPublicCartatCronRouteImport.update({
+  id: '/api/public/cartat-cron',
+  path: '/api/public/cartat-cron',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicEdfapayWebhookRoute = ApiPublicEdfapayWebhookRouteImport.update({
   id: '/api/public/edfapay-webhook',
   path: '/api/public/edfapay-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMoatmtCronRoute = ApiPublicMoatmtCronRouteImport.update({
+  id: '/api/public/moatmt-cron',
+  path: '/api/public/moatmt-cron',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAdminAccountingCostsRoute =
@@ -382,7 +394,9 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/account/orders': typeof AuthenticatedAccountOrdersRoute
+  '/api/public/cartat-cron': typeof ApiPublicCartatCronRoute
   '/api/public/edfapay-webhook': typeof ApiPublicEdfapayWebhookRoute
+  '/api/public/moatmt-cron': typeof ApiPublicMoatmtCronRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
   '/admin/accounting/costs': typeof AdminAdminAccountingCostsRoute
   '/admin/accounting/expenses': typeof AdminAdminAccountingExpensesRoute
@@ -434,7 +448,9 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/account/orders': typeof AuthenticatedAccountOrdersRoute
+  '/api/public/cartat-cron': typeof ApiPublicCartatCronRoute
   '/api/public/edfapay-webhook': typeof ApiPublicEdfapayWebhookRoute
+  '/api/public/moatmt-cron': typeof ApiPublicMoatmtCronRoute
   '/account': typeof AuthenticatedAccountIndexRoute
   '/admin/accounting/costs': typeof AdminAdminAccountingCostsRoute
   '/admin/accounting/expenses': typeof AdminAdminAccountingExpensesRoute
@@ -490,7 +506,9 @@ export interface FileRoutesById {
   '/_admin/admin/settings': typeof AdminAdminSettingsRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_authenticated/account/orders': typeof AuthenticatedAccountOrdersRoute
+  '/api/public/cartat-cron': typeof ApiPublicCartatCronRoute
   '/api/public/edfapay-webhook': typeof ApiPublicEdfapayWebhookRoute
+  '/api/public/moatmt-cron': typeof ApiPublicMoatmtCronRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
   '/_admin/admin/accounting/costs': typeof AdminAdminAccountingCostsRoute
   '/_admin/admin/accounting/expenses': typeof AdminAdminAccountingExpensesRoute
@@ -545,7 +563,9 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/account/orders'
+    | '/api/public/cartat-cron'
     | '/api/public/edfapay-webhook'
+    | '/api/public/moatmt-cron'
     | '/account/'
     | '/admin/accounting/costs'
     | '/admin/accounting/expenses'
@@ -597,7 +617,9 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/account/orders'
+    | '/api/public/cartat-cron'
     | '/api/public/edfapay-webhook'
+    | '/api/public/moatmt-cron'
     | '/account'
     | '/admin/accounting/costs'
     | '/admin/accounting/expenses'
@@ -652,7 +674,9 @@ export interface FileRouteTypes {
     | '/_admin/admin/settings'
     | '/_admin/admin/users'
     | '/_authenticated/account/orders'
+    | '/api/public/cartat-cron'
     | '/api/public/edfapay-webhook'
+    | '/api/public/moatmt-cron'
     | '/_authenticated/account/'
     | '/_admin/admin/accounting/costs'
     | '/_admin/admin/accounting/expenses'
@@ -691,7 +715,9 @@ export interface RootRouteChildren {
   PaymentFailedRoute: typeof PaymentFailedRoute
   PaymentSuccessRoute: typeof PaymentSuccessRoute
   ProductSlugRoute: typeof ProductSlugRoute
+  ApiPublicCartatCronRoute: typeof ApiPublicCartatCronRoute
   ApiPublicEdfapayWebhookRoute: typeof ApiPublicEdfapayWebhookRoute
+  ApiPublicMoatmtCronRoute: typeof ApiPublicMoatmtCronRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -1019,11 +1045,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountOrdersRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/api/public/cartat-cron': {
+      id: '/api/public/cartat-cron'
+      path: '/api/public/cartat-cron'
+      fullPath: '/api/public/cartat-cron'
+      preLoaderRoute: typeof ApiPublicCartatCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/edfapay-webhook': {
       id: '/api/public/edfapay-webhook'
       path: '/api/public/edfapay-webhook'
       fullPath: '/api/public/edfapay-webhook'
       preLoaderRoute: typeof ApiPublicEdfapayWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/moatmt-cron': {
+      id: '/api/public/moatmt-cron'
+      path: '/api/public/moatmt-cron'
+      fullPath: '/api/public/moatmt-cron'
+      preLoaderRoute: typeof ApiPublicMoatmtCronRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_admin/admin/accounting/costs': {
@@ -1181,7 +1221,9 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentFailedRoute: PaymentFailedRoute,
   PaymentSuccessRoute: PaymentSuccessRoute,
   ProductSlugRoute: ProductSlugRoute,
+  ApiPublicCartatCronRoute: ApiPublicCartatCronRoute,
   ApiPublicEdfapayWebhookRoute: ApiPublicEdfapayWebhookRoute,
+  ApiPublicMoatmtCronRoute: ApiPublicMoatmtCronRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport

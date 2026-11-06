@@ -41,22 +41,25 @@ export async function getMoatmtConfig(): Promise<{
   // فحص قاعدة البيانات إذا لم تكن المتغيرات معينة في البيئة
   if (!apiKey || !instanceId) {
     try {
-      const { data: storeRow } = await supabaseAdmin
+      const { data: rows } = await supabaseAdmin
         .from("store_settings")
-        .select("value")
-        .eq("key", "payment_settings")
-        .maybeSingle();
+        .select("key, value")
+        .in("key", ["moatmt_api_key", "moatmt_instance_id", "moatmt_base_url", "payment_settings"]);
 
-      let ps: any = null;
-      if (storeRow?.value) {
+      const map = new Map((rows || []).map((r) => [r.key, r.value]));
+
+      if (!apiKey && map.get("moatmt_api_key")) apiKey = String(map.get("moatmt_api_key")).trim();
+      if (!instanceId && map.get("moatmt_instance_id")) instanceId = String(map.get("moatmt_instance_id")).trim();
+      if (map.get("moatmt_base_url")) baseUrl = String(map.get("moatmt_base_url")).trim().replace(/\/+$/, "");
+
+      const psRow = map.get("payment_settings");
+      if (psRow) {
         try {
-          ps = JSON.parse(storeRow.value);
+          const ps = JSON.parse(psRow);
+          if (!apiKey && ps.moatmt_api_key) apiKey = String(ps.moatmt_api_key).trim();
+          if (!instanceId && ps.moatmt_instance_id) instanceId = String(ps.moatmt_instance_id).trim();
+          if (ps.moatmt_base_url) baseUrl = String(ps.moatmt_base_url).trim().replace(/\/+$/, "");
         } catch {}
-      }
-      if (ps) {
-        if (!apiKey && ps.moatmt_api_key) apiKey = String(ps.moatmt_api_key).trim();
-        if (!instanceId && ps.moatmt_instance_id) instanceId = String(ps.moatmt_instance_id).trim();
-        if (ps.moatmt_base_url) baseUrl = String(ps.moatmt_base_url).trim().replace(/\/+$/, "");
       }
     } catch (e) {
       console.warn("[Moatmt] Failed reading settings from DB, using env fallback:", e);
@@ -126,11 +129,11 @@ export async function sendMoatmtMessage(
   const config = await getMoatmtConfig();
   const normalizedPhone = normalizePhoneNumber(phone);
 
-  if (!config.apiKey || !config.instanceId) {
+  if (!config.apiKey) {
     console.log(
-      "[Moatmt] Skipped WhatsApp message: MOATMT_API_KEY or MOATMT_INSTANCE_ID not configured yet.",
+      "[Moatmt] Skipped WhatsApp message: MOATMT_API_KEY not configured yet.",
     );
-    return { ok: false, error: "MOATMT_CREDENTIALS_NOT_CONFIGURED" };
+    return { ok: false, error: "MOATMT_API_KEY_NOT_CONFIGURED" };
   }
 
   if (!normalizedPhone || normalizedPhone.length < 8) {
@@ -140,7 +143,6 @@ export async function sendMoatmtMessage(
 
   // بناء حمولة الرسالة المتوافقة مع بوابات الواتساب ومؤتمت
   const payload: Record<string, unknown> = {
-    instance_id: config.instanceId,
     recipient: normalizedPhone,
     number: normalizedPhone,
     phone: normalizedPhone,
@@ -148,6 +150,11 @@ export async function sendMoatmtMessage(
     caption: message,
     type: mediaUrl ? "media" : "text",
   };
+
+  if (config.instanceId) {
+    payload.instance_id = config.instanceId;
+    payload.instance = config.instanceId;
+  }
 
   if (mediaUrl) {
     payload.media_url = mediaUrl;
@@ -158,8 +165,11 @@ export async function sendMoatmtMessage(
     "Content-Type": "application/json",
     Authorization: `Bearer ${config.apiKey}`,
     "x-api-key": config.apiKey,
-    "x-instance-id": config.instanceId,
   };
+
+  if (config.instanceId) {
+    headers["x-instance-id"] = config.instanceId;
+  }
 
   // تحديد الرابط المناسب (دعم الرابط المخصص أو الافتراضي)
   const targetEndpoints = config.sendUrl
