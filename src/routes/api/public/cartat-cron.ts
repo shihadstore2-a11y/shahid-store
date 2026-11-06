@@ -12,8 +12,30 @@ import {
   processAutomaticReviewRequests,
 } from "@/lib/moatmt.server";
 
-const handleCron = async () => {
+const handleCron = async ({ request }: { request: Request }) => {
   try {
+    const url = new URL(request.url);
+    if (url.searchParams.get("test") === "true") {
+      const targetPhone = url.searchParams.get("phone") || "966500451602";
+      const { sendMoatmtMessage } = await import("@/lib/moatmt.server");
+      const testRes = await sendMoatmtMessage(
+        targetPhone,
+        "مرحباً بك! 👋 تم ربط بوت واتساب مؤتمت (Moatmt) بنجاح مع متجر ديوان البث 🚀",
+      );
+      return new Response(
+        JSON.stringify({
+          ok: testRes.ok,
+          message: testRes.ok ? "Test message sent successfully" : "Failed to send test message",
+          result: testRes,
+          timestamp: new Date().toISOString(),
+        }),
+        {
+          status: testRes.ok ? 200 : 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
     const abandonedResult = await processAbandonedCartsAutomatic({
       maxHours: 24,
       limit: 15,
