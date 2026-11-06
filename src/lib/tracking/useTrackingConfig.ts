@@ -1,24 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { STORE_ID } from "@/lib/store-config";
 import type { TrackingConfig } from "./types";
 
 export async function fetchTrackingConfig(): Promise<TrackingConfig> {
   try {
-    let query = supabase.from("store_settings").select("key, value");
-    if (STORE_ID) {
-      query = query.eq("store_id", STORE_ID);
-    }
-    const { data, error } = await query.in("key", [
-      "google_site_verification",
-      "gtm_id",
-      "ga4_measurement_id",
-      "google_ads_id",
-      "google_ads_purchase_label",
-      "meta_pixel_id",
-      "snapchat_pixel_id",
-      "tiktok_pixel_id",
-    ]);
+    const { data, error } = await supabase
+      .from("store_settings")
+      .select("key, value")
+      .in("key", [
+        "google_site_verification",
+        "gtm_id",
+        "ga4_measurement_id",
+        "google_ads_id",
+        "google_ads_purchase_label",
+        "meta_pixel_id",
+        "snapchat_pixel_id",
+        "tiktok_pixel_id",
+      ]);
 
     if (error) {
       console.warn("[Tracking] fetchTrackingConfig error:", error);
@@ -33,7 +31,7 @@ export async function fetchTrackingConfig(): Promise<TrackingConfig> {
     const rawGtm = (map.gtm_id || "").trim();
     const rawGa4 = (map.ga4_measurement_id || "").trim();
 
-    // كشف ذكي: إذا تم لصق كود G- في حقل GTM أو العكس يتعرف عليه تلقائياً
+    // كشف ذكي: إذا تم إدخال معرف G- في حقل GTM أو العكس يتعرف عليه تلقائياً
     const gtmId = rawGtm.startsWith("GTM-")
       ? rawGtm
       : rawGa4.startsWith("GTM-")
@@ -64,7 +62,7 @@ export async function fetchTrackingConfig(): Promise<TrackingConfig> {
 
 export function useTrackingConfig() {
   return useQuery({
-    queryKey: ["tracking-config", STORE_ID],
+    queryKey: ["tracking-config"],
     queryFn: fetchTrackingConfig,
     staleTime: 5 * 60 * 1000,
   });

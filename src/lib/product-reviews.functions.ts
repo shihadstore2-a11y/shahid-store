@@ -486,7 +486,6 @@ export const submitProductReview = createServerFn({ method: "POST" })
       const { data: settingRow } = await supabaseAdmin
         .from("store_settings")
         .select("value")
-        .eq("store_id", STORE_ID)
         .eq("key", "reviews_settings")
         .maybeSingle();
 

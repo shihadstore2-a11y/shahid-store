@@ -135,6 +135,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     const storeLogo = store.logo_url || "/logo.webp";
     const storeUrl = store.domain ? `https://${store.domain}` : "https://ksa-tv.com";
 
+    const ga4Id =
+      loaderData?.trackingConfig?.ga4MeasurementId || "G-7YZ1GWEZEM";
+    const googleSiteVerification =
+      loaderData?.trackingConfig?.googleSiteVerification ||
+      "4KYC-G8zhGBbOc2K47ekYe6wLPY_x2gMgIP49Ip6WwA";
+
     const metaList: any[] = [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -154,11 +160,59 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image", content: storeLogo },
     ];
 
-    if (loaderData?.trackingConfig?.googleSiteVerification) {
+    if (googleSiteVerification) {
       metaList.push({
         name: "google-site-verification",
-        content: loaderData.trackingConfig.googleSiteVerification,
+        content: googleSiteVerification,
       });
+    }
+
+    const scriptsList: any[] = [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: store.name_ar,
+          alternateName: store.name_en || store.name_ar,
+          url: storeUrl,
+          logo: storeLogo.startsWith("http") ? storeLogo : `${storeUrl}${storeLogo}`,
+          description: storeDesc,
+          contactPoint: {
+            "@type": "ContactPoint",
+            contactType: "customer support",
+            availableLanguage: ["ar", "en"],
+            areaServed: "SA",
+          },
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: store.name_ar,
+          url: storeUrl,
+          inLanguage: "ar",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: `${storeUrl}/products?search={search_term_string}`,
+            "query-input": "required name=search_term_string",
+          },
+        }),
+      },
+    ];
+
+    if (ga4Id) {
+      scriptsList.push(
+        {
+          src: `https://www.googletagmanager.com/gtag/js?id=${ga4Id}`,
+          async: true,
+        },
+        {
+          children: `window.dataLayer = window.dataLayer || [];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js', new Date());\ngtag('config', '${ga4Id}');`,
+        }
+      );
     }
 
     return {
@@ -170,41 +224,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { rel: "icon", type: "image/webp", sizes: "512x512", href: storeLogo },
         { rel: "apple-touch-icon", sizes: "180x180", href: storeLogo },
       ],
-      scripts: [
-        {
-          type: "application/ld+json",
-          children: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            name: store.name_ar,
-            alternateName: store.name_en || store.name_ar,
-            url: storeUrl,
-            logo: storeLogo.startsWith("http") ? storeLogo : `${storeUrl}${storeLogo}`,
-            description: storeDesc,
-            contactPoint: {
-              "@type": "ContactPoint",
-              contactType: "customer support",
-              availableLanguage: ["ar", "en"],
-              areaServed: "SA",
-            },
-          }),
-        },
-        {
-          type: "application/ld+json",
-          children: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: store.name_ar,
-            url: storeUrl,
-            inLanguage: "ar",
-            potentialAction: {
-              "@type": "SearchAction",
-              target: `${storeUrl}/products?search={search_term_string}`,
-              "query-input": "required name=search_term_string",
-            },
-          }),
-        },
-      ],
+      scripts: scriptsList,
     };
   },
   shellComponent: RootShell,

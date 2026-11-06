@@ -412,12 +412,9 @@ export function ProductReviewsSection({
         {/* التقييمات الأفقية (Horizontal Swipeable Slider / Carousel) */}
         <div className="mt-10 border-t border-border/50 pt-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-black text-foreground">
-                تجارب المشتركين ({reviews.length})
-              </h3>
-              <span className="text-[11px] text-muted-foreground">اسحب أفقياً لتصفح باقي الآراء</span>
-            </div>
+            <h3 className="text-base font-black text-foreground">
+              تجارب المشتركين ({reviews.length})
+            </h3>
             
             {/* أزرار التحريك الأفقي */}
             {reviews.length > 2 && (

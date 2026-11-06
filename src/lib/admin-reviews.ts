@@ -228,7 +228,6 @@ export async function fetchReviewsSettings(): Promise<ReviewsSettings> {
     const { data, error } = await supabase
       .from("store_settings")
       .select("value")
-      .eq("store_id", STORE_ID)
       .eq("key", REVIEWS_SETTINGS_KEY)
       .maybeSingle();
 
@@ -248,7 +247,7 @@ export async function fetchReviewsSettings(): Promise<ReviewsSettings> {
 
 export const reviewsSettingsQueryOptions = () =>
   queryOptions({
-    queryKey: ["admin-reviews-settings", STORE_ID],
+    queryKey: ["admin-reviews-settings"],
     queryFn: fetchReviewsSettings,
     staleTime: 30_000,
   });
@@ -256,38 +255,18 @@ export const reviewsSettingsQueryOptions = () =>
 export async function saveReviewsSettings(settings: ReviewsSettings): Promise<void> {
   const payload = JSON.stringify(settings);
 
-  const { data: existing } = await supabase
+  const { error } = await supabase
     .from("store_settings")
-    .select("id")
-    .eq("store_id", STORE_ID)
-    .eq("key", REVIEWS_SETTINGS_KEY)
-    .maybeSingle();
+    .upsert(
+      [
+        {
+          key: REVIEWS_SETTINGS_KEY,
+          value: payload,
+          updated_at: new Date().toISOString(),
+        },
+      ],
+      { onConflict: "key" }
+    );
 
-  if (existing?.id) {
-    const { error } = await supabase
-      .from("store_settings")
-      .update({
-        value: payload,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", existing.id);
-
-    if (error) throw new Error(`فشل تحديث إعدادات التقييمات: ${error.message}`);
-  } else {
-    const { error } = await supabase
-      .from("store_settings")
-      .upsert(
-        [
-          {
-            key: REVIEWS_SETTINGS_KEY,
-            value: payload,
-            store_id: STORE_ID,
-            updated_at: new Date().toISOString(),
-          },
-        ],
-        { onConflict: "store_id,key" }
-      );
-
-    if (error) throw new Error(`فشل حفظ إعدادات التقييمات: ${error.message}`);
-  }
+  if (error) throw new Error(`فشل حفظ إعدادات التقييمات: ${error.message}`);
 }

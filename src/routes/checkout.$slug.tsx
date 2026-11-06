@@ -53,7 +53,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { createEdfaPayCheckout } from "@/lib/edfapay.functions";
 import { createNGeniusCheckout } from "@/lib/ngenius.functions";
 import { PhoneInputIntl } from "@/components/forms/PhoneInputIntl";
-import { E164_REGEX, isSaudiE164, toE164, formatE164ForDisplay, detectCountry } from "@/lib/phone-intl";
+import { E164_REGEX, isSaudiE164, toE164, formatE164ForDisplay, detectCountry, DEFAULT_COUNTRY } from "@/lib/phone-intl";
+import type { CountryCode } from "libphonenumber-js/min";
 import { useWhatsappLink } from "@/lib/whatsapp";
 import { CheckoutAuthGate, type CheckoutAuthMode } from "@/components/checkout/CheckoutAuthGate";
 import { STORE_ID } from "@/lib/store-config";
@@ -383,6 +384,7 @@ function CheckoutPage() {
       else if (pmConfig.cod?.enabled) setValue("payment_method", "cash", { shouldValidate: true });
     }
   }, [pmConfig, setValue, watch]);
+  const [clientCountry, setClientCountry] = useState<CountryCode>(DEFAULT_COUNTRY || "SA");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [phoneInitial, setPhoneInitial] = useState<string>("");
   // H.2.1: Track name fill source to resolve F.4 vs H.2 precedence (DB > Google metadata > user typing wins)
