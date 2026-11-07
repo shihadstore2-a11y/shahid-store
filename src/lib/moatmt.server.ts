@@ -33,8 +33,19 @@ export async function getMoatmtConfig(): Promise<{
   baseUrl: string;
   sendUrl?: string;
 }> {
-  let apiKey = (process.env.MOATMT_API_KEY || process.env.MOATMT_ACCESS_TOKEN || "").trim();
-  let instanceId = (process.env.MOATMT_INSTANCE_ID || "").trim();
+  let apiKey = (
+    process.env.MOATMT_API_KEY ||
+    process.env.MOATMT_ACCESS_TOKEN ||
+    process.env.moatmt_api_key ||
+    ""
+  ).trim();
+  let instanceId = (
+    process.env.MOATMT_INSTANCE_ID ||
+    process.env.INSTANCE_ID ||
+    process.env.instance_id ||
+    process.env.moatmt_instance_id ||
+    ""
+  ).trim();
   let baseUrl = (process.env.MOATMT_BASE_URL || "https://moatmt.ai").trim().replace(/\/+$/, "");
   let sendUrl = (process.env.MOATMT_SEND_URL || "").trim();
 
@@ -660,20 +671,36 @@ export async function processAbandonedCartsAutomatic(options?: {
 
       if (res.ok) {
         sent++;
-        const logEntry = JSON.stringify({
+        const logObj = {
           template: "abandoned_recovery",
           sent_at: new Date().toISOString(),
           sent_by: "system_auto",
           auto: true,
           moatmt_msg_id: res.id,
-        });
+        };
+        const logEntry = JSON.stringify(logObj);
         const finalNotes = lockingNotes.replace(
           "[WHATSAPP_LOG:abandoned_in_progress]",
           `[WHATSAPP_LOG:${logEntry}]`,
         );
+
+        const { data: latestOrder } = await supabaseAdmin
+          .from("orders")
+          .select("whatsapp_messages_sent")
+          .eq("id", order.id)
+          .maybeSingle();
+
+        const existingMessages = Array.isArray(latestOrder?.whatsapp_messages_sent)
+          ? latestOrder.whatsapp_messages_sent
+          : [];
+
         await supabaseAdmin
           .from("orders")
-          .update({ notes: finalNotes, updated_at: new Date().toISOString() })
+          .update({
+            notes: finalNotes,
+            whatsapp_messages_sent: [...existingMessages, logObj],
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", order.id);
 
         console.log(`[Moatmt Auto] ✅ Sent abandoned reminder to order #${order.order_number}`);
@@ -764,23 +791,36 @@ export async function processAutomaticReviewRequests(options?: {
 
       if (res.ok) {
         sent++;
-        const logEntry = JSON.stringify({
+        const logObj = {
           template: "review_request",
           sent_at: new Date().toISOString(),
           sent_by: "system_auto",
           auto: true,
           moatmt_msg_id: res.id,
-        });
+        };
+        const logEntry = JSON.stringify(logObj);
         const finalNotes = lockingNotes.replace(
           "[WHATSAPP_LOG:review_in_progress]",
           `[WHATSAPP_LOG:${logEntry}]`,
         );
         const updatedItems = items.map((it: any) => ({ ...it, review_requested: true }));
+
+        const { data: latestOrder } = await supabaseAdmin
+          .from("orders")
+          .select("whatsapp_messages_sent")
+          .eq("id", order.id)
+          .maybeSingle();
+
+        const existingMessages = Array.isArray(latestOrder?.whatsapp_messages_sent)
+          ? latestOrder.whatsapp_messages_sent
+          : [];
+
         await supabaseAdmin
           .from("orders")
           .update({
             notes: finalNotes,
             items: updatedItems,
+            whatsapp_messages_sent: [...existingMessages, logObj],
             updated_at: new Date().toISOString(),
           })
           .eq("id", order.id);

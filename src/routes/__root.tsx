@@ -133,7 +133,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     const storeTitle = `${store.name_ar} — اشتراكات رقمية بتفعيل سريع`;
     const storeDesc = `${store.name_ar} — متجر اشتراكات رقمية موثوق. تفعيل سريع، دفع آمن، ودعم متواصل.`;
     const storeLogo = store.logo_url || "/logo.webp";
-    const storeUrl = store.domain ? `https://${store.domain}` : "https://ksa-tv.com";
+    const storeUrl =
+      store.domain && !store.domain.includes("workers.dev")
+        ? `https://${store.domain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+        : "https://ksa-tv.com";
 
     const ga4Id =
       loaderData?.trackingConfig?.ga4MeasurementId || "G-7YZ1GWEZEM";

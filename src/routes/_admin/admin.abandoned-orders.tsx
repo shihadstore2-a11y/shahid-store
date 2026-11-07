@@ -100,6 +100,10 @@ function AbandonedOrdersPage() {
             `تم إرسال رسائل استعادة السلة تلقائياً إلى ${json.abandoned.sent} عميل بنجاح عبر واتساب 🚀`,
           );
           handleRefresh();
+        } else if (json.abandoned.errors > 0) {
+          toast.error(
+            `تعذر إرسال رسائل السلات المتروكة (${json.abandoned.errors} خطأ من مزود الواتساب). يرجى التحقق من اتصال جلسة مؤتمت.`,
+          );
         } else if (showToast) {
           toast.info(
             "لا توجد سلات متروكة مؤهلة للإرسال حالياً (لم يمر عدد الساعات المحدد بعد أو أُرسلت لهم مسبقاً)",

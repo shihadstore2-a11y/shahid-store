@@ -316,7 +316,7 @@ VALUES (
   'shahid-store',
   'ديوان البث',
   'ديوان البث',
-  'shahid-store.digitaneo.workers.dev',
+  'ksa-tv.com',
   'https://umozikpkfmjkcglizysd.supabase.co/storage/v1/object/public/products/logo.webp',
   true
 ) ON CONFLICT (id) DO UPDATE SET

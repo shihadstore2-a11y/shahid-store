@@ -9,6 +9,7 @@ export type StoreSettings = {
   telegramChannel: string;
 
   // إعدادات بوت واتساب مؤتمت (Moatmt Bot) والسلات المتروكة
+  moatmtInstanceId?: string;
   moatmtAdminPhones?: string;
   moatmtAbandonedDelayHours?: string; // وقت إرسال رسالة السلة المتروكة بالساعات
   moatmtAbandonedDelayMinutes?: string; // وقت إرسال رسالة السلة المتروكة بالدقائق
@@ -35,6 +36,7 @@ const DEFAULT_STORE: StoreSettings = {
   whatsappNumber: "966500451602",
   officialEmail: "info@ksa-tv.com",
   telegramChannel: "",
+  moatmtInstanceId: "f515e927-5bef-49c8-919e-57576e2de066",
   moatmtAdminPhones: "966500451602",
   moatmtAbandonedDelayHours: "1", // 1 ساعة افتراضياً
   moatmtAbandonedDelayMinutes: "60", // 60 دقيقة
@@ -59,6 +61,7 @@ const KEY_MAP: Record<keyof StoreSettings, string> = {
   whatsappNumber: "whatsapp_number",
   officialEmail: "contact_email",
   telegramChannel: "telegram_channel",
+  moatmtInstanceId: "moatmt_instance_id",
   moatmtAdminPhones: "moatmt_admin_phones",
   moatmtAbandonedDelayHours: "moatmt_abandoned_delay_hours",
   moatmtAbandonedDelayMinutes: "moatmt_abandoned_delay_minutes",
@@ -114,6 +117,7 @@ export async function fetchStoreSettings(): Promise<StoreSettings> {
     whatsappNumber: map.whatsapp_number || DEFAULT_STORE.whatsappNumber,
     officialEmail: map.contact_email || DEFAULT_STORE.officialEmail,
     telegramChannel: map.telegram_channel || DEFAULT_STORE.telegramChannel,
+    moatmtInstanceId: map.moatmt_instance_id || DEFAULT_STORE.moatmtInstanceId,
     moatmtAdminPhones: map.moatmt_admin_phones || map.cartat_admin_phones || DEFAULT_STORE.moatmtAdminPhones,
     moatmtAbandonedDelayHours: abandonedHours,
     moatmtAbandonedDelayMinutes: abandonedMinutes,

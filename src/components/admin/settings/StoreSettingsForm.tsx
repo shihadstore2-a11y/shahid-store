@@ -140,6 +140,18 @@ export function StoreSettingsForm() {
 
         <div className="space-y-4">
           <Field
+            label="معرّف الجلسة (Instance ID) في منصة مؤتمت"
+            hint="معرّف جلسة الواتساب المتصلة من قائمة أجهزة مؤتمت (مثل: f515e927-5bef-49c8-919e-57576e2de066)"
+          >
+            <Input
+              dir="ltr"
+              placeholder="f515e927-5bef-49c8-919e-57576e2de066"
+              value={form.moatmtInstanceId ?? ""}
+              onChange={(e) => set("moatmtInstanceId", e.target.value.trim())}
+            />
+          </Field>
+
+          <Field
             label="أرقام واتساب الإدارة لاستقبال إشعارات الطلبات الجديدة"
             hint="اكتب الأرقام مفصولة بفاصلة (مثال: 966500000000, 966555555555)"
           >

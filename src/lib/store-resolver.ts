@@ -16,7 +16,7 @@ export const DEFAULT_SHAHID_STORE: StoreInfo = {
   slug: "shahid-store",
   name_ar: "ديوان البث",
   name_en: "ديوان البث",
-  domain: "shahid-store.digitaneo.workers.dev",
+  domain: "ksa-tv.com",
   logo_url: "/logo.webp",
   is_active: true,
   settings: {},
@@ -120,7 +120,7 @@ export async function resolveStoreByDomain(
       return store;
     }
 
-    // 5. محاولة المطابقة عبر الـ Subdomain (مثل cobra.digitaneo.workers.dev -> slug: cobra)
+    // 5. محاولة المطابقة عبر الـ Subdomain (مثل shahid-store.shihadstore2.workers.dev -> slug: shahid-store)
     const parts = hostname.split(".");
     if (parts.length > 2) {
       const subdomain = parts[0];
